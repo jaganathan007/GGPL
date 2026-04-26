@@ -130,22 +130,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  // ─── Persist to localStorage + broadcast via WebSocket ───
+  // ─── Persist to localStorage ───
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-    // Only broadcast if this change originated locally (not from WS/storage)
-    if (!isExternalUpdate.current) {
-      const ws = wsRef.current;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'STATE_UPDATE', state }));
-      }
-    }
     isExternalUpdate.current = false;
   }, [state]);
 
+  const customDispatch = (action: Action) => {
+    dispatch(action);
+    if (action.type !== 'SET_STATE') {
+      const ws = wsRef.current;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ACTION', action }));
+      }
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ state, dispatch: customDispatch }}>
       {children}
     </AppContext.Provider>
   );

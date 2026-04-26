@@ -43,6 +43,8 @@ export interface Toss {
 
 export interface Match {
   id: string;
+  viewerCode: string;
+  adminCode: string;
   team1Id: string;
   team2Id: string;
   toss?: Toss;

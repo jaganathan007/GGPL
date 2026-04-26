@@ -3,30 +3,47 @@ import { WebSocketServer } from 'ws';
 const PORT = process.env.PORT || 3001;
 const wss = new WebSocketServer({ port: PORT });
 
-let latestState = null;
+let globalState = { teams: [], matches: [] };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'ADD_TEAM': return { ...state, teams: [...state.teams, action.payload] };
+    case 'UPDATE_TEAM': return { ...state, teams: state.teams.map(t => t.id === action.payload.id ? action.payload : t) };
+    case 'DELETE_TEAM': return { ...state, teams: state.teams.filter(t => t.id !== action.payload), matches: state.matches.filter(m => m.team1Id !== action.payload && m.team2Id !== action.payload) };
+    case 'ADD_MATCH': return { ...state, matches: [...state.matches, action.payload] };
+    case 'UPDATE_MATCH': return { ...state, matches: state.matches.map(m => m.id === action.payload.id ? action.payload : m) };
+    case 'DELETE_MATCH': return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
+    case 'SET_STATE': return action.payload;
+    default: return state;
+  }
+}
+
 let clientCount = 0;
 
 wss.on('connection', (ws) => {
   clientCount++;
   console.log(`✅ Client connected (${clientCount} total)`);
 
-  // Send latest state to newly connected client immediately
-  if (latestState) {
-    ws.send(JSON.stringify({ type: 'STATE_SYNC', state: latestState }));
-  }
+  ws.send(JSON.stringify({ type: 'STATE_SYNC', state: globalState }));
 
   ws.on('message', (data) => {
     try {
       const msg = JSON.parse(data.toString());
-      if (msg.type === 'STATE_UPDATE') {
-        latestState = msg.state;
-        // Broadcast to ALL other connected clients
+      if (msg.type === 'ACTION') {
+        globalState = reducer(globalState, msg.action);
         wss.clients.forEach((client) => {
           if (client !== ws && client.readyState === 1) {
-            client.send(JSON.stringify({ type: 'STATE_SYNC', state: msg.state }));
+            client.send(JSON.stringify({ type: 'STATE_SYNC', state: globalState }));
           }
         });
-        console.log(`📡 State broadcast to ${wss.clients.size - 1} client(s)`);
+      } else if (msg.type === 'STATE_UPDATE') {
+        // Fallback for older clients
+        globalState = msg.state;
+        wss.clients.forEach(c => {
+          if (c !== ws && c.readyState === 1) {
+            c.send(JSON.stringify({ type: 'STATE_SYNC', state: globalState }));
+          }
+        });
       }
     } catch (err) {
       console.error('❌ Invalid message:', err.message);

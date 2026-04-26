@@ -7,6 +7,7 @@ import MatchesView from './components/MatchesView';
 import ScoringView from './components/ScoringView';
 import MatchStats from './components/MatchStats';
 import PinGate, { getStoredPin, setStoredPin } from './components/PinGate';
+import { useApp } from './store';
 
 type View = 'dashboard' | 'teams' | 'matches';
 
@@ -17,6 +18,7 @@ const navItems: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
 ];
 
 export default function App() {
+  const { state } = useApp();
   const [view, setView] = useState<View>('dashboard');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPinGate, setShowPinGate] = useState(false);
@@ -28,6 +30,9 @@ export default function App() {
   const [resetNewPin, setResetNewPin] = useState('');
   const [resetConfirmPin, setResetConfirmPin] = useState('');
   const [resetError, setResetError] = useState('');
+
+  const [landingCode, setLandingCode] = useState('');
+  const [landingError, setLandingError] = useState('');
 
   // Admin login via PIN
   function handleAdminLogin() {
@@ -83,32 +88,52 @@ export default function App() {
     }
   }
 
+  function handleCodeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const code = landingCode.trim().toUpperCase();
+    if (!code) return;
+    
+    // Check if it's a viewer code or admin code
+    const match = state.matches.find(m => m.viewerCode === code || m.adminCode === code);
+    if (!match) {
+      setLandingError('Invalid Match Code');
+      return;
+    }
+    
+    setLandingError('');
+    if (code === match.adminCode) {
+      setScoringMatchId(match.id);
+    } else {
+      setStatsMatchId(match.id);
+    }
+  }
+
   // PIN gate overlay
   if (showPinGate) {
     return <PinGate onSuccess={handlePinSuccess} onCancel={handlePinCancel} />;
   }
 
-  // Scoring view (admin only)
-  if (scoringMatchId && isAdmin) {
+  // Scoring view
+  if (scoringMatchId) {
     return (
       <ScoringView
         matchId={scoringMatchId}
         onBack={() => {
           setScoringMatchId(null);
-          setView('matches');
+          setLandingCode('');
         }}
       />
     );
   }
 
-  // Stats view (anyone)
+  // Stats view
   if (statsMatchId) {
     return (
       <MatchStats
         matchId={statsMatchId}
         onBack={() => {
           setStatsMatchId(null);
-          setView('matches');
+          setLandingCode('');
         }}
       />
     );
@@ -157,19 +182,14 @@ export default function App() {
               </>
             ) : (
               <>
-                {/* Viewer badge */}
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                  <Eye className="w-3.5 h-3.5 text-white/60" />
-                  <span className="text-[11px] text-white/70 font-semibold tracking-wide">VIEWER</span>
-                </div>
-                {/* Login as admin */}
+                {/* Login as Global Admin */}
                 <button
                   onClick={handleAdminLogin}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-[11px] font-bold rounded-lg transition-all"
-                  title="Login as Admin"
+                  title="Global Admin Login"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Admin</span>
+                  <span className="hidden sm:inline">Global Admin</span>
                 </button>
               </>
             )}
@@ -177,55 +197,94 @@ export default function App() {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex gap-1">
-            {navItems.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setView(item.id)}
-                className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium transition-all relative ${
-                  view === item.id
-                    ? 'text-emerald-400'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{item.label}</span>
-                {view === item.id && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute bottom-0 left-2 right-2 h-[2px] bg-emerald-400 rounded-full"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
+      {isAdmin ? (
+        <>
+          {/* Navigation for Global Admin */}
+          <nav className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="flex gap-1">
+                {navItems.map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setView(item.id)}
+                    className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium transition-all relative ${
+                      view === item.id
+                        ? 'text-emerald-400'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{item.label}</span>
+                    {view === item.id && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute bottom-0 left-2 right-2 h-[2px] bg-emerald-400 rounded-full"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </nav>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <AnimatePresence mode="wait">
-          {view === 'dashboard' && (
-            <motion.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-              <Dashboard onNavigate={(v) => setView(v as View)} onScoreMatch={handleScoreMatch} isAdmin={isAdmin} onViewStats={setStatsMatchId} />
-            </motion.div>
-          )}
-          {view === 'teams' && (
-            <motion.div key="teams" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-              <TeamsView isAdmin={isAdmin} />
-            </motion.div>
-          )}
-          {view === 'matches' && (
-            <motion.div key="matches" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-              <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+          {/* Admin Content */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <AnimatePresence mode="wait">
+              {view === 'dashboard' && (
+                <motion.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
+                  <Dashboard onNavigate={(v) => setView(v as View)} onScoreMatch={handleScoreMatch} isAdmin={isAdmin} onViewStats={setStatsMatchId} />
+                </motion.div>
+              )}
+              {view === 'teams' && (
+                <motion.div key="teams" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
+                  <TeamsView isAdmin={isAdmin} />
+                </motion.div>
+              )}
+              {view === 'matches' && (
+                <motion.div key="matches" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
+                  <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </>
+      ) : (
+        /* Landing Page for Viewers / Match Scorers */
+        <main className="max-w-md mx-auto px-4 py-20">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-slate-800/60 rounded-3xl p-8 shadow-2xl backdrop-blur-md">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-5">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-extrabold text-white tracking-tight">Join Match</h2>
+              <p className="text-slate-400 text-sm mt-2">Enter your Match Code to watch or score</p>
+            </div>
+            
+            <form onSubmit={handleCodeSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  value={landingCode}
+                  onChange={e => setLandingCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. V-A1B2C3"
+                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-4 text-center text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
+                />
+                {landingError && (
+                  <p className="text-rose-400 text-xs font-semibold text-center mt-2">{landingError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={!landingCode.trim()}
+                className="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide text-sm"
+              >
+                Enter Match
+              </button>
+            </form>
+          </motion.div>
+        </main>
+      )}
 
       {/* Reset PIN Modal */}
       <AnimatePresence>

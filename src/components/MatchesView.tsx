@@ -67,6 +67,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
     if (!team1Id || !team2Id || team1Id === team2Id || !tossWinner || !tossDecision) return;
     const match: Match = {
       id: uid(),
+      viewerCode: 'V-' + uid().toUpperCase().substring(0, 6),
+      adminCode: 'A-' + uid().toUpperCase().substring(0, 6),
       team1Id,
       team2Id,
       toss: { winnerId: tossWinner, decision: tossDecision as 'bat'|'bowl' },
@@ -299,10 +301,22 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
                     </div>
                     {match.toss && (
                       <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400/90 inline-flex items-center gap-1.5 font-medium">
-                        <span className="text-xs">🪙</span> {teams.find(t => t.id === match.toss!.winnerId)?.name} won toss and elected to {match.toss!.decision}
+                        <span className="text-xs">🪙</span> {teams.find(t => t.id === match.toss!.winnerId)?.name} elected to {match.toss!.decision}
                       </div>
                     )}
                   </div>
+                  {isAdmin && (
+                    <div className="mb-4 flex gap-3 text-xs bg-slate-950/50 p-2 rounded-lg border border-slate-800/60">
+                      <div className="flex-1 text-center border-r border-slate-800/60">
+                        <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Viewer Code</p>
+                        <p className="text-emerald-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
+                      </div>
+                      <div className="flex-1 text-center">
+                        <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Scorer Code</p>
+                        <p className="text-amber-400 font-mono tracking-wider font-bold">{match.adminCode}</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-6 mb-3">
                     <div className="flex-1 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: t1?.color || '#10b981' }}>
