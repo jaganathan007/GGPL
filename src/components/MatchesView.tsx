@@ -216,13 +216,18 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
                   className="bg-slate-900/60 border border-emerald-500/15 rounded-2xl p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
                       <MapPin className="w-3 h-3" /> {match.venue}
                       <span className="mx-1">•</span>
                       <Calendar className="w-3 h-3" /> {match.date}
                       <span className="mx-1">•</span>
                       <Clock className="w-3 h-3" /> {match.totalOvers} ov
                     </div>
+                    {match.toss && (
+                      <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400/90 inline-flex items-center gap-1.5 font-medium">
+                        <span className="text-xs">🪙</span> {teams.find(t => t.id === match.toss!.winnerId)?.name} won toss and elected to {match.toss!.decision}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-6 mb-3">
                     <div className="flex-1 flex items-center gap-3">

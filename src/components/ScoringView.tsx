@@ -26,6 +26,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const [bowlerId, setBowlerId] = useState('');
   const [inningsStarted, setInningsStarted] = useState(false);
   const [currentInningsIdx, setCurrentInningsIdx] = useState(match?.innings.length === 0 ? 0 : (match?.innings.length || 1) - 1);
+  const [tossWinner, setTossWinner] = useState('');
   const restoredRef = useRef(false);
 
   // ── Restore persisted scoring state on mount ──
@@ -58,9 +59,28 @@ export default function ScoringView({ matchId, onBack }: Props) {
 
   const team1 = state.teams.find(t => t.id === match.team1Id);
   const team2 = state.teams.find(t => t.id === match.team2Id);
+  
+  let firstBattingTeamId = match.team1Id;
+  let firstBowlingTeamId = match.team2Id;
+
+  if (match.toss) {
+    if (match.toss.decision === 'bat') {
+      firstBattingTeamId = match.toss.winnerId;
+      firstBowlingTeamId = match.toss.winnerId === match.team1Id ? match.team2Id : match.team1Id;
+    } else {
+      firstBowlingTeamId = match.toss.winnerId;
+      firstBattingTeamId = match.toss.winnerId === match.team1Id ? match.team2Id : match.team1Id;
+    }
+  }
+
   const isFirstInnings = currentInningsIdx === 0;
-  const battingTeam = isFirstInnings ? team1 : team2;
-  const bowlingTeam = isFirstInnings ? team2 : team1;
+  const battingTeam = isFirstInnings 
+    ? state.teams.find(t => t.id === firstBattingTeamId) 
+    : state.teams.find(t => t.id === firstBowlingTeamId);
+  const bowlingTeam = isFirstInnings 
+    ? state.teams.find(t => t.id === firstBowlingTeamId) 
+    : state.teams.find(t => t.id === firstBattingTeamId);
+
   const firstInnTotal = match.innings[0] ? match.innings[0].battingEntries.reduce((s,e)=>s+e.runs,0) + match.innings[0].extras : 0;
   const target = !isFirstInnings ? firstInnTotal + 1 : null;
 
@@ -126,6 +146,71 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const runsNeeded = target ? target - engine.totalRuns : null;
   const oversDisplay = `${engine.oversCompleted}.${engine.ballsInOver}`;
   const oversRemaining = match.totalOvers - engine.oversCompleted;
+
+  function handleTossSubmit(decision: 'bat' | 'bowl') {
+    if (!tossWinner) return;
+    dispatch({
+      type: 'UPDATE_MATCH',
+      payload: { ...match, toss: { winnerId: tossWinner, decision } }
+    });
+  }
+
+  // ─── TOSS PHASE ───
+  if (!match.toss && match.innings.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <ScoringHeader t1={team1} t2={team2} match={match} onBack={onBack} />
+        <div className="max-w-md mx-auto px-4 py-12 space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
+              <span className="text-3xl drop-shadow-md">🪙</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Match Toss</h2>
+            <p className="text-sm text-slate-400 mt-2">Who won the toss?</p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <button 
+              onClick={() => setTossWinner(team1?.id || '')}
+              className={`py-4 rounded-xl border transition-all ${tossWinner === team1?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
+            >
+              <span className="font-semibold">{team1?.shortName || team1?.name}</span>
+            </button>
+            <button 
+              onClick={() => setTossWinner(team2?.id || '')}
+              className={`py-4 rounded-xl border transition-all ${tossWinner === team2?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
+            >
+              <span className="font-semibold">{team2?.shortName || team2?.name}</span>
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {tossWinner && (
+              <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} exit={{opacity:0, height:0}} className="space-y-4 pt-6">
+                <p className="text-center text-sm font-medium text-slate-300">What did they choose?</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => handleTossSubmit('bat')}
+                    className="flex flex-col items-center justify-center py-5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-900/20"
+                  >
+                    <span className="text-2xl mb-2">🏏</span>
+                    <span className="font-bold text-sm">Bat First</span>
+                  </button>
+                  <button 
+                    onClick={() => handleTossSubmit('bowl')}
+                    className="flex flex-col items-center justify-center py-5 bg-violet-500/10 border border-violet-500/30 text-violet-400 rounded-xl hover:bg-violet-500/20 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-violet-900/20"
+                  >
+                    <span className="text-2xl mb-2">🎯</span>
+                    <span className="font-bold text-sm">Bowl First</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
 
   // ─── SETUP PHASE ───
   if (!inningsStarted || engine.phase === 'setup') {

@@ -36,10 +36,16 @@ export interface Innings {
   extras: number;
 }
 
+export interface Toss {
+  winnerId: string;
+  decision: 'bat' | 'bowl';
+}
+
 export interface Match {
   id: string;
   team1Id: string;
   team2Id: string;
+  toss?: Toss;
   date: string;
   venue: string;
   totalOvers: number;
