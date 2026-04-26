@@ -4,6 +4,7 @@ import { LayoutDashboard, Users, Swords, Trophy, Settings, Lock, X, LogOut, Shie
 import Dashboard from './components/Dashboard';
 import TeamsView from './components/TeamsView';
 import MatchesView from './components/MatchesView';
+import CreateMatchForm from './components/CreateMatchForm';
 import ScoringView from './components/ScoringView';
 import MatchStats from './components/MatchStats';
 import PinGate, { getStoredPin, setStoredPin } from './components/PinGate';
@@ -33,6 +34,9 @@ export default function App() {
 
   const [landingCode, setLandingCode] = useState('');
   const [landingError, setLandingError] = useState('');
+  
+  const [showScorerCreate, setShowScorerCreate] = useState(false);
+  const [createdMatch, setCreatedMatch] = useState<any>(null);
 
   // Admin login via PIN
   function handleAdminLogin() {
@@ -246,6 +250,49 @@ export default function App() {
             </AnimatePresence>
           </main>
         </>
+      ) : showScorerCreate ? (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+          {!createdMatch ? (
+            <div className="pt-10">
+              <CreateMatchForm 
+                onCancel={() => setShowScorerCreate(false)} 
+                onCreated={(m) => setCreatedMatch(m)} 
+              />
+            </div>
+          ) : (
+            <div className="max-w-md mx-auto pt-10">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-8 text-center shadow-2xl shadow-emerald-900/20">
+                <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Check className="w-10 h-10 text-emerald-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Match Created!</h2>
+                <p className="text-slate-400 text-sm mb-8">Save these codes! You will need them to score or view the match later.</p>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800">
+                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-1">Scorer Code (For You)</p>
+                    <p className="text-3xl font-mono font-bold text-amber-400 tracking-[0.2em]">{createdMatch.adminCode}</p>
+                  </div>
+                  <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800">
+                    <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-1">Viewer Code (Share This)</p>
+                    <p className="text-3xl font-mono font-bold text-emerald-400 tracking-[0.2em]">{createdMatch.viewerCode}</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setScoringMatchId(createdMatch.id);
+                    setCreatedMatch(null);
+                    setShowScorerCreate(false);
+                  }}
+                  className="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all text-lg"
+                >
+                  Start Scoring Now
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </main>
       ) : (
         /* Viewer Mode */
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -274,9 +321,16 @@ export default function App() {
             {landingError && <p className="text-rose-400 text-xs font-semibold mt-2">{landingError}</p>}
           </div>
 
-          {/* List of Live Matches for Viewers */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">All Live Matches</h2>
+            <button 
+              onClick={() => setShowScorerCreate(true)}
+              className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
+            >
+              + Create Match as Scorer
+            </button>
+          </div>
           <div>
-            <h2 className="text-lg font-bold text-white mb-4">All Live Matches</h2>
             <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
           </div>
         </main>
