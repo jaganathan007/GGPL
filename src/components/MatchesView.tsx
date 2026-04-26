@@ -8,6 +8,10 @@ function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 function getInningsTotal(match: Match, idx: number): number {
   const inn = match.innings[idx];
   if (!inn) return 0;
@@ -67,8 +71,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
     if (!team1Id || !team2Id || team1Id === team2Id || !tossWinner || !tossDecision) return;
     const match: Match = {
       id: uid(),
-      viewerCode: 'V-' + uid().toUpperCase().substring(0, 6),
-      adminCode: 'A-' + uid().toUpperCase().substring(0, 6),
+      viewerCode: generateOTP(),
+      adminCode: generateOTP(),
       team1Id,
       team2Id,
       toss: { winnerId: tossWinner, decision: tossDecision as 'bat'|'bowl' },

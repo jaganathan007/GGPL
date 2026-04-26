@@ -266,9 +266,9 @@ export default function App() {
                 <input
                   type="text"
                   value={landingCode}
-                  onChange={e => setLandingCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. V-A1B2C3"
-                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-4 text-center text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
+                  onChange={e => setLandingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="e.g. 123456"
+                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-4 text-center text-3xl tracking-[0.5em] font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
                 />
                 {landingError && (
                   <p className="text-rose-400 text-xs font-semibold text-center mt-2">{landingError}</p>
