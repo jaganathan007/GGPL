@@ -2,8 +2,8 @@ import { createContext, useContext, useReducer, useEffect, useRef, type ReactNod
 import type { Team, Match } from './types';
 
 const STORAGE_KEY = 'ggpl-data';
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const WS_URL = `${protocol}//${window.location.host}/ws`;
+// Use the environment variable if available, otherwise fallback to local
+const WS_URL = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? `wss://${window.location.host}/ws` : `ws://${window.location.host}/ws`);
 const RECONNECT_DELAY = 2000;
 
 interface AppState {

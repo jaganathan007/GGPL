@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node sync-server.js",
     "dev": "vite --host",
     "sync": "node sync-server.js",
     "build": "vite build",
@@ -18,6 +19,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "cors": "^2.8.6",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "react": "^19.2.5",
