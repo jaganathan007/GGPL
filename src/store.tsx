@@ -69,6 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isExternalUpdate = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const actionQueue = useRef<Action[]>([]);
 
   // ─── WebSocket connection with auto-reconnect ───
   useEffect(() => {
@@ -79,6 +80,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ws.onopen = () => {
           console.log('🟢 GGPL Sync connected');
           wsRef.current = ws;
+          
+          // Send any actions that were queued while offline
+          if (actionQueue.current.length > 0) {
+            actionQueue.current.forEach(action => {
+              ws.send(JSON.stringify({ type: 'ACTION', action }));
+            });
+            actionQueue.current = [];
+          }
         };
 
         ws.onmessage = (event) => {
@@ -142,6 +151,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const ws = wsRef.current;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ACTION', action }));
+      } else {
+        // Queue the action to be sent when the connection is restored
+        actionQueue.current.push(action);
       }
     }
   };
