@@ -28,7 +28,8 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
   const [isCreatingTeam, setIsCreatingTeam] = useState<1 | 2 | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamShort, setNewTeamShort] = useState('');
-  const [newTeamPlayers, setNewTeamPlayers] = useState('');
+  const [newTeamPlayers, setNewTeamPlayers] = useState<string[]>([]);
+  const [currentPlayerName, setCurrentPlayerName] = useState('');
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
@@ -41,16 +42,21 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
     setFormStep(2);
   }
 
+  function handleAddPlayer(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!currentPlayerName.trim()) return;
+    setNewTeamPlayers([...newTeamPlayers, currentPlayerName.trim()]);
+    setCurrentPlayerName('');
+  }
+
+  function handleRemovePlayer(index: number) {
+    setNewTeamPlayers(newTeamPlayers.filter((_, i) => i !== index));
+  }
+
   function handleCreateTeam(slot: 1 | 2) {
     if (!newTeamName.trim() || !newTeamShort.trim()) return;
-    
-    // Parse players from comma or newline separated string
-    const playerNames = newTeamPlayers
-      .split(/[\n,]+/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
 
-    const players = playerNames.map(name => ({
+    const players = newTeamPlayers.map(name => ({
       id: uid(),
       name,
       role: 'Batsman' as const,
@@ -71,7 +77,8 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
     setIsCreatingTeam(null);
     setNewTeamName('');
     setNewTeamShort('');
-    setNewTeamPlayers('');
+    setNewTeamPlayers([]);
+    setCurrentPlayerName('');
   }
 
   function handleCreateMatch() {
@@ -128,15 +135,32 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                   <div className="space-y-2 bg-slate-950/50 p-2 rounded-xl border border-emerald-500/30">
                     <input autoFocus placeholder="Team Name" value={newTeamName} onChange={e=>setNewTeamName(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
                     <input placeholder="Short (e.g. IND)" value={newTeamShort} onChange={e=>setNewTeamShort(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
-                    <textarea 
-                      placeholder="Player Names (comma separated)" 
-                      value={newTeamPlayers} 
-                      onChange={e=>setNewTeamPlayers(e.target.value)} 
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white resize-none h-16" 
-                    />
+                    
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg p-2 space-y-2">
+                      <div className="flex gap-1">
+                        <input 
+                          placeholder="Player name..." 
+                          value={currentPlayerName} 
+                          onChange={e=>setCurrentPlayerName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlayer(); }}}
+                          className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" 
+                        />
+                        <button type="button" onClick={() => handleAddPlayer()} className="text-xs px-2 bg-slate-700 text-slate-300 rounded font-medium hover:bg-slate-600">Add</button>
+                      </div>
+                      {newTeamPlayers.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {newTeamPlayers.map((p, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded">
+                              {p} <button type="button" onClick={() => handleRemovePlayer(i)} className="hover:text-emerald-200"><X className="w-3 h-3" /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded">Cancel</button>
-                      <button type="button" onClick={() => handleCreateTeam(1)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold">Add</button>
+                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Cancel</button>
+                      <button type="button" onClick={() => handleCreateTeam(1)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold hover:bg-emerald-400">Save Team</button>
                     </div>
                   </div>
                 ) : (
@@ -152,7 +176,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
-                    <button type="button" onClick={() => { setIsCreatingTeam(1); setNewTeamName(''); setNewTeamShort(''); setNewTeamPlayers(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
+                    <button type="button" onClick={() => { setIsCreatingTeam(1); setNewTeamName(''); setNewTeamShort(''); setNewTeamPlayers([]); setCurrentPlayerName(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
                   </div>
                 )}
               </div>
@@ -164,15 +188,32 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                   <div className="space-y-2 bg-slate-950/50 p-2 rounded-xl border border-emerald-500/30">
                     <input autoFocus placeholder="Team Name" value={newTeamName} onChange={e=>setNewTeamName(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
                     <input placeholder="Short (e.g. AUS)" value={newTeamShort} onChange={e=>setNewTeamShort(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
-                    <textarea 
-                      placeholder="Player Names (comma separated)" 
-                      value={newTeamPlayers} 
-                      onChange={e=>setNewTeamPlayers(e.target.value)} 
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white resize-none h-16" 
-                    />
+                    
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg p-2 space-y-2">
+                      <div className="flex gap-1">
+                        <input 
+                          placeholder="Player name..." 
+                          value={currentPlayerName} 
+                          onChange={e=>setCurrentPlayerName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlayer(); }}}
+                          className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white" 
+                        />
+                        <button type="button" onClick={() => handleAddPlayer()} className="text-xs px-2 bg-slate-700 text-slate-300 rounded font-medium hover:bg-slate-600">Add</button>
+                      </div>
+                      {newTeamPlayers.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {newTeamPlayers.map((p, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded">
+                              {p} <button type="button" onClick={() => handleRemovePlayer(i)} className="hover:text-emerald-200"><X className="w-3 h-3" /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded">Cancel</button>
-                      <button type="button" onClick={() => handleCreateTeam(2)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold">Add</button>
+                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded hover:bg-slate-700">Cancel</button>
+                      <button type="button" onClick={() => handleCreateTeam(2)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold hover:bg-emerald-400">Save Team</button>
                     </div>
                   </div>
                 ) : (
@@ -188,7 +229,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
-                    <button type="button" onClick={() => { setIsCreatingTeam(2); setNewTeamName(''); setNewTeamShort(''); setNewTeamPlayers(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
+                    <button type="button" onClick={() => { setIsCreatingTeam(2); setNewTeamName(''); setNewTeamShort(''); setNewTeamPlayers([]); setCurrentPlayerName(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
                   </div>
                 )}
               </div>
