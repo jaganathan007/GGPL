@@ -199,7 +199,6 @@ export default function App() {
 
       {isAdmin ? (
         <>
-          {/* Navigation for Global Admin */}
           <nav className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-40">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="flex gap-1">
@@ -227,8 +226,6 @@ export default function App() {
               </div>
             </div>
           </nav>
-
-          {/* Admin Content */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
             <AnimatePresence mode="wait">
               {view === 'dashboard' && (
@@ -250,39 +247,38 @@ export default function App() {
           </main>
         </>
       ) : (
-        /* Landing Page for Viewers / Match Scorers */
-        <main className="max-w-md mx-auto px-4 py-20">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-slate-900/80 border border-slate-800/60 rounded-3xl p-8 shadow-2xl backdrop-blur-md">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-5">
-                <Trophy className="w-8 h-8 text-white" />
-              </div>
-              <h2 className="text-2xl font-extrabold text-white tracking-tight">Join Match</h2>
-              <p className="text-slate-400 text-sm mt-2">Enter your Match Code to watch or score</p>
-            </div>
-            
-            <form onSubmit={handleCodeSubmit} className="space-y-4">
-              <div>
-                <input
-                  type="text"
-                  value={landingCode}
-                  onChange={e => setLandingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="e.g. 123456"
-                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-4 text-center text-3xl tracking-[0.5em] font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-                {landingError && (
-                  <p className="text-rose-400 text-xs font-semibold text-center mt-2">{landingError}</p>
-                )}
-              </div>
+        /* Viewer Mode */
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+          {/* Search by Code */}
+          <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 shadow-lg">
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              Find Specific Match
+            </h3>
+            <form onSubmit={handleCodeSubmit} className="flex gap-3">
+              <input
+                type="text"
+                value={landingCode}
+                onChange={e => setLandingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Enter 6-Digit Match Code"
+                className="flex-1 bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+              />
               <button
                 type="submit"
-                disabled={!landingCode.trim()}
-                className="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 hover:shadow-lg hover:shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide text-sm"
+                disabled={landingCode.length !== 6}
+                className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Enter Match
+                Search
               </button>
             </form>
-          </motion.div>
+            {landingError && <p className="text-rose-400 text-xs font-semibold mt-2">{landingError}</p>}
+          </div>
+
+          {/* List of Live Matches for Viewers */}
+          <div>
+            <h2 className="text-lg font-bold text-white mb-4">All Live Matches</h2>
+            <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
+          </div>
         </main>
       )}
 
