@@ -23,6 +23,11 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
+  
+  // New Team State
+  const [isCreatingTeam, setIsCreatingTeam] = useState<1 | 2 | null>(null);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamShort, setNewTeamShort] = useState('');
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
@@ -33,6 +38,23 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
     e.preventDefault();
     if (!team1Id || !team2Id || team1Id === team2Id) return;
     setFormStep(2);
+  }
+
+  function handleCreateTeam(slot: 1 | 2) {
+    if (!newTeamName.trim() || !newTeamShort.trim()) return;
+    const team = {
+      id: uid(),
+      name: newTeamName.trim(),
+      shortName: newTeamShort.trim().toUpperCase().slice(0, 3),
+      color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
+      players: []
+    };
+    dispatch({ type: 'ADD_TEAM', payload: team });
+    if (slot === 1) setTeam1Id(team.id);
+    if (slot === 2) setTeam2Id(team.id);
+    setIsCreatingTeam(null);
+    setNewTeamName('');
+    setNewTeamShort('');
   }
 
   function handleCreateMatch() {
@@ -55,6 +77,8 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
     onCreated(match);
   }
 
+  // Remove the restriction so they can create teams if there are < 2
+  /*
   if (teams.length < 2) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center max-w-md mx-auto w-full">
@@ -63,6 +87,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
       </div>
     );
   }
+  */
 
   return (
     <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 max-w-md w-full mx-auto shadow-2xl backdrop-blur-md overflow-hidden">
@@ -79,33 +104,64 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
         {formStep === 1 ? (
           <motion.form key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleNextStep} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              {/* Team 1 Selection / Creation */}
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-medium">Team 1</label>
-                <select
-                  value={team1Id}
-                  onChange={e => setTeam1Id(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                  required
-                >
-                  <option value="">Select team...</option>
-                  {teams.filter(t => t.id !== team2Id).map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
+                {isCreatingTeam === 1 ? (
+                  <div className="space-y-2 bg-slate-950/50 p-2 rounded-xl border border-emerald-500/30">
+                    <input autoFocus placeholder="Team Name" value={newTeamName} onChange={e=>setNewTeamName(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+                    <input placeholder="Short (e.g. IND)" value={newTeamShort} onChange={e=>setNewTeamShort(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded">Cancel</button>
+                      <button type="button" onClick={() => handleCreateTeam(1)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold">Add</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <select
+                      value={team1Id}
+                      onChange={e => setTeam1Id(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      required={!isCreatingTeam}
+                    >
+                      <option value="">Select team...</option>
+                      {teams.filter(t => t.id !== team2Id).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => { setIsCreatingTeam(1); setNewTeamName(''); setNewTeamShort(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
+                  </div>
+                )}
               </div>
+
+              {/* Team 2 Selection / Creation */}
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-medium">Team 2</label>
-                <select
-                  value={team2Id}
-                  onChange={e => setTeam2Id(e.target.value)}
-                  className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                  required
-                >
-                  <option value="">Select team...</option>
-                  {teams.filter(t => t.id !== team1Id).map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
+                {isCreatingTeam === 2 ? (
+                  <div className="space-y-2 bg-slate-950/50 p-2 rounded-xl border border-emerald-500/30">
+                    <input autoFocus placeholder="Team Name" value={newTeamName} onChange={e=>setNewTeamName(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+                    <input placeholder="Short (e.g. AUS)" value={newTeamShort} onChange={e=>setNewTeamShort(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => setIsCreatingTeam(null)} className="flex-1 text-xs py-1 bg-slate-800 text-slate-300 rounded">Cancel</button>
+                      <button type="button" onClick={() => handleCreateTeam(2)} className="flex-1 text-xs py-1 bg-emerald-500 text-white rounded font-bold">Add</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <select
+                      value={team2Id}
+                      onChange={e => setTeam2Id(e.target.value)}
+                      className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      required={!isCreatingTeam}
+                    >
+                      <option value="">Select team...</option>
+                      {teams.filter(t => t.id !== team1Id).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => { setIsCreatingTeam(2); setNewTeamName(''); setNewTeamShort(''); }} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">+ Create New Team</button>
+                  </div>
+                )}
               </div>
             </div>
             
