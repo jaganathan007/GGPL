@@ -36,11 +36,14 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
   const { state, dispatch } = useApp();
   const { teams, matches } = state;
   const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2>(1);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
+  const [tossWinner, setTossWinner] = useState('');
+  const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
 
   function resetForm() {
     setTeam1Id('');
@@ -48,16 +51,25 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
     setVenue('');
     setDate(new Date().toISOString().slice(0, 10));
     setTotalOvers(10);
+    setTossWinner('');
+    setTossDecision('');
+    setFormStep(1);
     setShowForm(false);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleNextStep(e: React.FormEvent) {
     e.preventDefault();
     if (!team1Id || !team2Id || team1Id === team2Id) return;
+    setFormStep(2);
+  }
+
+  function handleCreateMatch() {
+    if (!team1Id || !team2Id || team1Id === team2Id || !tossWinner || !tossDecision) return;
     const match: Match = {
       id: uid(),
       team1Id,
       team2Id,
+      toss: { winnerId: tossWinner, decision: tossDecision as 'bat'|'bowl' },
       date,
       venue: venue.trim() || 'TBD',
       totalOvers,
@@ -104,93 +116,155 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleSubmit}
-            className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 space-y-4 overflow-hidden"
+            onSubmit={(e) => e.preventDefault()}
+            className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 overflow-hidden"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-200">New Match</h3>
+              <h3 className="text-sm font-semibold text-slate-200">
+                {formStep === 1 ? 'New Match Details' : 'Match Toss'}
+              </h3>
               <button type="button" onClick={resetForm} className="text-slate-500 hover:text-slate-300 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Team 1</label>
-                <select
-                  id="match-team1-select"
-                  value={team1Id}
-                  onChange={e => setTeam1Id(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                  required
-                >
-                  <option value="">Select team...</option>
-                  {teams.filter(t => t.id !== team2Id).map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Team 2</label>
-                <select
-                  id="match-team2-select"
-                  value={team2Id}
-                  onChange={e => setTeam2Id(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                  required
-                >
-                  <option value="">Select team...</option>
-                  {teams.filter(t => t.id !== team1Id).map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Venue</label>
-                <input
-                  id="match-venue-input"
-                  value={venue}
-                  onChange={e => setVenue(e.target.value)}
-                  placeholder="e.g. Local Ground"
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Date</label>
-                <input
-                  id="match-date-input"
-                  type="date"
-                  value={date}
-                  onChange={e => setDate(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Total Overs</label>
-                <input
-                  id="match-overs-input"
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={totalOvers}
-                  onChange={e => setTotalOvers(Number(e.target.value))}
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={resetForm} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
-                Cancel
-              </button>
-              <button
-                id="match-create-btn"
-                type="submit"
-                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors"
-              >
-                <Check className="w-4 h-4" /> Create Match
-              </button>
-            </div>
+
+            {formStep === 1 ? (
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Team 1</label>
+                    <select
+                      value={team1Id}
+                      onChange={e => setTeam1Id(e.target.value)}
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      required
+                    >
+                      <option value="">Select team...</option>
+                      {teams.filter(t => t.id !== team2Id).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Team 2</label>
+                    <select
+                      value={team2Id}
+                      onChange={e => setTeam2Id(e.target.value)}
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      required
+                    >
+                      <option value="">Select team...</option>
+                      {teams.filter(t => t.id !== team1Id).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Venue</label>
+                    <input
+                      value={venue}
+                      onChange={e => setVenue(e.target.value)}
+                      placeholder="e.g. Local Ground"
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Date</label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={e => setDate(e.target.value)}
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Total Overs</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={totalOvers}
+                      onChange={e => setTotalOvers(Number(e.target.value))}
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button type="button" onClick={resetForm} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={!team1Id || !team2Id}
+                    className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next: Toss <Play className="w-3.5 h-3.5 fill-current" />
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/50">
+                  <p className="text-center text-sm font-medium text-slate-300 mb-3">Who won the toss?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[team1Id, team2Id].map(tId => {
+                      const t = teams.find(x => x.id === tId);
+                      return (
+                        <button
+                          key={tId}
+                          type="button"
+                          onClick={() => setTossWinner(tId)}
+                          className={`py-3 rounded-xl border transition-all ${tossWinner === tId ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
+                        >
+                          {t?.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <AnimatePresence>
+                    {tossWinner && (
+                      <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} className="pt-5 overflow-hidden">
+                        <p className="text-center text-sm font-medium text-slate-300 mb-3">What did they choose?</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            type="button"
+                            onClick={() => setTossDecision('bat')}
+                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                          >
+                            <span className="text-lg mb-1">🏏</span> Bat
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setTossDecision('bowl')}
+                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bowl' ? 'bg-violet-500/20 border-violet-500 text-violet-400 font-bold shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                          >
+                            <span className="text-lg mb-1">🎯</span> Bowl
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                
+                <div className="flex justify-between items-center pt-2">
+                  <button type="button" onClick={() => setFormStep(1)} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateMatch}
+                    disabled={!tossWinner || !tossDecision}
+                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                  >
+                    <Check className="w-4 h-4" /> Create Match
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </motion.form>
         )}
       </AnimatePresence>
