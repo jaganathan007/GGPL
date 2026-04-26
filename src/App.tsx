@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, Swords, Trophy, Settings, Lock, X, LogOut, ShieldCheck, Eye } from 'lucide-react';
+import { LayoutDashboard, Users, Swords, Trophy, Settings, Lock, X, LogOut, ShieldCheck, Eye, Check } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import TeamsView from './components/TeamsView';
 import MatchesView from './components/MatchesView';
