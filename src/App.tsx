@@ -108,7 +108,8 @@ export default function App() {
     }
     
     setLandingError('');
-    if (code === match.adminCode) {
+    // If the match is already completed, always show the viewer stats mode
+    if (code === match.adminCode && !match.isComplete) {
       setScoringMatchId(match.id);
     } else {
       setStatsMatchId(match.id);
