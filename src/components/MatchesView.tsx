@@ -350,14 +350,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {isAdmin && (
-                      <button
-                        onClick={() => onScoreMatch(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-500/15 text-emerald-400 text-sm font-semibold rounded-lg hover:bg-emerald-500/25 transition-colors"
-                      >
-                        <Play className="w-3.5 h-3.5" /> Score
-                      </button>
-                    )}
+
                     {onViewStats && match.innings.length > 0 && (
                       <button
                         onClick={() => onViewStats(match.id)}

@@ -42,7 +42,7 @@ const itemVariants = {
 };
 
 export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewStats }: DashboardProps) {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const { teams, matches } = state;
 
   const completedMatches = matches.filter(m => m.isComplete);
@@ -122,10 +122,10 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
               const t1 = getTeam(teams, match.team1Id);
               const t2 = getTeam(teams, match.team2Id);
               return (
-                <button
+                <div
                   key={match.id}
-                  onClick={() => isAdmin ? onScoreMatch(match.id) : onViewStats?.(match.id)}
-                  className="w-full bg-gradient-to-r from-slate-900/90 to-slate-800/50 border border-emerald-500/20 rounded-2xl p-4 text-left hover:border-emerald-500/40 transition-all group"
+                  onClick={() => onViewStats?.(match.id)}
+                  className="w-full bg-gradient-to-r from-slate-900/90 to-slate-800/50 border border-emerald-500/20 rounded-2xl p-4 text-left hover:border-emerald-500/40 transition-all group cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-6">
@@ -149,14 +149,21 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                     </div>
                     <div className="flex items-center gap-2">
                       {isAdmin ? (
-                        <span className="text-[9px] text-emerald-400/60 font-semibold uppercase tracking-wider">Score</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); if(confirm('Delete match permanently?')) dispatch({type: 'DELETE_MATCH', payload: match.id}) }}
+                          className="text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-colors"
+                        >
+                          Delete
+                        </button>
                       ) : (
-                        <span className="text-[9px] text-violet-400/60 font-semibold uppercase tracking-wider">View</span>
+                        <>
+                          <span className="text-[9px] text-violet-400/60 font-semibold uppercase tracking-wider">View</span>
+                          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
+                        </>
                       )}
-                      <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -199,8 +206,16 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); if(confirm('Delete match permanently?')) dispatch({type: 'DELETE_MATCH', payload: match.id}) }}
+                        className="mr-2 text-[10px] text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2 py-1 rounded font-bold uppercase tracking-wider transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
                     <p className="text-[11px] text-emerald-400/80 font-medium max-w-[140px] text-right truncate">{match.result}</p>
-                    <Eye className="w-3.5 h-3.5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+                    {!isAdmin && <Eye className="w-3.5 h-3.5 text-slate-600 group-hover:text-violet-400 transition-colors" />}
                   </div>
                 </div>
               );
