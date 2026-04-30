@@ -314,13 +314,13 @@ export default function App() {
               <input
                 type="text"
                 value={landingCode}
-                onChange={e => setLandingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="Enter 6-Digit Match Code"
-                className="flex-1 bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+                onChange={e => setLandingCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8))}
+                placeholder="Enter Match Code"
+                className="flex-1 bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
               />
               <button
                 type="submit"
-                disabled={landingCode.length !== 6}
+                disabled={landingCode.length < 4}
                 className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Search

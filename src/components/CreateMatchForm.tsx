@@ -44,6 +44,8 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
   const [leagueCode, setLeagueCode] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
+  const [adminCode, setAdminCode] = useState(() => generateOTP());
+  const [viewerCode, setViewerCode] = useState(() => generateOTP());
 
   // Step 4: Toss
   const [tossWinner, setTossWinner] = useState<'team1'|'team2'|''>('');
@@ -120,8 +122,8 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
 
     const match: Match = {
       id: uid(),
-      viewerCode: generateOTP(),
-      adminCode: generateOTP(),
+      viewerCode: viewerCode.trim() || generateOTP(),
+      adminCode: adminCode.trim() || generateOTP(),
       leagueCode: leagueCode.trim().toUpperCase() || undefined,
       team1Id: finalTeam1Id,
       team2Id: finalTeam2Id,
@@ -295,6 +297,16 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-medium">Venue</label>
                 <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. Local Ground" className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1.5 font-medium">Scorer Code</label>
+                  <input value={adminCode} onChange={e => setAdminCode(e.target.value.toUpperCase())} maxLength={8} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-amber-400 font-bold tracking-widest focus:outline-none focus:border-amber-500/50 transition-all uppercase" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1.5 font-medium">Viewer Code</label>
+                  <input value={viewerCode} onChange={e => setViewerCode(e.target.value.toUpperCase())} maxLength={8} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-emerald-400 font-bold tracking-widest focus:outline-none focus:border-emerald-500/50 transition-all uppercase" />
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-medium">League Code (Optional)</label>
