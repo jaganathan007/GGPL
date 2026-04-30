@@ -70,6 +70,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
   const actionQueue = useRef<Action[]>([]);
+  const stateRef = useRef(initialState);
+  stateRef.current = state;
 
   // ─── WebSocket connection with auto-reconnect ───
   useEffect(() => {
@@ -94,6 +96,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           try {
             const msg = JSON.parse(event.data);
             if (msg.type === 'STATE_SYNC' && msg.state) {
+              // Rehydrate the server if it woke up from sleep (empty) but we have data
+              if (msg.state.teams?.length === 0 && msg.state.matches?.length === 0 && 
+                 (stateRef.current.teams.length > 0 || stateRef.current.matches.length > 0)) {
+                ws.send(JSON.stringify({ type: 'STATE_UPDATE', state: stateRef.current }));
+                return;
+              }
+
               isExternalUpdate.current = true;
               dispatch({ type: 'SET_STATE', payload: msg.state });
             }
