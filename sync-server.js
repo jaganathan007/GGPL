@@ -1,9 +1,31 @@
 import { WebSocketServer } from 'ws';
+import fs from 'fs';
+import path from 'path';
 
 const PORT = process.env.PORT || 3001;
 const wss = new WebSocketServer({ port: PORT });
+const DATA_FILE = path.join(process.cwd(), 'data.json');
 
 let globalState = { teams: [], matches: [] };
+
+// Try to load existing data on startup
+try {
+  if (fs.existsSync(DATA_FILE)) {
+    const saved = fs.readFileSync(DATA_FILE, 'utf-8');
+    globalState = JSON.parse(saved);
+    console.log('✅ Loaded previous state from data.json');
+  }
+} catch (err) {
+  console.error('⚠️ Could not load data.json:', err.message);
+}
+
+function saveState() {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(globalState));
+  } catch (err) {
+    console.error('⚠️ Could not save data.json:', err.message);
+  }
+}
 
 function reducer(state, action) {
   switch (action.type) {
@@ -31,14 +53,16 @@ wss.on('connection', (ws) => {
       const msg = JSON.parse(data.toString());
       if (msg.type === 'ACTION') {
         globalState = reducer(globalState, msg.action);
+        saveState();
         wss.clients.forEach((client) => {
           if (client !== ws && client.readyState === 1) {
             client.send(JSON.stringify({ type: 'STATE_SYNC', state: globalState }));
           }
         });
       } else if (msg.type === 'STATE_UPDATE') {
-        // Fallback for older clients
+        // Fallback for older clients or rehydration from client
         globalState = msg.state;
+        saveState();
         wss.clients.forEach(c => {
           if (c !== ws && c.readyState === 1) {
             c.send(JSON.stringify({ type: 'STATE_SYNC', state: globalState }));
