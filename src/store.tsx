@@ -7,11 +7,15 @@ const WS_URL = import.meta.env.VITE_WS_URL || (window.location.protocol === 'htt
 const RECONNECT_DELAY = 2000;
 
 interface AppState {
+  leagues: League[];
   teams: Team[];
   matches: Match[];
 }
 
 type Action =
+  | { type: 'ADD_LEAGUE'; payload: League }
+  | { type: 'UPDATE_LEAGUE'; payload: League }
+  | { type: 'DELETE_LEAGUE'; payload: string }
   | { type: 'ADD_TEAM'; payload: Team }
   | { type: 'UPDATE_TEAM'; payload: Team }
   | { type: 'DELETE_TEAM'; payload: string }
@@ -21,12 +25,19 @@ type Action =
   | { type: 'SET_STATE'; payload: AppState };
 
 const initialState: AppState = {
+  leagues: [],
   teams: [],
   matches: [],
 };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case 'ADD_LEAGUE':
+      return { ...state, leagues: [...(state.leagues || []), action.payload] };
+    case 'UPDATE_LEAGUE':
+      return { ...state, leagues: (state.leagues || []).map(l => l.id === action.payload.id ? action.payload : l) };
+    case 'DELETE_LEAGUE':
+      return { ...state, leagues: (state.leagues || []).filter(l => l.id !== action.payload) };
     case 'ADD_TEAM':
       return { ...state, teams: [...state.teams, action.payload] };
     case 'UPDATE_TEAM':
@@ -96,9 +107,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           try {
             const msg = JSON.parse(event.data);
             if (msg.type === 'STATE_SYNC' && msg.state) {
+              // Ensure leagues array exists
+              msg.state.leagues = msg.state.leagues || [];
               // Rehydrate the server if it woke up from sleep (empty) but we have data
               if (msg.state.teams?.length === 0 && msg.state.matches?.length === 0 && 
-                 (stateRef.current.teams.length > 0 || stateRef.current.matches.length > 0)) {
+                 (stateRef.current.teams.length > 0 || stateRef.current.matches.length > 0 || stateRef.current.leagues?.length > 0)) {
                 ws.send(JSON.stringify({ type: 'STATE_UPDATE', state: stateRef.current }));
                 return;
               }

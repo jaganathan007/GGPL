@@ -3,6 +3,12 @@ export interface Player {
   name: string;
 }
 
+export interface League {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -45,6 +51,7 @@ export interface Match {
   id: string;
   viewerCode: string;
   adminCode: string;
+  leagueCode?: string;
   team1Id: string;
   team2Id: string;
   toss?: Toss;

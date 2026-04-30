@@ -35,6 +35,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
   const [totalOvers, setTotalOvers] = useState(10);
   const [tossWinner, setTossWinner] = useState('');
   const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
+  const [leagueCode, setLeagueCode] = useState('');
 
   function handleNextStep(e: React.FormEvent) {
     e.preventDefault();
@@ -87,6 +88,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
       id: uid(),
       viewerCode: generateOTP(),
       adminCode: generateOTP(),
+      leagueCode: leagueCode.trim().toUpperCase() || undefined,
       team1Id,
       team2Id,
       toss: { winnerId: tossWinner, decision: tossDecision as 'bat'|'bowl' },
@@ -242,6 +244,16 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                 onChange={e => setVenue(e.target.value)}
                 placeholder="e.g. Local Ground"
                 className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs text-slate-400 mb-1.5 font-medium">League Code (Optional)</label>
+              <input
+                value={leagueCode}
+                onChange={e => setLeagueCode(e.target.value)}
+                placeholder="e.g. SUMMER26"
+                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 font-mono focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
               />
             </div>
             

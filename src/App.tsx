@@ -10,10 +10,13 @@ import MatchStats from './components/MatchStats';
 import PinGate, { getStoredPin, setStoredPin } from './components/PinGate';
 import { useApp } from './store';
 
-type View = 'dashboard' | 'teams' | 'matches';
+import LeaguesView from './components/LeaguesView';
+
+type View = 'dashboard' | 'teams' | 'matches' | 'leagues';
 
 const navItems: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'leagues', label: 'Leagues', icon: Trophy },
   { id: 'teams', label: 'Teams', icon: Users },
   { id: 'matches', label: 'Matches', icon: Swords },
 ];
@@ -245,6 +248,11 @@ export default function App() {
               {view === 'matches' && (
                 <motion.div key="matches" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
                   <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
+                </motion.div>
+              )}
+              {view === 'leagues' && (
+                <motion.div key="leagues" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
+                  <LeaguesView isAdmin={isAdmin} />
                 </motion.div>
               )}
             </AnimatePresence>
