@@ -42,6 +42,7 @@ export default function App() {
   const [createdMatch, setCreatedMatch] = useState<any>(null);
   const [viewingLeagueId, setViewingLeagueId] = useState<string | null>(null);
   const [showLeagueCreate, setShowLeagueCreate] = useState(false);
+  const [viewerTab, setViewerTab] = useState<'matches' | 'leagues'>('matches');
 
   // Admin login via PIN
   function handleAdminLogin() {
@@ -362,36 +363,64 @@ export default function App() {
             {landingError && <p className="text-rose-400 text-xs font-semibold mt-2">{landingError}</p>}
           </div>
 
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h2 className="text-lg font-bold text-white">All Live Matches</h2>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setShowLeagueCreate(true)}
-                className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-lg hover:bg-amber-500/25 transition-all border border-amber-500/30"
-              >
-                <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
-              </button>
-              <button 
-                onClick={() => setShowScorerCreate(true)}
-                className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
-              >
-                + Create Match as Scorer
-              </button>
-            </div>
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800/50 rounded-xl p-1">
+            <button
+              onClick={() => setViewerTab('matches')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                viewerTab === 'matches' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Swords className="w-4 h-4" /> Matches
+            </button>
+            <button
+              onClick={() => setViewerTab('leagues')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                viewerTab === 'leagues' ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/30' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Trophy className="w-4 h-4" /> Leagues
+            </button>
           </div>
 
-          {/* League Create Inline */}
-          <AnimatePresence>
-            {showLeagueCreate && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {viewerTab === 'matches' ? (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-white">All Matches</h2>
+                <button 
+                  onClick={() => setShowScorerCreate(true)}
+                  className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
+                >
+                  + Create Match as Scorer
+                </button>
+              </div>
+              <div>
+                <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-white">All Leagues</h2>
+                <button 
+                  onClick={() => setShowLeagueCreate(true)}
+                  className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-lg hover:bg-amber-500/25 transition-all border border-amber-500/30"
+                >
+                  <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
+                </button>
+              </div>
 
-          <div>
-            <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
-          </div>
+              <AnimatePresence>
+                {showLeagueCreate && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                    <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <LeaguesView isAdmin={false} />
+            </>
+          )}
         </main>
       )}
 
