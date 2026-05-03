@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Play, Trophy, X, Check, Swords, MapPin, Calendar, Clock, BarChart3, Eye } from 'lucide-react';
 import { useApp } from '../store';
-import type { Match } from '../types';
+import type { Match, League } from '../types';
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -38,7 +38,7 @@ interface MatchesViewProps {
 
 export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: MatchesViewProps) {
   const { state, dispatch } = useApp();
-  const { teams, matches } = state;
+  const { teams, matches, leagues } = state;
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [team1Id, setTeam1Id] = useState('');
@@ -303,6 +303,11 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
                       <span className="mx-1">•</span>
                       <Clock className="w-3 h-3" /> {match.totalOvers} ov
                     </div>
+                    {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
+                      <span className="px-2 py-0.5 bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-md flex items-center gap-1">
+                        <Trophy className="w-3 h-3" />{lg.name}
+                      </span>
+                    ) : null; })()}
                     {match.toss && (
                       <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400/90 inline-flex items-center gap-1.5 font-medium">
                         <span className="text-xs">🪙</span> {teams.find(t => t.id === match.toss!.winnerId)?.name} elected to {match.toss!.decision}
@@ -405,6 +410,9 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin }: Matc
                         <span className="text-xs font-semibold text-slate-300">{t2?.shortName || '??'}</span>
                         <span className="text-sm font-bold text-white">{getInningsTotal(match, 1)}/{getInningsWickets(match, 1)}</span>
                       </div>
+                      {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
+                        <span className="ml-2 px-1.5 py-0.5 bg-amber-500/10 text-amber-400/70 text-[9px] font-bold rounded">{lg.name}</span>
+                      ) : null; })()}
                     </div>
                     <div className="flex items-center gap-2">
                       <p className="text-[11px] text-emerald-400/80 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>

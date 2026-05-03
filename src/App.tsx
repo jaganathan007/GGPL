@@ -40,6 +40,8 @@ export default function App() {
   
   const [showScorerCreate, setShowScorerCreate] = useState(false);
   const [createdMatch, setCreatedMatch] = useState<any>(null);
+  const [viewingLeagueId, setViewingLeagueId] = useState<string | null>(null);
+  const [showLeagueCreate, setShowLeagueCreate] = useState(false);
 
   // Admin login via PIN
   function handleAdminLogin() {
@@ -100,15 +102,22 @@ export default function App() {
     const code = landingCode.trim().toUpperCase();
     if (!code) return;
     
+    // Check if it's a league code first
+    const league = state.leagues?.find(l => l.code === code);
+    if (league) {
+      setLandingError('');
+      setViewingLeagueId(league.id);
+      return;
+    }
+    
     // Check if it's a viewer code or admin code
     const match = state.matches.find(m => m.viewerCode === code || m.adminCode === code);
     if (!match) {
-      setLandingError('Invalid Match Code');
+      setLandingError('Invalid code. Try a match or league code.');
       return;
     }
     
     setLandingError('');
-    // If the match is already completed, always show the viewer stats mode
     if (code === match.adminCode && !match.isComplete) {
       setScoringMatchId(match.id);
     } else {
@@ -144,6 +153,29 @@ export default function App() {
           setLandingCode('');
         }}
       />
+    );
+  }
+
+  // League viewer (non-admin)
+  if (viewingLeagueId) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <header className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-lg shadow-emerald-900/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
+            <div className="w-11 h-11 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-xl font-extrabold text-white tracking-tight">GGPL</h1>
+              <p className="text-[11px] text-emerald-100/70 font-medium tracking-wide uppercase">Score Tracker</p>
+            </div>
+            <button onClick={() => { setViewingLeagueId(null); setLandingCode(''); }} className="px-4 py-2 bg-white/15 text-white text-sm font-bold rounded-lg hover:bg-white/25 transition-all">← Back</button>
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <LeaguesView isAdmin={false} focusLeagueId={viewingLeagueId} />
+        </main>
+      </div>
     );
   }
 
@@ -309,19 +341,19 @@ export default function App() {
           <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 shadow-lg">
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Eye className="w-4 h-4 text-emerald-400" />
-              Find Specific Match
+              Find Match or League
             </h3>
             <form onSubmit={handleCodeSubmit} className="flex gap-3">
               <input
                 type="text"
                 value={landingCode}
                 onChange={e => setLandingCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8))}
-                placeholder="Enter Match Code"
+                placeholder="Enter Match or League Code"
                 className="flex-1 bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-lg tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
               />
               <button
                 type="submit"
-                disabled={landingCode.length < 4}
+                disabled={landingCode.length < 3}
                 className="px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Search
@@ -330,15 +362,33 @@ export default function App() {
             {landingError && <p className="text-rose-400 text-xs font-semibold mt-2">{landingError}</p>}
           </div>
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h2 className="text-lg font-bold text-white">All Live Matches</h2>
-            <button 
-              onClick={() => setShowScorerCreate(true)}
-              className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
-            >
-              + Create Match as Scorer
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowLeagueCreate(true)}
+                className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-lg hover:bg-amber-500/25 transition-all border border-amber-500/30"
+              >
+                <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
+              </button>
+              <button 
+                onClick={() => setShowScorerCreate(true)}
+                className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700"
+              >
+                + Create Match as Scorer
+              </button>
+            </div>
           </div>
+
+          {/* League Create Inline */}
+          <AnimatePresence>
+            {showLeagueCreate && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div>
             <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
           </div>
