@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode, type Dispatch } from 'react';
-import type { Team, Match } from './types';
+import type { League, Team, Match } from './types';
 
 const STORAGE_KEY = 'ggpl-data';
 // Use the environment variable if available, otherwise fallback to local
@@ -79,7 +79,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // to avoid echo-broadcasting it back
   const isExternalUpdate = useRef(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const actionQueue = useRef<Action[]>([]);
   const stateRef = useRef(initialState);
   stateRef.current = state;

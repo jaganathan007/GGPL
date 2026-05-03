@@ -56,6 +56,8 @@ export default function ScoringView({ matchId, onBack }: Props) {
   }, [engine.batters, engine.bowlers, engine.extras, engine.phase, engine.oversCompleted, engine.ballsInOver, currentInningsIdx, inningsStarted, matchId]);
 
   if (!match) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><p className="text-slate-400">Match not found.</p></div>;
+  // Non-null alias for TypeScript narrowing in hooks & closures
+  const m = match;
 
   const team1 = state.teams.find(t => t.id === match.team1Id);
   const team2 = state.teams.find(t => t.id === match.team2Id);
@@ -104,9 +106,9 @@ export default function ScoringView({ matchId, onBack }: Props) {
       })),
       extras: engine.extras,
     };
-    const newInnings = [...match.innings];
+    const newInnings = [...m.innings];
     newInnings[currentInningsIdx] = innings;
-    dispatch({ type: 'UPDATE_MATCH', payload: { ...match, innings: newInnings } });
+    dispatch({ type: 'UPDATE_MATCH', payload: { ...m, innings: newInnings } });
   }, [engine.batters, engine.bowlers, engine.extras, engine.phase]);
 
   function doStartInnings() {
@@ -114,25 +116,38 @@ export default function ScoringView({ matchId, onBack }: Props) {
     const ns = battingTeam?.players.find(p => p.id === nonStrikerId);
     const b = bowlingTeam?.players.find(p => p.id === bowlerId);
     if (!s || !ns || !b) return;
-    if (match.innings.length <= currentInningsIdx) {
+    if (m.innings.length <= currentInningsIdx) {
       const newInn: Innings = { battingTeamId: battingTeam?.id||'', bowlingTeamId: bowlingTeam?.id||'', battingEntries: [], bowlingEntries: [], extras: 0 };
-      dispatch({ type: 'UPDATE_MATCH', payload: { ...match, innings: [...match.innings, newInn] } });
+      dispatch({ type: 'UPDATE_MATCH', payload: { ...m, innings: [...m.innings, newInn] } });
     }
-    engine.startInnings({ id: s.id, name: s.name }, { id: ns.id, name: ns.name }, { id: b.id, name: b.name }, match.totalOvers, target);
+    engine.startInnings({ id: s.id, name: s.name }, { id: ns.id, name: ns.name }, { id: b.id, name: b.name }, m.totalOvers, target);
     setInningsStarted(true);
   }
 
-  function handleEndMatch(overridePhase?: string) {
-    const inn1 = match.innings[0]; const inn2 = match.innings[1];
+  function handleEndMatch() {
+    const inn1 = m.innings[0]; const inn2 = m.innings[1];
     if (!inn1 || !inn2) return;
     const t1Score = inn1.battingEntries.reduce((s,e)=>s+e.runs,0)+inn1.extras;
     const t2Score = engine.totalRuns;
     const t1Name = state.teams.find(t=>t.id===inn1.battingTeamId)?.name||'Team 1';
     const t2Name = state.teams.find(t=>t.id===inn2.battingTeamId)?.name||'Team 2';
     let result = 'Match Tied';
-    if (t1Score > t2Score) result = `${t1Name} won by ${t1Score-t2Score} runs`;
-    else if (t2Score > t1Score) { const w = engine.batters.filter(b=>!b.isOut).length; result = `${t2Name} won by ${w} wickets`; }
-    dispatch({ type: 'UPDATE_MATCH', payload: { ...match, isComplete: true, result } });
+    let winnerId: string | undefined = undefined;
+    let isTie = false;
+
+    if (t1Score > t2Score) {
+      result = `${t1Name} won by ${t1Score-t2Score} runs`;
+      winnerId = inn1.battingTeamId;
+    }
+    else if (t2Score > t1Score) {
+      const w = engine.batters.filter(b=>!b.isOut).length;
+      result = `${t2Name} won by ${w} wickets`;
+      winnerId = inn2.battingTeamId;
+    } else {
+      isTie = true;
+    }
+
+    dispatch({ type: 'UPDATE_MATCH', payload: { ...m, isComplete: true, result, winnerId, isTie } });
     // Clean up persisted scoring state
     localStorage.removeItem(SCORING_STORAGE_PREFIX + matchId);
     onBack();
@@ -151,7 +166,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
     if (!tossWinner) return;
     dispatch({
       type: 'UPDATE_MATCH',
-      payload: { ...match, toss: { winnerId: tossWinner, decision } }
+      payload: { ...m, toss: { winnerId: tossWinner, decision } }
     });
   }
 
@@ -354,7 +369,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
             <h2 className="text-xl font-extrabold text-emerald-400">🎉 Target Reached!</h2>
             <p className="text-white font-bold text-lg">{winningTeam?.name} won by {wicketsRemaining} wicket{wicketsRemaining !== 1 ? 's' : ''}</p>
             <p className="text-xs text-slate-400">with {ballsRemaining} ball{ballsRemaining !== 1 ? 's' : ''} remaining</p>
-            <button onClick={() => handleEndMatch('target_reached')} className="mt-3 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/40 hover:shadow-emerald-900/60 transition-all text-sm">
+            <button onClick={() => handleEndMatch()} className="mt-3 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/40 hover:shadow-emerald-900/60 transition-all text-sm">
               <Trophy className="w-4 h-4 inline mr-1" /> Finish Match
             </button>
           </motion.div>

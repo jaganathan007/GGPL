@@ -15,6 +15,7 @@ export interface Team {
   shortName: string;
   color: string;
   players: Player[];
+  leagueId?: string;
 }
 
 export interface BattingEntry {
@@ -61,4 +62,6 @@ export interface Match {
   innings: Innings[];
   isComplete: boolean;
   result: string;
+  winnerId?: string;
+  isTie?: boolean;
 }
