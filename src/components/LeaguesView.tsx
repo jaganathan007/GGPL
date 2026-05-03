@@ -26,6 +26,7 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
   const [name, setName] = useState('');
   const [expandedLeague, setExpandedLeague] = useState<string | null>(focusLeagueId || null);
   const [createdCode, setCreatedCode] = useState('');
+  const [createdLeagueId, setCreatedLeagueId] = useState('');
 
   // Add team state
   const [addTeamLeague, setAddTeamLeague] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
     dispatch({ type: 'ADD_LEAGUE', payload: league });
     setName('');
     setCreatedCode(code);
+    setCreatedLeagueId(leagueId);
     setShowForm(false);
   }
 
@@ -79,15 +81,87 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
 
   // Inline create mode: just show create form + result
   if (inlineCreate) {
+    const inlineLeagueTeams = createdLeagueId ? teams.filter(t => t.leagueId === createdLeagueId) : [];
     return (
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-lg relative max-w-xl mx-auto">
         <button onClick={onDone} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X className="w-5 h-5" /></button>
         {createdCode ? (
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto"><Trophy className="w-8 h-8 text-amber-400" /></div>
-            <h3 className="text-lg font-bold text-white">League Created!</h3>
-            <p className="text-sm text-slate-400">Share this code with scorers to link matches:</p>
-            <p className="text-3xl font-mono font-bold text-amber-400 tracking-[0.2em] bg-slate-950/50 rounded-xl py-4 border border-slate-800">{createdCode}</p>
+          <div className="space-y-5">
+            {/* Header with code */}
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto"><Trophy className="w-7 h-7 text-amber-400" /></div>
+              <h3 className="text-lg font-bold text-white">League Created!</h3>
+              <p className="text-xs text-slate-400">Share this code with scorers to link matches</p>
+              <p className="text-2xl font-mono font-bold text-amber-400 tracking-[0.2em] bg-slate-950/50 rounded-xl py-3 border border-slate-800">{createdCode}</p>
+            </div>
+
+            {/* Add Teams */}
+            <div className="border-t border-slate-800/60 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-slate-300 flex items-center gap-1.5"><Users className="w-4 h-4 text-blue-400" /> Teams</h4>
+              </div>
+
+              {/* Add team form */}
+              <div className="mb-3 bg-slate-950/40 border border-slate-800/50 rounded-xl p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input placeholder="Team Name" value={newTeamName} onChange={e => setNewTeamName(e.target.value)}
+                    className="flex-[2] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                  <input placeholder="Short" value={newTeamShort} onChange={e => setNewTeamShort(e.target.value)} maxLength={4}
+                    className="flex-[1] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                  <button onClick={() => handleAddTeam(createdLeagueId)} disabled={!newTeamName.trim() || !newTeamShort.trim()}
+                    className="px-4 py-2 bg-emerald-500 text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-emerald-400 transition-colors">Add</button>
+                </div>
+              </div>
+
+              {/* Team list with player add */}
+              {inlineLeagueTeams.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {inlineLeagueTeams.map(team => (
+                    <div key={team.id} className="bg-slate-900/50 border border-slate-800/40 rounded-xl p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
+                          <span className="text-sm font-semibold text-white">{team.name}</span>
+                          <span className="text-xs text-slate-500">({team.shortName})</span>
+                        </div>
+                        <button onClick={() => { setAddPlayerTeam(addPlayerTeam === team.id ? null : team.id); setNewPlayerName(''); }}
+                          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold">
+                          <UserPlus className="w-3 h-3" /> Add Player
+                        </button>
+                      </div>
+
+                      <AnimatePresence>
+                        {addPlayerTeam === team.id && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-2 overflow-hidden">
+                            <div className="flex gap-2">
+                              <input placeholder="Player name" value={newPlayerName}
+                                onChange={e => setNewPlayerName(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlayer(team.id); } }}
+                                className="flex-1 bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50" />
+                              <button onClick={() => handleAddPlayer(team.id)} disabled={!newPlayerName.trim()}
+                                className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {team.players.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {team.players.map(p => (
+                            <span key={p.id} className="px-2 py-0.5 bg-slate-800/60 text-slate-300 text-[11px] rounded-md">{p.name}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-600 italic">No players yet</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 text-center py-2">Add your first team above</p>
+              )}
+            </div>
+
             <button onClick={onDone} className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all">Done</button>
           </div>
         ) : (
