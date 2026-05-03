@@ -228,6 +228,7 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
           const leagueTeams = teams.filter(t => t.leagueId === league.id);
           const leagueMatches = matches.filter(m => m.leagueCode === league.code);
           const isExpanded = expandedLeague === league.id || !!focusLeagueId;
+          const isOwner = !!currentUserId && league.ownerId === currentUserId;
 
           // Compute Points Table
           const ptMap = new Map<string, { id: string; name: string; short: string; color: string; M: number; W: number; L: number; T: number; Pts: number }>();
@@ -267,6 +268,17 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                       <Users className="w-3.5 h-3.5 text-blue-400" /><span>{leagueTeams.length} Teams</span></div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-800/50 px-2 py-1 rounded-md">
                       <Trophy className="w-3.5 h-3.5 text-amber-400" /><span>{leagueMatches.length} Matches</span></div>
+                    {isOwner && league.editorCode && (
+                      <div className="flex items-center gap-1.5 text-xs text-violet-400 bg-violet-500/10 px-2 py-1 rounded-md border border-violet-500/20">
+                        <span className="text-[10px] text-violet-400/70 uppercase font-semibold">Editor Code:</span>
+                        <span className="font-mono font-bold tracking-wider">{league.editorCode}</span>
+                      </div>
+                    )}
+                    {!isOwner && league.ownerId && (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-800/30 px-2 py-1 rounded-md">
+                        <span>🔒 Owner managed</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
@@ -276,7 +288,7 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                       {isExpanded ? <><ChevronUp className="w-4 h-4" /> Hide</> : <><ChevronDown className="w-4 h-4" /> Details</>}
                     </button>
                   )}
-                  {isAdmin && (
+                  {isOwner && (
                     <button onClick={() => { if (confirm('Delete this league?')) dispatch({ type: 'DELETE_LEAGUE', payload: league.id }); }}
                       className="p-2 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Delete League">
                       <Trash2 className="w-4 h-4" />
@@ -294,10 +306,12 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                       <div>
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Teams</h4>
-                          <button onClick={() => { setAddTeamLeague(addTeamLeague === league.id ? null : league.id); setNewTeamName(''); setNewTeamShort(''); }}
-                            className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
-                            <Plus className="w-3.5 h-3.5" /> Add Team
-                          </button>
+                          {isOwner && (
+                            <button onClick={() => { setAddTeamLeague(addTeamLeague === league.id ? null : league.id); setNewTeamName(''); setNewTeamShort(''); }}
+                              className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                              <Plus className="w-3.5 h-3.5" /> Add Team
+                            </button>
+                          )}
                         </div>
 
                         <AnimatePresence>
@@ -329,10 +343,12 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                                     <span className="text-sm font-semibold text-white">{team.name}</span>
                                     <span className="text-xs text-slate-500">({team.shortName})</span>
                                   </div>
-                                  <button onClick={() => { setAddPlayerTeam(addPlayerTeam === team.id ? null : team.id); setNewPlayerName(''); }}
-                                    className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold">
-                                    <UserPlus className="w-3 h-3" /> Add Player
-                                  </button>
+                                  {isOwner && (
+                                    <button onClick={() => { setAddPlayerTeam(addPlayerTeam === team.id ? null : team.id); setNewPlayerName(''); }}
+                                      className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold">
+                                      <UserPlus className="w-3 h-3" /> Add Player
+                                    </button>
+                                  )}
                                 </div>
 
                                 <AnimatePresence>
