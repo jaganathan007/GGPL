@@ -3,10 +3,21 @@ export interface Player {
   name: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  pinHash: string;
+  createdAt: string;
+}
+
 export interface League {
   id: string;
   name: string;
   code: string;
+  ownerId?: string;
+  editorCode?: string;
 }
 
 export interface Team {
@@ -64,4 +75,5 @@ export interface Match {
   result: string;
   winnerId?: string;
   isTie?: boolean;
+  ownerId?: string;
 }

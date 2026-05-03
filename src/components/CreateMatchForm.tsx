@@ -16,9 +16,10 @@ interface CreateMatchFormProps {
   onCancel: () => void;
   onCreated: (match: Match) => void;
   initialLeagueCode?: string;
+  ownerId?: string;
 }
 
-export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode }: CreateMatchFormProps) {
+export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode, ownerId }: CreateMatchFormProps) {
   const { state, dispatch } = useApp();
   const { teams, leagues } = state;
 
@@ -171,6 +172,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
       innings: [],
       isComplete: false,
       result: '',
+      ownerId,
     };
     dispatch({ type: 'ADD_MATCH', payload: match });
     onCreated(match);

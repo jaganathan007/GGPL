@@ -18,9 +18,10 @@ interface Props {
   inlineCreate?: boolean;
   onDone?: () => void;
   onStartMatch?: (leagueCode: string) => void;
+  currentUserId?: string;
 }
 
-export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch }: Props) {
+export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId }: Props) {
   const { state, dispatch } = useApp();
   const { leagues, matches, teams } = state;
   const [showForm, setShowForm] = useState(!!inlineCreate);
@@ -43,7 +44,8 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
     if (!name.trim()) return;
     const leagueId = uid();
     const code = generateLeagueCode();
-    const league: League = { id: leagueId, name: name.trim(), code };
+    const editorCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const league: League = { id: leagueId, name: name.trim(), code, ownerId: currentUserId, editorCode };
     dispatch({ type: 'ADD_LEAGUE', payload: league });
     setName('');
     setCreatedCode(code);
@@ -252,7 +254,12 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
               className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-emerald-500/30 transition-all">
               <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-1">{league.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-bold text-white">{league.name}</h3>
+                    {currentUserId && league.ownerId === currentUserId && (
+                      <span className="px-2 py-0.5 bg-amber-500/15 text-amber-400 text-[10px] font-bold rounded-md border border-amber-500/20">Your League</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Code: </span>
                       <span className="text-sm font-mono text-emerald-400 font-bold tracking-widest">{league.code}</span></div>

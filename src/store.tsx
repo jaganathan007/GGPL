@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode, type Dispatch } from 'react';
-import type { League, Team, Match } from './types';
+import type { League, Team, Match, User } from './types';
 
 const STORAGE_KEY = 'ggpl-data';
 // Use the environment variable if available, otherwise fallback to local
@@ -7,12 +7,15 @@ const WS_URL = import.meta.env.VITE_WS_URL || (window.location.protocol === 'htt
 const RECONNECT_DELAY = 2000;
 
 interface AppState {
+  users: User[];
   leagues: League[];
   teams: Team[];
   matches: Match[];
 }
 
 type Action =
+  | { type: 'ADD_USER'; payload: User }
+  | { type: 'UPDATE_USER'; payload: User }
   | { type: 'ADD_LEAGUE'; payload: League }
   | { type: 'UPDATE_LEAGUE'; payload: League }
   | { type: 'DELETE_LEAGUE'; payload: string }
@@ -25,6 +28,7 @@ type Action =
   | { type: 'SET_STATE'; payload: AppState };
 
 const initialState: AppState = {
+  users: [],
   leagues: [],
   teams: [],
   matches: [],
@@ -32,6 +36,10 @@ const initialState: AppState = {
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case 'ADD_USER':
+      return { ...state, users: [...(state.users || []), action.payload] };
+    case 'UPDATE_USER':
+      return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? action.payload : u) };
     case 'ADD_LEAGUE':
       return { ...state, leagues: [...(state.leagues || []), action.payload] };
     case 'UPDATE_LEAGUE':
