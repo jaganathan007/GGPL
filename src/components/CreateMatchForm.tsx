@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Play, ChevronLeft } from 'lucide-react';
+import { X, Check, Play, ChevronLeft, Trophy } from 'lucide-react';
 import { useApp } from '../store';
-import type { Match, Team } from '../types';
+import type { Match, Team, League } from '../types';
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -19,8 +19,13 @@ interface CreateMatchFormProps {
 
 export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchFormProps) {
   const { state, dispatch } = useApp();
-  const { teams } = state;
-  const [formStep, setFormStep] = useState<1 | 2 | 3 | 4>(1);
+  const { teams, leagues } = state;
+  const [formStep, setFormStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+
+  // Step 0: League code
+  const [leagueCode, setLeagueCode] = useState('');
+  const [leagueError, setLeagueError] = useState('');
+  const [linkedLeague, setLinkedLeague] = useState<League | null>(null);
 
   // Step 1: Teams
   const [team1Mode, setTeam1Mode] = useState<'existing'|'new'>('existing');
@@ -41,7 +46,6 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
 
   // Step 3: Match Details
   const [venue, setVenue] = useState('');
-  const [leagueCode, setLeagueCode] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
   const [adminCode, setAdminCode] = useState(() => generateOTP());
@@ -51,7 +55,30 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
   const [tossWinner, setTossWinner] = useState<'team1'|'team2'|''>('');
   const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
 
-  function handleNext(target: 1|2|3|4) {
+  // Filtered teams: if league selected, show only that league's teams
+  const availableTeams = linkedLeague
+    ? teams.filter(t => t.leagueId === linkedLeague.id)
+    : teams;
+
+  function handleLeagueStep(hasCode: boolean) {
+    if (hasCode) {
+      const code = leagueCode.trim().toUpperCase();
+      const league = (leagues || []).find(l => l.code === code);
+      if (!league) { setLeagueError('League not found. Check the code.'); return; }
+      setLinkedLeague(league);
+      setLeagueError('');
+      setLeagueCode(code);
+      // Reset team selections since we're filtering
+      setTeam1Id(''); setTeam2Id('');
+      setTeam1Mode('existing'); setTeam2Mode('existing');
+    } else {
+      setLinkedLeague(null);
+      setLeagueCode('');
+    }
+    setFormStep(1);
+  }
+
+  function handleNext(target: 0|1|2|3|4) {
     if (target === 2) {
       if (team1Mode === 'existing' && !team1Id) return;
       if (team1Mode === 'new' && (!newTeam1Name || !newTeam1Short)) return;
@@ -160,23 +187,76 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
     <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-6 max-w-md w-full mx-auto shadow-2xl backdrop-blur-md overflow-hidden flex flex-col min-h-[500px]">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-white flex items-center gap-2">
-          {formStep > 1 && (
-            <button onClick={() => handleNext((formStep - 1) as any)} className="p-1 hover:bg-slate-800 rounded-md transition-colors mr-1">
+          {formStep > 0 && (
+            <button onClick={() => handleNext((formStep === 1 && linkedLeague ? 0 : formStep - 1) as any)} className="p-1 hover:bg-slate-800 rounded-md transition-colors mr-1">
               <ChevronLeft className="w-5 h-5 text-slate-400" />
             </button>
           )}
-          {formStep === 1 && 'Step 1: Choose Teams'}
-          {formStep === 2 && 'Step 2: Player Details'}
-          {formStep === 3 && 'Step 3: Match Details'}
-          {formStep === 4 && 'Step 4: Toss'}
+          {formStep === 0 && 'League Code'}
+          {formStep === 1 && 'Choose Teams'}
+          {formStep === 2 && 'Player Details'}
+          {formStep === 3 && 'Match Details'}
+          {formStep === 4 && 'Toss'}
         </h3>
-        <button type="button" onClick={onCancel} className="text-slate-500 hover:text-slate-300 transition-colors bg-slate-800/50 p-1.5 rounded-full">
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {linkedLeague && formStep > 0 && (
+            <span className="px-2 py-1 bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-md flex items-center gap-1">
+              <Trophy className="w-3 h-3" />{linkedLeague.name}
+            </span>
+          )}
+          <button type="button" onClick={onCancel} className="text-slate-500 hover:text-slate-300 transition-colors bg-slate-800/50 p-1.5 rounded-full">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1">
         <AnimatePresence mode="wait">
+          {/* STEP 0: LEAGUE CODE */}
+          {formStep === 0 && (
+            <motion.div key="step0" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+              <div className="text-center mb-2">
+                <div className="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><Trophy className="w-7 h-7 text-amber-400" /></div>
+                <p className="text-sm text-slate-300 font-medium">Are you part of a league?</p>
+                <p className="text-xs text-slate-500 mt-1">If yes, enter the league code to pick from league teams only</p>
+              </div>
+
+              <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80 space-y-3">
+                <label className="block text-xs text-slate-400 font-bold uppercase tracking-wider">League Code</label>
+                <input
+                  autoFocus
+                  value={leagueCode}
+                  onChange={e => { setLeagueCode(e.target.value.toUpperCase()); setLeagueError(''); }}
+                  placeholder="e.g. X7KM2P"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-lg text-amber-400 font-mono font-bold tracking-widest placeholder-slate-600 focus:outline-none focus:border-amber-500/50 uppercase text-center"
+                />
+                {leagueError && <p className="text-rose-400 text-xs font-semibold text-center">{leagueError}</p>}
+                <button
+                  type="button"
+                  onClick={() => handleLeagueStep(true)}
+                  disabled={leagueCode.trim().length < 3}
+                  className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-400 transition-colors disabled:opacity-40"
+                >
+                  Enter League
+                </button>
+              </div>
+
+              <div className="relative flex items-center gap-3">
+                <div className="flex-1 h-px bg-slate-800" />
+                <span className="text-xs text-slate-500 font-semibold">OR</span>
+                <div className="flex-1 h-px bg-slate-800" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleLeagueStep(false)}
+                className="w-full py-3 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700"
+              >
+                Skip — Just a friendly match
+              </button>
+            </motion.div>
+          )}
+
           {/* STEP 1: TEAMS */}
           {formStep === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
@@ -193,7 +273,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                 {team1Mode === 'existing' ? (
                   <select value={team1Id} onChange={e => setTeam1Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                     <option value="">Select team...</option>
-                    {teams.map(t => <option key={t.id} value={t.id} disabled={t.id === team2Id}>{t.name}</option>)}
+                    {availableTeams.map(t => <option key={t.id} value={t.id} disabled={t.id === team2Id}>{t.name}</option>)}
                   </select>
                 ) : (
                   <div className="flex gap-2">
@@ -215,7 +295,7 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                 {team2Mode === 'existing' ? (
                   <select value={team2Id} onChange={e => setTeam2Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
                     <option value="">Select team...</option>
-                    {teams.map(t => <option key={t.id} value={t.id} disabled={t.id === team1Id}>{t.name}</option>)}
+                    {availableTeams.map(t => <option key={t.id} value={t.id} disabled={t.id === team1Id}>{t.name}</option>)}
                   </select>
                 ) : (
                   <div className="flex gap-2">
@@ -308,10 +388,13 @@ export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchForm
                   <input value={viewerCode} onChange={e => setViewerCode(e.target.value.toUpperCase())} maxLength={8} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-emerald-400 font-bold tracking-widest focus:outline-none focus:border-emerald-500/50 transition-all uppercase" />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-medium">League Code (Optional)</label>
-                <input value={leagueCode} onChange={e => setLeagueCode(e.target.value)} placeholder="e.g. SUMMER26" className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 font-mono focus:outline-none focus:border-emerald-500/50 uppercase transition-all" />
-              </div>
+              {linkedLeague && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs text-amber-400 font-semibold">League: {linkedLeague.name}</span>
+                  <span className="text-xs text-slate-500 font-mono ml-auto">{linkedLeague.code}</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Date</label>
