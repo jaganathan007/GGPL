@@ -15,17 +15,24 @@ function generateOTP(): string {
 interface CreateMatchFormProps {
   onCancel: () => void;
   onCreated: (match: Match) => void;
+  initialLeagueCode?: string;
 }
 
-export default function CreateMatchForm({ onCancel, onCreated }: CreateMatchFormProps) {
+export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode }: CreateMatchFormProps) {
   const { state, dispatch } = useApp();
   const { teams, leagues } = state;
-  const [formStep, setFormStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+
+  // Resolve initial league if code provided
+  const initialLeague = initialLeagueCode
+    ? (leagues || []).find(l => l.code === initialLeagueCode) || null
+    : null;
+
+  const [formStep, setFormStep] = useState<0 | 1 | 2 | 3 | 4>(initialLeague ? 1 : 0);
 
   // Step 0: League code
-  const [leagueCode, setLeagueCode] = useState('');
+  const [leagueCode, setLeagueCode] = useState(initialLeagueCode || '');
   const [leagueError, setLeagueError] = useState('');
-  const [linkedLeague, setLinkedLeague] = useState<League | null>(null);
+  const [linkedLeague, setLinkedLeague] = useState<League | null>(initialLeague);
 
   // Step 1: Teams
   const [team1Mode, setTeam1Mode] = useState<'existing'|'new'>('existing');

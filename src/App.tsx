@@ -43,6 +43,7 @@ export default function App() {
   const [viewingLeagueId, setViewingLeagueId] = useState<string | null>(null);
   const [showLeagueCreate, setShowLeagueCreate] = useState(false);
   const [viewerTab, setViewerTab] = useState<'matches' | 'leagues'>('matches');
+  const [scorerLeagueCode, setScorerLeagueCode] = useState('');
 
   // Admin login via PIN
   function handleAdminLogin() {
@@ -297,8 +298,9 @@ export default function App() {
           {!createdMatch ? (
             <div className="pt-10">
               <CreateMatchForm 
-                onCancel={() => setShowScorerCreate(false)} 
-                onCreated={(m) => setCreatedMatch(m)} 
+                onCancel={() => { setShowScorerCreate(false); setScorerLeagueCode(''); }} 
+                onCreated={(m) => setCreatedMatch(m)}
+                initialLeagueCode={scorerLeagueCode || undefined}
               />
             </div>
           ) : (
@@ -413,7 +415,7 @@ export default function App() {
               <AnimatePresence>
                 {showLeagueCreate && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                    <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)} />
+                    <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)} onStartMatch={(code) => { setShowLeagueCreate(false); setScorerLeagueCode(code); setShowScorerCreate(true); }} />
                   </motion.div>
                 )}
               </AnimatePresence>

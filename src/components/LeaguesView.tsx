@@ -17,9 +17,10 @@ interface Props {
   focusLeagueId?: string;
   inlineCreate?: boolean;
   onDone?: () => void;
+  onStartMatch?: (leagueCode: string) => void;
 }
 
-export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone }: Props) {
+export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch }: Props) {
   const { state, dispatch } = useApp();
   const { leagues, matches, teams } = state;
   const [showForm, setShowForm] = useState(!!inlineCreate);
@@ -162,7 +163,12 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
               )}
             </div>
 
-            <button onClick={onDone} className="w-full py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-all">Done</button>
+            <div className="flex gap-2">
+              <button onClick={onDone} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700">Done</button>
+              {inlineLeagueTeams.length >= 2 && (
+                <button onClick={() => onStartMatch?.(createdCode)} className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all">🏏 Start a Match</button>
+              )}
+            </div>
           </div>
         ) : (
           <>
