@@ -148,7 +148,7 @@ export default function App() {
           </div>
         </header>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <LeaguesView isAdmin={isLoggedIn} focusLeagueId={viewingLeagueId} currentUserId={currentUserId || undefined} />
+          <LeaguesView isAdmin={isLoggedIn} focusLeagueId={viewingLeagueId} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
         </main>
       </div>
     );
@@ -263,7 +263,7 @@ export default function App() {
               )}
               {view === 'leagues' && (
                 <motion.div key="leagues" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <LeaguesView isAdmin={isAdmin} currentUserId={currentUserId || undefined} />
+                  <LeaguesView isAdmin={isAdmin} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -393,7 +393,7 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              <LeaguesView isAdmin={isLoggedIn} currentUserId={currentUserId || undefined} />
+              <LeaguesView isAdmin={isLoggedIn} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
             </>
           )}
         </main>

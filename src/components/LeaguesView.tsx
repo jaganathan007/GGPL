@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Plus, X, Trash2, ChevronDown, ChevronUp, Users, UserPlus } from 'lucide-react';
+import { Trophy, Plus, X, Trash2, ChevronDown, ChevronUp, Users, UserPlus, Swords, Play, Check } from 'lucide-react';
 import { useApp } from '../store';
-import type { League, Team } from '../types';
+import type { League, Team, Match } from '../types';
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -19,9 +19,15 @@ interface Props {
   onDone?: () => void;
   onStartMatch?: (leagueCode: string) => void;
   currentUserId?: string;
+  onMatchCreated?: (match: Match) => void;
+  onScoreMatch?: (matchId: string) => void;
 }
 
-export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId }: Props) {
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId, onMatchCreated, onScoreMatch }: Props) {
   const { state, dispatch } = useApp();
   const { leagues, matches, teams } = state;
   const [showForm, setShowForm] = useState(!!inlineCreate);
@@ -37,6 +43,18 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
 
   // Add player state
   const [addPlayerTeam, setAddPlayerTeam] = useState<string | null>(null);
+
+  // Inline match creation state
+  const [createMatchLeague, setCreateMatchLeague] = useState<string | null>(null);
+  const [matchTeam1Id, setMatchTeam1Id] = useState('');
+  const [matchTeam2Id, setMatchTeam2Id] = useState('');
+  const [matchVenue, setMatchVenue] = useState('');
+  const [matchOvers, setMatchOvers] = useState(10);
+  const [matchDate, setMatchDate] = useState(new Date().toISOString().slice(0, 10));
+  const [matchTossWinner, setMatchTossWinner] = useState<'team1'|'team2'|''>('');
+  const [matchTossDecision, setMatchTossDecision] = useState<'bat'|'bowl'|''>('');
+  const [matchStep, setMatchStep] = useState<0|1|2>(0); // 0=teams, 1=details, 2=toss
+  const [createdMatchResult, setCreatedMatchResult] = useState<Match | null>(null);
   const [newPlayerName, setNewPlayerName] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
@@ -76,6 +94,50 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
     const updated = { ...team, players: [...team.players, { id: uid(), name: newPlayerName.trim() }] };
     dispatch({ type: 'UPDATE_TEAM', payload: updated });
     setNewPlayerName('');
+  }
+
+  function resetMatchForm() {
+    setMatchTeam1Id(''); setMatchTeam2Id('');
+    setMatchVenue(''); setMatchOvers(10);
+    setMatchDate(new Date().toISOString().slice(0, 10));
+    setMatchTossWinner(''); setMatchTossDecision('');
+    setMatchStep(0); setCreatedMatchResult(null);
+  }
+
+  function handleCreateLeagueMatch(leagueId: string) {
+    const league = (leagues || []).find(l => l.id === leagueId);
+    if (!league) return;
+    const leagueTeams = teams.filter(t => t.leagueId === leagueId);
+
+    const t1Id = matchTeam1Id;
+    const t2Id = matchTeam2Id;
+    if (!t1Id || !t2Id || t1Id === t2Id) return;
+
+    const adminCode = generateOTP();
+    const viewerCode = generateOTP();
+
+    const match: Match = {
+      id: uid(),
+      viewerCode,
+      adminCode,
+      leagueCode: league.code,
+      team1Id: t1Id,
+      team2Id: t2Id,
+      toss: {
+        winnerId: matchTossWinner === 'team1' ? t1Id : t2Id,
+        decision: matchTossDecision as 'bat' | 'bowl',
+      },
+      date: matchDate,
+      venue: matchVenue.trim() || 'TBD',
+      totalOvers: matchOvers,
+      innings: [],
+      isComplete: false,
+      result: '',
+      ownerId: currentUserId,
+    };
+    dispatch({ type: 'ADD_MATCH', payload: match });
+    setCreatedMatchResult(match);
+    onMatchCreated?.(match);
   }
 
   const visibleLeagues = focusLeagueId
@@ -428,6 +490,221 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                           </div>
                         )}
                       </div>
+
+                      {/* Create Match in League */}
+                      {isOwner && leagueTeams.length >= 2 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Create Match</h4>
+                            {createMatchLeague !== league.id && (
+                              <button onClick={() => { setCreateMatchLeague(league.id); resetMatchForm(); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 text-emerald-400 text-xs font-bold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20">
+                                <Swords className="w-3.5 h-3.5" /> New Match
+                              </button>
+                            )}
+                          </div>
+
+                          <AnimatePresence>
+                            {createMatchLeague === league.id && !createdMatchResult && (
+                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                className="bg-slate-900/60 border border-emerald-500/15 rounded-2xl p-5 space-y-4 overflow-hidden mb-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Swords className="w-4 h-4 text-emerald-400" />
+                                    <span className="text-sm font-bold text-white">
+                                      {matchStep === 0 ? 'Select Teams' : matchStep === 1 ? 'Match Details' : 'Toss'}
+                                    </span>
+                                  </div>
+                                  <button onClick={() => { setCreateMatchLeague(null); resetMatchForm(); }} className="text-slate-500 hover:text-slate-300">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                                {/* Step indicator */}
+                                <div className="flex items-center gap-2">
+                                  {[0,1,2].map(s => (
+                                    <div key={s} className={`flex-1 h-1 rounded-full transition-all ${s <= matchStep ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+                                  ))}
+                                </div>
+
+                                <AnimatePresence mode="wait">
+                                  {/* Step 0: Teams */}
+                                  {matchStep === 0 && (
+                                    <motion.div key="ms0" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-3">
+                                      <p className="text-xs text-slate-400">Only teams in <span className="text-amber-400 font-semibold">{league.name}</span> can play</p>
+                                      <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50 space-y-2">
+                                        <label className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Team 1</label>
+                                        <select value={matchTeam1Id} onChange={e => setMatchTeam1Id(e.target.value)}
+                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                                          <option value="">Select team...</option>
+                                          {leagueTeams.filter(t => t.id !== matchTeam2Id).map(t => (
+                                            <option key={t.id} value={t.id}>{t.name} ({t.shortName})</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50 space-y-2">
+                                        <label className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Team 2</label>
+                                        <select value={matchTeam2Id} onChange={e => setMatchTeam2Id(e.target.value)}
+                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                                          <option value="">Select team...</option>
+                                          {leagueTeams.filter(t => t.id !== matchTeam1Id).map(t => (
+                                            <option key={t.id} value={t.id}>{t.name} ({t.shortName})</option>
+                                          ))}
+                                        </select>
+                                      </div>
+
+                                      {/* Show selected teams' players */}
+                                      {matchTeam1Id && matchTeam2Id && (
+                                        <div className="grid grid-cols-2 gap-3 mt-2">
+                                          {[matchTeam1Id, matchTeam2Id].map(tId => {
+                                            const team = leagueTeams.find(t => t.id === tId);
+                                            return team ? (
+                                              <div key={tId} className="bg-slate-950/30 rounded-lg p-2.5 border border-slate-800/30">
+                                                <div className="flex items-center gap-1.5 mb-1.5">
+                                                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: team.color }} />
+                                                  <span className="text-[11px] font-bold text-white">{team.shortName}</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1">
+                                                  {team.players.length > 0 ? team.players.map(p => (
+                                                    <span key={p.id} className="px-1.5 py-0.5 bg-slate-800/60 text-slate-300 text-[10px] rounded">{p.name}</span>
+                                                  )) : (
+                                                    <span className="text-[10px] text-slate-600 italic">No players</span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ) : null;
+                                          })}
+                                        </div>
+                                      )}
+
+                                      <button onClick={() => setMatchStep(1)}
+                                        disabled={!matchTeam1Id || !matchTeam2Id || matchTeam1Id === matchTeam2Id}
+                                        className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-2">
+                                        Next: Details <Play className="w-4 h-4 fill-current" />
+                                      </button>
+                                    </motion.div>
+                                  )}
+
+                                  {/* Step 1: Match Details */}
+                                  {matchStep === 1 && (
+                                    <motion.div key="ms1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
+                                      <div>
+                                        <label className="block text-xs text-slate-400 mb-1 font-medium">Venue</label>
+                                        <input value={matchVenue} onChange={e => setMatchVenue(e.target.value)} placeholder="e.g. Local Ground"
+                                          className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50" />
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <label className="block text-xs text-slate-400 mb-1 font-medium">Date</label>
+                                          <input type="date" value={matchDate} onChange={e => setMatchDate(e.target.value)}
+                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-slate-400 mb-1 font-medium">Overs</label>
+                                          <input type="number" min={1} max={50} value={matchOvers} onChange={e => setMatchOvers(Number(e.target.value))}
+                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-2 mt-2">
+                                        <button onClick={() => setMatchStep(0)} className="flex-1 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700">
+                                          ← Back
+                                        </button>
+                                        <button onClick={() => setMatchStep(2)}
+                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors">
+                                          Next: Toss <Play className="w-4 h-4 fill-current" />
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+
+                                  {/* Step 2: Toss */}
+                                  {matchStep === 2 && (
+                                    <motion.div key="ms2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                                      <p className="text-center text-xs text-slate-400 font-medium">Who won the toss?</p>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        {[{ key: 'team1' as const, id: matchTeam1Id }, { key: 'team2' as const, id: matchTeam2Id }].map(({ key, id }) => {
+                                          const team = leagueTeams.find(t => t.id === id);
+                                          return (
+                                            <button key={key} onClick={() => setMatchTossWinner(key)}
+                                              className={`py-3 rounded-xl border-2 transition-all text-sm font-semibold ${matchTossWinner === key ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                                              {team?.name || key}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+
+                                      <AnimatePresence>
+                                        {matchTossWinner && (
+                                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3 pt-2 overflow-hidden">
+                                            <p className="text-center text-xs text-slate-400 font-medium">What did they choose?</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                              <button onClick={() => setMatchTossDecision('bat')}
+                                                className={`py-3.5 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${matchTossDecision === 'bat' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                                                <span className="text-xl mb-1">🏏</span>
+                                                <span className="text-xs font-bold">Bat</span>
+                                              </button>
+                                              <button onClick={() => setMatchTossDecision('bowl')}
+                                                className={`py-3.5 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${matchTossDecision === 'bowl' ? 'bg-violet-500/20 border-violet-500 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                                                <span className="text-xl mb-1">🎯</span>
+                                                <span className="text-xs font-bold">Bowl</span>
+                                              </button>
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+
+                                      <div className="flex gap-2 mt-2">
+                                        <button onClick={() => setMatchStep(1)} className="flex-1 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700">
+                                          ← Back
+                                        </button>
+                                        <button onClick={() => handleCreateLeagueMatch(league.id)}
+                                          disabled={!matchTossWinner || !matchTossDecision}
+                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                          <Check className="w-4 h-4" /> Create Match
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            )}
+
+                            {/* Match Created Success */}
+                            {createdMatchResult && createMatchLeague === league.id && (
+                              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                                className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-5 text-center space-y-3 mb-4">
+                                <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
+                                  <Check className="w-7 h-7 text-emerald-400" />
+                                </div>
+                                <h4 className="text-lg font-bold text-white">Match Created!</h4>
+                                <p className="text-xs text-slate-400">Save these codes to score or share the match</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800">
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Scorer Code</p>
+                                    <p className="text-lg font-mono font-bold text-amber-400 tracking-[0.15em]">{createdMatchResult.adminCode}</p>
+                                  </div>
+                                  <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800">
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Viewer Code</p>
+                                    <p className="text-lg font-mono font-bold text-emerald-400 tracking-[0.15em]">{createdMatchResult.viewerCode}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={() => { setCreateMatchLeague(null); resetMatchForm(); }}
+                                    className="flex-1 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700">
+                                    Done
+                                  </button>
+                                  {onScoreMatch && (
+                                    <button onClick={() => { onScoreMatch(createdMatchResult.id); setCreateMatchLeague(null); resetMatchForm(); }}
+                                      className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all">
+                                      🏏 Start Scoring
+                                    </button>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
 
                       {/* League Matches */}
                       {leagueMatches.length > 0 && (
