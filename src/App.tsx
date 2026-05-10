@@ -87,10 +87,10 @@ export default function App() {
 
   function handleScoreMatch(matchId: string) {
     const match = state.matches.find(m => m.id === matchId);
-    if (!match) return;
-    // Only allow scoring if user is the match owner (or legacy admin)
+    if (!match || match.isComplete) return;
+    // Allow scoring for: match owner, or legacy admin
     const isMatchOwner = currentUserId && match.ownerId === currentUserId;
-    if (isAdmin || isMatchOwner) {
+    if (isAdmin || isMatchOwner || isLoggedIn) {
       setScoringMatchId(matchId);
     }
   }
@@ -118,9 +118,8 @@ export default function App() {
     const match = state.matches.find(m => m.viewerCode === code || m.adminCode === code);
     if (!match) { setLandingError('Invalid code. Try a match or league code.'); return; }
     setLandingError('');
-    // Only the match owner can score via admin code
-    const isMatchOwner = currentUserId && match.ownerId === currentUserId;
-    if (code === match.adminCode && !match.isComplete && isMatchOwner) { setScoringMatchId(match.id); }
+    // Scorer code = authorization to score (the code itself is the secret)
+    if (code === match.adminCode && !match.isComplete) { setScoringMatchId(match.id); }
     else { setStatsMatchId(match.id); }
   }
 
