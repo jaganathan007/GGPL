@@ -86,7 +86,11 @@ export default function App() {
   function handleAdminLogout() { setIsAdmin(false); setScoringMatchId(null); }
 
   function handleScoreMatch(matchId: string) {
-    if (isAdmin || isLoggedIn) {
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match) return;
+    // Only allow scoring if user is the match owner (or legacy admin)
+    const isMatchOwner = currentUserId && match.ownerId === currentUserId;
+    if (isAdmin || isMatchOwner) {
       setScoringMatchId(matchId);
     }
   }
@@ -114,7 +118,9 @@ export default function App() {
     const match = state.matches.find(m => m.viewerCode === code || m.adminCode === code);
     if (!match) { setLandingError('Invalid code. Try a match or league code.'); return; }
     setLandingError('');
-    if (code === match.adminCode && !match.isComplete) { setScoringMatchId(match.id); }
+    // Only the match owner can score via admin code
+    const isMatchOwner = currentUserId && match.ownerId === currentUserId;
+    if (code === match.adminCode && !match.isComplete && isMatchOwner) { setScoringMatchId(match.id); }
     else { setStatsMatchId(match.id); }
   }
 
@@ -258,7 +264,7 @@ export default function App() {
               )}
               {view === 'matches' && (
                 <motion.div key="matches" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} />
+                  <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} currentUserId={currentUserId || undefined} />
                 </motion.div>
               )}
               {view === 'leagues' && (
@@ -362,7 +368,7 @@ export default function App() {
                 )}
               </div>
               <div>
-                <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isLoggedIn} />
+                <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isLoggedIn} currentUserId={currentUserId || undefined} />
               </div>
             </>
           ) : (

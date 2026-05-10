@@ -778,6 +778,15 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
                                     </div>
                                   </div>
                                   {m.result && <p className="text-[11px] text-emerald-400 font-medium mt-2 text-center">{m.result}</p>}
+                                  {/* Resume Scoring - only for match owner on live matches */}
+                                  {currentUserId && m.ownerId === currentUserId && !m.isComplete && onScoreMatch && (
+                                    <button
+                                      onClick={() => onScoreMatch(m.id)}
+                                      className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-emerald-500/15 text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20"
+                                    >
+                                      <Play className="w-3 h-3 fill-current" /> Resume Scoring
+                                    </button>
+                                  )}
                                 </div>
                               );
                             })}
