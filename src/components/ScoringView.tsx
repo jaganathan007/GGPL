@@ -11,6 +11,9 @@ interface ScoringPersistence {
   engineSnapshot: EngineSnapshot;
   currentInningsIdx: number;
   inningsStarted: boolean;
+  strikerId?: string;
+  nonStrikerId?: string;
+  bowlerId?: string;
 }
 
 interface Props { matchId: string; onBack: () => void; }
@@ -25,7 +28,18 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const [nonStrikerId, setNonStrikerId] = useState('');
   const [bowlerId, setBowlerId] = useState('');
   const [inningsStarted, setInningsStarted] = useState(false);
-  const [currentInningsIdx, setCurrentInningsIdx] = useState(match?.innings.length === 0 ? 0 : (match?.innings.length || 1) - 1);
+  const [currentInningsIdx, setCurrentInningsIdx] = useState(() => {
+    // Try to restore from localStorage first
+    try {
+      const saved = localStorage.getItem(SCORING_STORAGE_PREFIX + matchId);
+      if (saved) {
+        const data: ScoringPersistence = JSON.parse(saved);
+        return data.currentInningsIdx;
+      }
+    } catch { /* ignore */ }
+    // Fallback: derive from match data
+    return match?.innings.length === 0 ? 0 : (match?.innings.length || 1) - 1;
+  });
   const [tossWinner, setTossWinner] = useState('');
   const restoredRef = useRef(false);
 
@@ -40,20 +54,28 @@ export default function ScoringView({ matchId, onBack }: Props) {
         engine.importState(data.engineSnapshot);
         setCurrentInningsIdx(data.currentInningsIdx);
         setInningsStarted(data.inningsStarted);
+        // Restore selected players for setup screen
+        if (data.strikerId) setStrikerId(data.strikerId);
+        if (data.nonStrikerId) setNonStrikerId(data.nonStrikerId);
+        if (data.bowlerId) setBowlerId(data.bowlerId);
       }
     } catch { /* ignore corrupt data */ }
   }, [matchId]);
 
   // ── Persist scoring state on every engine change ──
   useEffect(() => {
-    if (!inningsStarted || engine.phase === 'setup') return;
+    // Persist even during setup phase (to remember which innings we're on)
+    if (engine.phase === 'setup' && !inningsStarted && currentInningsIdx === 0 && match?.innings.length === 0) return;
     const data: ScoringPersistence = {
       engineSnapshot: engine.exportState(),
       currentInningsIdx,
       inningsStarted,
+      strikerId: strikerId || undefined,
+      nonStrikerId: nonStrikerId || undefined,
+      bowlerId: bowlerId || undefined,
     };
     localStorage.setItem(SCORING_STORAGE_PREFIX + matchId, JSON.stringify(data));
-  }, [engine.batters, engine.bowlers, engine.extras, engine.phase, engine.oversCompleted, engine.ballsInOver, currentInningsIdx, inningsStarted, matchId]);
+  }, [engine.batters, engine.bowlers, engine.extras, engine.phase, engine.oversCompleted, engine.ballsInOver, currentInningsIdx, inningsStarted, matchId, strikerId, nonStrikerId, bowlerId]);
 
   if (!match) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><p className="text-slate-400">Match not found.</p></div>;
   // Non-null alias for TypeScript narrowing in hooks & closures
