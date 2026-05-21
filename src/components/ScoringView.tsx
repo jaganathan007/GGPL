@@ -23,48 +23,45 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const match = state.matches.find(m => m.id === matchId);
   const engine = useScoringEngine();
 
-  // Setup state
-  const [strikerId, setStrikerId] = useState('');
-  const [nonStrikerId, setNonStrikerId] = useState('');
-  const [bowlerId, setBowlerId] = useState('');
-  const [inningsStarted, setInningsStarted] = useState(false);
-  const [currentInningsIdx, setCurrentInningsIdx] = useState(() => {
-    // Try to restore from localStorage first
+  // Read saved state synchronously for initial values
+  const savedData = useRef<ScoringPersistence | null>(null);
+  const readyRef = useRef(false); // true once restore is complete — blocks persist until then
+
+  if (!savedData.current) {
     try {
-      const saved = localStorage.getItem(SCORING_STORAGE_PREFIX + matchId);
-      if (saved) {
-        const data: ScoringPersistence = JSON.parse(saved);
-        return data.currentInningsIdx;
-      }
+      const raw = localStorage.getItem(SCORING_STORAGE_PREFIX + matchId);
+      if (raw) savedData.current = JSON.parse(raw);
     } catch { /* ignore */ }
-    // Fallback: derive from match data
+  }
+
+  // Setup state — initialize from saved data if available
+  const [strikerId, setStrikerId] = useState(savedData.current?.strikerId || '');
+  const [nonStrikerId, setNonStrikerId] = useState(savedData.current?.nonStrikerId || '');
+  const [bowlerId, setBowlerId] = useState(savedData.current?.bowlerId || '');
+  const [inningsStarted, setInningsStarted] = useState(savedData.current?.inningsStarted || false);
+  const [currentInningsIdx, setCurrentInningsIdx] = useState(() => {
+    if (savedData.current) return savedData.current.currentInningsIdx;
     return match?.innings.length === 0 ? 0 : (match?.innings.length || 1) - 1;
   });
   const [tossWinner, setTossWinner] = useState('');
   const restoredRef = useRef(false);
 
-  // ── Restore persisted scoring state on mount ──
+  // ── Restore persisted ENGINE state on mount (must happen in useEffect since it calls setState) ──
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    try {
-      const saved = localStorage.getItem(SCORING_STORAGE_PREFIX + matchId);
-      if (saved) {
-        const data: ScoringPersistence = JSON.parse(saved);
-        engine.importState(data.engineSnapshot);
-        setCurrentInningsIdx(data.currentInningsIdx);
-        setInningsStarted(data.inningsStarted);
-        // Restore selected players for setup screen
-        if (data.strikerId) setStrikerId(data.strikerId);
-        if (data.nonStrikerId) setNonStrikerId(data.nonStrikerId);
-        if (data.bowlerId) setBowlerId(data.bowlerId);
-      }
-    } catch { /* ignore corrupt data */ }
+    if (savedData.current) {
+      engine.importState(savedData.current.engineSnapshot);
+    }
+    // Mark ready after restore — allow persist effect to run
+    readyRef.current = true;
   }, [matchId]);
 
   // ── Persist scoring state on every engine change ──
   useEffect(() => {
-    // Persist even during setup phase (to remember which innings we're on)
+    // Don't persist until restore is complete (prevents overwriting saved data)
+    if (!readyRef.current) return;
+    // Don't persist the very first fresh match state (no innings, no scoring started)
     if (engine.phase === 'setup' && !inningsStarted && currentInningsIdx === 0 && match?.innings.length === 0) return;
     const data: ScoringPersistence = {
       engineSnapshot: engine.exportState(),
