@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3001;
 const wss = new WebSocketServer({ port: PORT });
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
-let globalState = { teams: [], matches: [], leagues: [] };
+let globalState = { users: [], teams: [], matches: [], leagues: [] };
 
 // Try to load existing data on startup
 try {
@@ -29,6 +29,8 @@ function saveState() {
 
 function reducer(state, action) {
   switch (action.type) {
+    case 'ADD_USER': return { ...state, users: [...(state.users || []), action.payload] };
+    case 'UPDATE_USER': return { ...state, users: (state.users || []).map(u => u.id === action.payload.id ? action.payload : u) };
     case 'ADD_LEAGUE': return { ...state, leagues: [...(state.leagues || []), action.payload] };
     case 'UPDATE_LEAGUE': return { ...state, leagues: (state.leagues || []).map(l => l.id === action.payload.id ? action.payload : l) };
     case 'DELETE_LEAGUE': return { ...state, leagues: (state.leagues || []).filter(l => l.id !== action.payload) };

@@ -63,7 +63,10 @@ function reducer(state: AppState, action: Action): AppState {
     case 'DELETE_MATCH':
       return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
     case 'SET_STATE':
-      return action.payload;
+      return {
+        ...action.payload,
+        users: action.payload.users || state.users || [],
+      };
     default:
       return state;
   }
