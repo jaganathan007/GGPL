@@ -17,6 +17,35 @@ function getPlayerName(teams: Team[], teamId: string, playerId: string): string 
   return team?.players.find(p => p.id === playerId)?.name || 'Unknown';
 }
 
+function getDismissalText(entry: BattingEntry, teams: Team[], bowlingTeamId: string): string {
+  if (entry.isNotOut) return 'not out';
+  if (!entry.dismissalType) return 'out';
+
+  const bowlerName = entry.bowlerId ? getPlayerName(teams, bowlingTeamId, entry.bowlerId) : '';
+  const fielderName = entry.fielderId ? getPlayerName(teams, bowlingTeamId, entry.fielderId) : '';
+
+  switch (entry.dismissalType) {
+    case 'bowled':
+      return `b ${bowlerName}`;
+    case 'caught':
+      if (entry.fielderId && entry.bowlerId && entry.fielderId === entry.bowlerId) {
+        return `c & b ${bowlerName}`;
+      }
+      return `c ${fielderName || 'fielder'} b ${bowlerName}`;
+    case 'lbw':
+      return `lbw b ${bowlerName}`;
+    case 'stumped':
+      return `st ${fielderName || 'keeper'} b ${bowlerName}`;
+    case 'runout':
+      return fielderName ? `run out (${fielderName})` : 'run out';
+    case 'hitwicket':
+      return `hit wicket b ${bowlerName}`;
+    case 'other':
+    default:
+      return 'out';
+  }
+}
+
 function getStrikeRate(runs: number, balls: number): string {
   if (balls === 0) return '0.00';
   return ((runs / balls) * 100).toFixed(1);
@@ -240,14 +269,18 @@ export default function MatchStats({ matchId, onBack }: Props) {
                       return (
                         <tr key={i} className={`border-b border-slate-800/20 ${isBest ? 'bg-emerald-500/5' : ''}`}>
                           <td className="py-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`font-medium ${entry.isNotOut ? 'text-slate-200' : 'text-slate-400'}`}>
-                                {getPlayerName(state.teams, inn.battingTeamId, entry.playerId)}
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-semibold ${entry.isNotOut ? 'text-slate-200' : 'text-slate-400 font-medium'}`}>
+                                  {getPlayerName(state.teams, inn.battingTeamId, entry.playerId)}
+                                </span>
+                                {entry.isNotOut && entry.balls > 0 && <span className="text-emerald-400 text-[9px]">*</span>}
+                                {isBest && <Zap className="w-3 h-3 text-amber-400" />}
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-normal">
+                                {getDismissalText(entry, state.teams, inn.bowlingTeamId)}
                               </span>
-                              {entry.isNotOut && entry.balls > 0 && <span className="text-emerald-400 text-[9px]">*</span>}
-                              {isBest && <Zap className="w-3 h-3 text-amber-400" />}
                             </div>
-                            {!entry.isNotOut && <span className="text-[9px] text-slate-600">out</span>}
                           </td>
                           <td className="text-right py-2 font-bold text-white">{entry.runs}</td>
                           <td className="text-right py-2 text-slate-400">{entry.balls}</td>

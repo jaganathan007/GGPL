@@ -44,6 +44,10 @@ export default function ScoringView({ matchId, onBack }: Props) {
     return match?.innings.length === 0 ? 0 : (match?.innings.length || 1) - 1;
   });
   const [tossWinner, setTossWinner] = useState('');
+  const [showDismissalModal, setShowDismissalModal] = useState(false);
+  const [dismissalType, setDismissalType] = useState<'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other'>('bowled');
+  const [fielderId, setFielderId] = useState('');
+  const [outPlayerId, setOutPlayerId] = useState('');
   const restoredRef = useRef(false);
 
   // ── Restore persisted ENGINE state on mount (must happen in useEffect since it calls setState) ──
@@ -118,6 +122,9 @@ export default function ScoringView({ matchId, onBack }: Props) {
       battingEntries: engine.batters.map(b => ({
         playerId: b.playerId, runs: b.runs, balls: b.balls,
         fours: b.fours, sixes: b.sixes, isNotOut: !b.isOut,
+        dismissalType: b.dismissalType,
+        bowlerId: b.bowlerId,
+        fielderId: b.fielderId,
       })),
       bowlingEntries: engine.bowlers.map(b => ({
         playerId: b.playerId, overs: b.overs + (b.currentOverBalls > 0 ? b.currentOverBalls / 10 : 0),
@@ -490,7 +497,12 @@ export default function ScoringView({ matchId, onBack }: Props) {
             <button onClick={()=>engine.handleRun(6)} className="py-4 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xl font-bold text-amber-400 hover:bg-amber-500/25 active:scale-95 transition-all">6</button>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <button onClick={engine.handleWicket} className="py-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/25 active:scale-95 transition-all">WICKET</button>
+            <button onClick={() => {
+              setDismissalType('bowled');
+              setFielderId('');
+              setOutPlayerId(engine.striker?.playerId || '');
+              setShowDismissalModal(true);
+            }} className="py-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/25 active:scale-95 transition-all">WICKET</button>
             <button onClick={engine.handleWide} className="py-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-sm font-bold text-orange-400 hover:bg-orange-500/20 active:scale-95 transition-all">WIDE</button>
             <button onClick={engine.handleNoBall} className="py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-sm font-bold text-yellow-400 hover:bg-yellow-500/20 active:scale-95 transition-all">NO BALL</button>
           </div>
@@ -521,6 +533,136 @@ export default function ScoringView({ matchId, onBack }: Props) {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showDismissalModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5"
+            >
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-white">How did the batsman get out?</h3>
+                <p className="text-xs text-slate-400 mt-1">Select dismissal details</p>
+              </div>
+
+              {/* Dismissal Types Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { type: 'bowled', label: '🏏 Bowled' },
+                  { type: 'caught', label: '🤲 Caught' },
+                  { type: 'lbw', label: '🦵 LBW' },
+                  { type: 'runout', label: '🏃 Run Out' },
+                  { type: 'stumped', label: '🧤 Stumped' },
+                  { type: 'hitwicket', label: '💥 Hit Wicket' },
+                  { type: 'other', label: '❓ Other' },
+                ].map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => {
+                      setDismissalType(item.type as any);
+                      if (item.type !== 'runout') {
+                        setOutPlayerId(engine.striker?.playerId || '');
+                      }
+                    }}
+                    className={`py-3 px-4 rounded-xl border text-sm font-semibold transition-all ${
+                      dismissalType === item.type
+                        ? 'bg-rose-500/20 border-rose-500 text-rose-400 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                        : 'bg-slate-800/50 border-slate-700/60 text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Who was run out selector (Only for Run Out) */}
+              {dismissalType === 'runout' && (
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-400">
+                    Who was run out?
+                  </label>
+                  <select
+                    value={outPlayerId}
+                    onChange={(e) => setOutPlayerId(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500/50"
+                  >
+                    {engine.striker && (
+                      <option value={engine.striker.playerId}>
+                        {engine.striker.name} (Striker)
+                      </option>
+                    )}
+                    {engine.nonStriker && (
+                      <option value={engine.nonStriker.playerId}>
+                        {engine.nonStriker.name} (Non-Striker)
+                      </option>
+                    )}
+                  </select>
+                </div>
+              )}
+
+              {/* Conditionally show Fielder Dropdown */}
+              {(dismissalType === 'caught' || dismissalType === 'stumped' || dismissalType === 'runout') && (
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-400">
+                    {dismissalType === 'caught' ? 'Caught By (Fielder)' : dismissalType === 'stumped' ? 'Stumped By (Wicketkeeper/Fielder)' : 'Run Out By (Fielder)'}
+                  </label>
+                  <select
+                    value={fielderId}
+                    onChange={(e) => setFielderId(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500/50"
+                  >
+                    <option value="">Select fielder...</option>
+                    {(bowlingTeam?.players || []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Show bowler credit info */}
+              {dismissalType !== 'runout' && dismissalType !== 'other' && engine.currentBowler && (
+                <div className="bg-slate-800/40 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 flex items-center justify-between">
+                  <span>Wicket credited to bowler:</span>
+                  <span className="font-semibold text-white">{engine.currentBowler.name}</span>
+                </div>
+              )}
+
+              {/* Modal Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDismissalModal(false)}
+                  className="flex-1 py-3 bg-slate-800 text-slate-300 font-semibold rounded-xl border border-slate-700 hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bowlerId = (dismissalType !== 'runout' && dismissalType !== 'other') ? engine.currentBowler?.playerId : undefined;
+                    engine.handleWicket({
+                      dismissalType,
+                      bowlerId,
+                      fielderId: fielderId || undefined,
+                      outPlayerId: outPlayerId || undefined,
+                    });
+                    setShowDismissalModal(false);
+                  }}
+                  className="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-xl shadow-lg shadow-rose-900/30 transition-all active:scale-95 text-sm"
+                >
+                  Confirm Wicket
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -36,6 +36,9 @@ export interface BattingEntry {
   fours: number;
   sixes: number;
   isNotOut: boolean;
+  dismissalType?: 'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other';
+  bowlerId?: string;
+  fielderId?: string;
 }
 
 export interface BowlingEntry {

@@ -34,10 +34,11 @@ interface MatchesViewProps {
   onScoreMatch: (matchId: string) => void;
   onViewStats?: (matchId: string) => void;
   isAdmin: boolean;
+  isGlobalAdmin?: boolean;
   currentUserId?: string;
 }
 
-export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, currentUserId }: MatchesViewProps) {
+export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlobalAdmin, currentUserId }: MatchesViewProps) {
   const { state, dispatch } = useApp();
   const { teams, matches, leagues } = state;
   const [showForm, setShowForm] = useState(false);
@@ -315,13 +316,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, curren
                       </div>
                     )}
                   </div>
-                  {currentUserId && (
+                  {(isGlobalAdmin || currentUserId) && (
                     <div className={`mb-4 flex gap-3 text-xs bg-slate-950/50 p-2 rounded-lg border border-slate-800/60`}>
-                      <div className={`flex-1 text-center ${currentUserId && match.ownerId === currentUserId ? 'border-r border-slate-800/60' : ''}`}>
+                      <div className={`flex-1 text-center ${(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) ? 'border-r border-slate-800/60' : ''}`}>
                         <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Viewer Code</p>
                         <p className="text-emerald-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
                       </div>
-                      {currentUserId && match.ownerId === currentUserId && (
+                      {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
                         <div className="flex-1 text-center">
                           <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Scorer Code</p>
                           <p className="text-amber-400 font-mono tracking-wider font-bold">{match.adminCode}</p>
@@ -358,8 +359,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, curren
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {/* Resume Scoring - only for match owner on live matches */}
-                    {currentUserId && match.ownerId === currentUserId && !match.isComplete && (
+                    {/* Resume Scoring - only for match owner or global admin on live matches */}
+                    {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && !match.isComplete && (
                       <button
                         onClick={() => onScoreMatch(match.id)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-500/15 text-emerald-400 text-sm font-semibold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20"
@@ -375,7 +376,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, curren
                         <BarChart3 className="w-3.5 h-3.5" /> {isAdmin ? '' : 'View'} Stats
                       </button>
                     )}
-                    {currentUserId && match.ownerId === currentUserId && (
+                    {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
                       <button
                         onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
                         className="px-3 py-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-lg transition-all"
@@ -428,7 +429,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, curren
                     <div className="flex items-center gap-2">
                       <p className="text-[11px] text-emerald-400/80 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
                       <Eye className="w-3.5 h-3.5 text-slate-600 group-hover:text-violet-400 transition-colors" />
-                      {currentUserId && match.ownerId === currentUserId && (
+                      {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
                         <button
                           onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_MATCH', payload: match.id }); }}
                           className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-rose-400 transition-all"

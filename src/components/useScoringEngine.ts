@@ -3,6 +3,9 @@ import { useState, useCallback } from 'react';
 export interface BatterState {
   playerId: string; name: string; runs: number; balls: number;
   fours: number; sixes: number; isOut: boolean;
+  dismissalType?: 'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other';
+  bowlerId?: string;
+  fielderId?: string;
 }
 export interface BowlerState {
   playerId: string; name: string; overs: number; maidens: number;
@@ -109,11 +112,38 @@ export function useScoringEngine() {
     }
   }, [phase,strikerIdx,currentBowlerIdx,ballsInOver,oversCompleted,maxOvers,target,totalRuns,striker,currentBowler,rotateStrike]);
 
-  const handleWicket = useCallback(() => {
+  const handleWicket = useCallback((details?: {
+    dismissalType: 'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other';
+    bowlerId?: string;
+    fielderId?: string;
+    outPlayerId?: string;
+  }) => {
     if (phase !== 'batting') return;
-    setBatters(prev => prev.map((b,i) => i===strikerIdx ? {...b, isOut:true, balls:b.balls+1} : b));
+    
+    const outPlayerId = details?.outPlayerId || striker?.playerId;
+    
+    setBatters(prev => prev.map((b,i) => {
+      const isThisOut = b.playerId === outPlayerId;
+      const isStriker = i === strikerIdx;
+      return {
+        ...b,
+        isOut: isThisOut ? true : b.isOut,
+        balls: isStriker ? b.balls + 1 : b.balls,
+        dismissalType: isThisOut ? details?.dismissalType : b.dismissalType,
+        bowlerId: isThisOut ? details?.bowlerId : b.bowlerId,
+        fielderId: isThisOut ? details?.fielderId : b.fielderId
+      };
+    }));
+
+    const isBowlerWicket = !details || (details.dismissalType !== 'runout' && details.dismissalType !== 'other');
+
     setBowlers(prev => prev.map((b,i) => i===currentBowlerIdx
-      ? {...b, wickets:b.wickets+1, runs:b.runs, currentOverBalls:b.currentOverBalls+1}
+      ? {
+          ...b,
+          wickets: isBowlerWicket ? b.wickets + 1 : b.wickets,
+          runs: b.runs,
+          currentOverBalls: b.currentOverBalls + 1
+        }
       : b));
     const newBalls = ballsInOver + 1;
     setBallsInOver(newBalls);
@@ -153,17 +183,24 @@ export function useScoringEngine() {
     const newBatter: BatterState = {playerId:p.id,name:p.name,runs:0,balls:0,fours:0,sixes:0,isOut:false};
     setBatters(prev => {
       const next = [...prev, newBatter];
-      setStrikerIdx(next.length - 1);
+      const newIndex = next.length - 1;
+      if (prev[strikerIdx]?.isOut) {
+        setStrikerIdx(newIndex);
+      } else if (prev[nonStrikerIdx]?.isOut) {
+        setNonStrikerIdx(newIndex);
+      } else {
+        setStrikerIdx(newIndex);
+      }
       return next;
     });
     if (oversCompleted >= maxOvers) {
       setPhase('innings_end');
-    } else if (ballsInOver === 0 && oversCompleted > 0 && batters.filter(b=>!b.isOut).length > 0) {
+    } else if (ballsInOver === 0 && oversCompleted > 0) {
       setPhase('over_end');
     } else {
       setPhase('batting');
     }
-  }, [ballsInOver, oversCompleted, maxOvers, batters]);
+  }, [ballsInOver, oversCompleted, maxOvers, strikerIdx, nonStrikerIdx]);
 
   const selectNewBowler = useCallback((p: {id:string,name:string}) => {
     const existingIdx = bowlers.findIndex(b => b.playerId === p.id);

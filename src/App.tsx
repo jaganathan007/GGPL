@@ -153,7 +153,7 @@ export default function App() {
           </div>
         </header>
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <LeaguesView isAdmin={isLoggedIn} focusLeagueId={viewingLeagueId} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
+          <LeaguesView isAdmin={isLoggedIn} isGlobalAdmin={isAdmin} focusLeagueId={viewingLeagueId} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
         </main>
       </div>
     );
@@ -263,12 +263,12 @@ export default function App() {
               )}
               {view === 'matches' && (
                 <motion.div key="matches" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} currentUserId={currentUserId || undefined} />
+                  <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isAdmin} isGlobalAdmin={isAdmin} currentUserId={currentUserId || undefined} />
                 </motion.div>
               )}
               {view === 'leagues' && (
                 <motion.div key="leagues" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <LeaguesView isAdmin={isAdmin} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
+                  <LeaguesView isAdmin={isAdmin} isGlobalAdmin={isAdmin} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -367,7 +367,7 @@ export default function App() {
                 )}
               </div>
               <div>
-                <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isLoggedIn} currentUserId={currentUserId || undefined} />
+                <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isLoggedIn} isGlobalAdmin={isAdmin} currentUserId={currentUserId || undefined} />
               </div>
             </>
           ) : (
@@ -391,14 +391,14 @@ export default function App() {
               <AnimatePresence>
                 {showLeagueCreate && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                    <LeaguesView isAdmin={true} inlineCreate onDone={() => setShowLeagueCreate(false)}
+                    <LeaguesView isAdmin={true} isGlobalAdmin={isAdmin} inlineCreate onDone={() => setShowLeagueCreate(false)}
                       onStartMatch={(code) => { setShowLeagueCreate(false); setScorerLeagueCode(code); setShowScorerCreate(true); }}
                       currentUserId={currentUserId || undefined} />
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <LeaguesView isAdmin={isLoggedIn} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
+              <LeaguesView isAdmin={isLoggedIn} isGlobalAdmin={isAdmin} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
             </>
           )}
         </main>

@@ -34,6 +34,7 @@ function getPlayerName(allTeams: Team[], teamId: string, playerId: string): stri
 
 interface Props {
   isAdmin: boolean;
+  isGlobalAdmin?: boolean;
   focusLeagueId?: string;
   inlineCreate?: boolean;
   onDone?: () => void;
@@ -47,7 +48,7 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId, onMatchCreated, onScoreMatch }: Props) {
+export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId, onMatchCreated, onScoreMatch }: Props) {
   const { state, dispatch } = useApp();
   const { leagues, matches, teams } = state;
   const [showForm, setShowForm] = useState(!!inlineCreate);
@@ -311,7 +312,7 @@ export default function LeaguesView({ isAdmin, focusLeagueId, inlineCreate, onDo
           const leagueTeams = teams.filter(t => t.leagueId === league.id);
           const leagueMatches = matches.filter(m => m.leagueCode === league.code);
           const isExpanded = expandedLeague === league.id || !!focusLeagueId;
-          const isOwner = !!currentUserId && league.ownerId === currentUserId;
+          const isOwner = (!!currentUserId && league.ownerId === currentUserId) || !!isGlobalAdmin;
 
           // Compute Points Table
           const ptMap = new Map<string, { id: string; name: string; short: string; color: string; M: number; W: number; L: number; T: number; Pts: number }>();
