@@ -38,6 +38,11 @@ interface MatchesViewProps {
   currentUserId?: string;
 }
 
+const TEAM_COLORS = [
+  '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444',
+  '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1',
+];
+
 export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlobalAdmin, currentUserId }: MatchesViewProps) {
   const { state, dispatch } = useApp();
   const { teams, matches, leagues } = state;
@@ -45,6 +50,10 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
+  const [customTeam1Name, setCustomTeam1Name] = useState('');
+  const [customTeam2Name, setCustomTeam2Name] = useState('');
+  const [isCreatingTeam1, setIsCreatingTeam1] = useState(teams.length < 2);
+  const [isCreatingTeam2, setIsCreatingTeam2] = useState(teams.length < 2);
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
@@ -54,6 +63,10 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
   function resetForm() {
     setTeam1Id('');
     setTeam2Id('');
+    setCustomTeam1Name('');
+    setCustomTeam2Name('');
+    setIsCreatingTeam1(teams.length < 2);
+    setIsCreatingTeam2(teams.length < 2);
     setVenue('');
     setDate(new Date().toISOString().slice(0, 10));
     setTotalOvers(10);
@@ -65,19 +78,68 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
 
   function handleNextStep(e: React.FormEvent) {
     e.preventDefault();
-    if (!team1Id || !team2Id || team1Id === team2Id) return;
+    const t1 = isCreatingTeam1 ? customTeam1Name.trim() : team1Id;
+    const t2 = isCreatingTeam2 ? customTeam2Name.trim() : team2Id;
+    if (!t1 || !t2 || t1 === t2) return;
     setFormStep(2);
   }
 
   function handleCreateMatch() {
-    if (!team1Id || !team2Id || team1Id === team2Id || !tossWinner || !tossDecision) return;
+    const t1 = isCreatingTeam1 ? customTeam1Name.trim() : team1Id;
+    const t2 = isCreatingTeam2 ? customTeam2Name.trim() : team2Id;
+    if (!t1 || !t2 || t1 === t2 || !tossWinner || !tossDecision) return;
+
+    let finalTeam1Id = team1Id;
+    let finalTeam2Id = team2Id;
+
+    if (isCreatingTeam1) {
+      const newId = uid();
+      dispatch({
+        type: 'ADD_TEAM',
+        payload: {
+          id: newId,
+          name: customTeam1Name.trim(),
+          shortName: customTeam1Name.trim().slice(0, 4).toUpperCase(),
+          color: TEAM_COLORS[Math.floor(Math.random() * TEAM_COLORS.length)],
+          players: [],
+        }
+      });
+      finalTeam1Id = newId;
+    }
+
+    if (isCreatingTeam2) {
+      const newId = uid();
+      dispatch({
+        type: 'ADD_TEAM',
+        payload: {
+          id: newId,
+          name: customTeam2Name.trim(),
+          shortName: customTeam2Name.trim().slice(0, 4).toUpperCase(),
+          color: TEAM_COLORS[Math.floor(Math.random() * TEAM_COLORS.length)],
+          players: [],
+        }
+      });
+      finalTeam2Id = newId;
+    }
+
+    let finalTossWinner = tossWinner;
+    if (tossWinner === 'team1') {
+      finalTossWinner = finalTeam1Id;
+    } else if (tossWinner === 'team2') {
+      finalTossWinner = finalTeam2Id;
+    } else if (tossWinner === team1Id) {
+      finalTossWinner = finalTeam1Id;
+    } else if (tossWinner === team2Id) {
+      finalTossWinner = finalTeam2Id;
+    }
+
     const match: Match = {
       id: uid(),
       viewerCode: generateOTP(),
       adminCode: generateOTP(),
-      team1Id,
-      team2Id,
-      toss: { winnerId: tossWinner, decision: tossDecision as 'bat'|'bowl' },
+      team1Id: finalTeam1Id,
+      team2Id: finalTeam2Id,
+      toss: { winnerId: finalTossWinner, decision: tossDecision as 'bat'|'bowl' },
       date,
       venue: venue.trim() || 'TBD',
       totalOvers,
@@ -103,19 +165,12 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
         {isAdmin && (
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            disabled={teams.length < 2}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" /> New Match
           </button>
         )}
       </div>
-
-      {isAdmin && teams.length < 2 && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-300/80">
-          You need at least 2 teams to create a match.
-        </div>
-      )}
 
       {/* Match Form */}
       <AnimatePresence>
@@ -140,32 +195,84 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1 font-medium">Team 1</label>
-                    <select
-                      value={team1Id}
-                      onChange={e => setTeam1Id(e.target.value)}
-                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                      required
-                    >
-                      <option value="">Select team...</option>
-                      {teams.filter(t => t.id !== team2Id).map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs text-slate-400 font-medium">Team 1</label>
+                      {teams.length >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCreatingTeam1(!isCreatingTeam1);
+                            setTeam1Id('');
+                            setCustomTeam1Name('');
+                          }}
+                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
+                        >
+                          {isCreatingTeam1 ? 'Select Existing' : 'Create Custom'}
+                        </button>
+                      )}
+                    </div>
+                    {isCreatingTeam1 ? (
+                      <input
+                        type="text"
+                        placeholder="Type Team 1 name..."
+                        value={customTeam1Name}
+                        onChange={e => setCustomTeam1Name(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        required
+                      />
+                    ) : (
+                      <select
+                        value={team1Id}
+                        onChange={e => setTeam1Id(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        required
+                      >
+                        <option value="">Select team...</option>
+                        {teams.filter(t => t.id !== team2Id).map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1 font-medium">Team 2</label>
-                    <select
-                      value={team2Id}
-                      onChange={e => setTeam2Id(e.target.value)}
-                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
-                      required
-                    >
-                      <option value="">Select team...</option>
-                      {teams.filter(t => t.id !== team1Id).map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs text-slate-400 font-medium">Team 2</label>
+                      {teams.length >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCreatingTeam2(!isCreatingTeam2);
+                            setTeam2Id('');
+                            setCustomTeam2Name('');
+                          }}
+                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
+                        >
+                          {isCreatingTeam2 ? 'Select Existing' : 'Create Custom'}
+                        </button>
+                      )}
+                    </div>
+                    {isCreatingTeam2 ? (
+                      <input
+                        type="text"
+                        placeholder="Type Team 2 name..."
+                        value={customTeam2Name}
+                        onChange={e => setCustomTeam2Name(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        required
+                      />
+                    ) : (
+                      <select
+                        value={team2Id}
+                        onChange={e => setTeam2Id(e.target.value)}
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        required
+                      >
+                        <option value="">Select team...</option>
+                        {teams.filter(t => t.id !== team1Id).map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -206,7 +313,11 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    disabled={!team1Id || !team2Id}
+                    disabled={
+                      (isCreatingTeam1 ? !customTeam1Name.trim() : !team1Id) ||
+                      (isCreatingTeam2 ? !customTeam2Name.trim() : !team2Id) ||
+                      (isCreatingTeam1 ? customTeam1Name.trim() : team1Id) === (isCreatingTeam2 ? customTeam2Name.trim() : team2Id)
+                    }
                     className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next: Toss <Play className="w-3.5 h-3.5 fill-current" />
@@ -218,19 +329,28 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                 <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/50">
                   <p className="text-center text-sm font-medium text-slate-300 mb-3">Who won the toss?</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {[team1Id, team2Id].map(tId => {
-                      const t = teams.find(x => x.id === tId);
-                      return (
-                        <button
-                          key={tId}
-                          type="button"
-                          onClick={() => setTossWinner(tId)}
-                          className={`py-3 rounded-xl border transition-all ${tossWinner === tId ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
-                        >
-                          {t?.name}
-                        </button>
-                      );
-                    })}
+                    <button
+                      type="button"
+                      onClick={() => setTossWinner(isCreatingTeam1 ? 'team1' : team1Id)}
+                      className={`py-3 rounded-xl border transition-all truncate px-2 ${
+                        tossWinner === (isCreatingTeam1 ? 'team1' : team1Id)
+                          ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                          : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                      }`}
+                    >
+                      {isCreatingTeam1 ? customTeam1Name || 'Team 1' : teams.find(x => x.id === team1Id)?.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTossWinner(isCreatingTeam2 ? 'team2' : team2Id)}
+                      className={`py-3 rounded-xl border transition-all truncate px-2 ${
+                        tossWinner === (isCreatingTeam2 ? 'team2' : team2Id)
+                          ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                          : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                      }`}
+                    >
+                      {isCreatingTeam2 ? customTeam2Name || 'Team 2' : teams.find(x => x.id === team2Id)?.name}
+                    </button>
                   </div>
 
                   <AnimatePresence>
