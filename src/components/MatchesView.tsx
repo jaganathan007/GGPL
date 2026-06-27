@@ -59,6 +59,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
   const [totalOvers, setTotalOvers] = useState(10);
   const [tossWinner, setTossWinner] = useState('');
   const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
+  const [createdMatch, setCreatedMatch] = useState<Match | null>(null);
 
   function resetForm() {
     setTeam1Id('');
@@ -74,6 +75,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
     setTossDecision('');
     setFormStep(1);
     setShowForm(false);
+    setCreatedMatch(null);
   }
 
   function handleNextStep(e: React.FormEvent) {
@@ -149,7 +151,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
       ownerId: currentUserId,
     };
     dispatch({ type: 'ADD_MATCH', payload: match });
-    resetForm();
+    setCreatedMatch(match);
   }
 
   const liveMatches = matches.filter(m => !m.isComplete);
@@ -183,16 +185,53 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
             onSubmit={(e) => e.preventDefault()}
             className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 overflow-hidden"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-200">
-                {formStep === 1 ? 'New Match Details' : 'Match Toss'}
+                {createdMatch ? 'Match Created Successfully' : formStep === 1 ? 'New Match Details' : 'Match Toss'}
               </h3>
               <button type="button" onClick={resetForm} className="text-slate-500 hover:text-slate-300 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {formStep === 1 ? (
+            {createdMatch ? (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                    <Check className="w-4 h-4 text-emerald-400" /> Match Setup Complete!
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                      <div className="text-slate-500 text-[9px] font-sans font-bold uppercase tracking-wider mb-1">Viewer Code</div>
+                      <div className="text-emerald-400 font-bold text-sm tracking-wider">{createdMatch.viewerCode}</div>
+                    </div>
+                    <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                      <div className="text-slate-500 text-[9px] font-sans font-bold uppercase tracking-wider mb-1">Scorer Code</div>
+                      <div className="text-amber-400 font-bold text-sm tracking-wider">{createdMatch.adminCode}</div>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Give the Scorer Code to the person scoring the match. They can enter it in the search box to start scoring.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button type="button" onClick={resetForm} className="px-4 py-2 text-sm bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors">
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const mId = createdMatch.id;
+                      resetForm();
+                      onScoreMatch(mId);
+                    }}
+                    className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors"
+                  >
+                    Start Scoring <Play className="w-3.5 h-3.5 fill-current" />
+                  </button>
+                </div>
+              </motion.div>
+            ) : formStep === 1 ? (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -439,11 +478,11 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   </div>
                   {(isGlobalAdmin || currentUserId) && (
                     <div className={`mb-4 flex gap-3 text-xs bg-slate-950/50 p-2 rounded-lg border border-slate-800/60`}>
-                      <div className={`flex-1 text-center ${(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) ? 'border-r border-slate-800/60' : ''}`}>
+                      <div className={`flex-1 text-center ${(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) ? 'border-r border-slate-800/60' : ''}`}>
                         <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Viewer Code</p>
                         <p className="text-emerald-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
                       </div>
-                      {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
+                      {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
                         <div className="flex-1 text-center">
                           <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Scorer Code</p>
                           <p className="text-amber-400 font-mono tracking-wider font-bold">{match.adminCode}</p>
