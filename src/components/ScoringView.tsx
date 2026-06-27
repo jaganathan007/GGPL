@@ -5,6 +5,10 @@ import { useApp } from '../store';
 import { useScoringEngine, type EngineSnapshot } from './useScoringEngine';
 import type { Match, Innings } from '../types';
 
+function uid(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
 const SCORING_STORAGE_PREFIX = 'ggpl-scoring-';
 
 interface ScoringPersistence {
@@ -48,6 +52,10 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const [dismissalType, setDismissalType] = useState<'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other'>('bowled');
   const [fielderId, setFielderId] = useState('');
   const [outPlayerId, setOutPlayerId] = useState('');
+  const [newBattingPlayerName, setNewBattingPlayerName] = useState('');
+  const [newBowlingPlayerName, setNewBowlingPlayerName] = useState('');
+  const [newWicketBatterName, setNewWicketBatterName] = useState('');
+  const [newOverBowlerName, setNewOverBowlerName] = useState('');
   const restoredRef = useRef(false);
 
   // ── Restore persisted ENGINE state on mount (must happen in useEffect since it calls setState) ──
@@ -112,6 +120,61 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const battedIds = engine.batters.map(b => b.playerId);
   const availableBatters = (battingTeam?.players || []).filter(p => !battedIds.includes(p.id));
   const allBowlers = bowlingTeam?.players || [];
+
+  function handleAddPlayer(isBattingTeam: boolean) {
+    const name = (isBattingTeam ? newBattingPlayerName : newBowlingPlayerName).trim();
+    if (!name) return;
+
+    const targetTeam = isBattingTeam ? battingTeam : bowlingTeam;
+    if (!targetTeam) return;
+
+    const newPlayer = {
+      id: uid(),
+      name,
+    };
+
+    const updatedTeam = {
+      ...targetTeam,
+      players: [...(targetTeam.players || []), newPlayer],
+    };
+
+    dispatch({ type: 'UPDATE_TEAM', payload: updatedTeam });
+
+    if (isBattingTeam) {
+      setNewBattingPlayerName('');
+      if (!strikerId) setStrikerId(newPlayer.id);
+      else if (!nonStrikerId) setNonStrikerId(newPlayer.id);
+    } else {
+      setNewBowlingPlayerName('');
+      if (!bowlerId) setBowlerId(newPlayer.id);
+    }
+  }
+
+  function handleAddPlayerWicket() {
+    const name = newWicketBatterName.trim();
+    if (!name || !battingTeam) return;
+    const newPlayer = { id: uid(), name };
+    const updatedTeam = {
+      ...battingTeam,
+      players: [...(battingTeam.players || []), newPlayer],
+    };
+    dispatch({ type: 'UPDATE_TEAM', payload: updatedTeam });
+    setNewWicketBatterName('');
+    engine.selectNewBatter({ id: newPlayer.id, name: newPlayer.name });
+  }
+
+  function handleAddPlayerOver() {
+    const name = newOverBowlerName.trim();
+    if (!name || !bowlingTeam) return;
+    const newPlayer = { id: uid(), name };
+    const updatedTeam = {
+      ...bowlingTeam,
+      players: [...(bowlingTeam.players || []), newPlayer],
+    };
+    dispatch({ type: 'UPDATE_TEAM', payload: updatedTeam });
+    setNewOverBowlerName('');
+    engine.selectNewBowler({ id: newPlayer.id, name: newPlayer.name });
+  }
 
   // Sync engine state to match store
   useEffect(() => {
@@ -293,6 +356,51 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 {allBowlers.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
+
+            {/* Quick Player Addition */}
+            <div className="pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Add Batter to {battingTeam?.shortName}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="New batter name..."
+                    value={newBattingPlayerName}
+                    onChange={e => setNewBattingPlayerName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer(true); }}
+                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddPlayer(true)}
+                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Add Bowler to {bowlingTeam?.shortName}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="New bowler name..."
+                    value={newBowlingPlayerName}
+                    onChange={e => setNewBowlingPlayerName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer(false); }}
+                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddPlayer(false)}
+                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <button onClick={doStartInnings} disabled={!strikerId||!nonStrikerId||!bowlerId}
               className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all disabled:opacity-30 disabled:pointer-events-none text-sm">
               Start Innings
@@ -318,8 +426,8 @@ export default function ScoringView({ matchId, onBack }: Props) {
             </div>
             {canContinue ? (
               <>
-                <p className="text-xs text-slate-300 font-medium">Select next batter:</p>
-                <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-medium mb-1.5">Select next batter:</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {availableBatters.map(p => (
                     <button key={p.id} onClick={() => engine.selectNewBatter({id:p.id,name:p.name})}
                       className="w-full py-2.5 px-4 bg-slate-800/60 border border-slate-700/50 rounded-lg text-sm text-white hover:border-emerald-500/50 hover:bg-slate-800 transition-all text-left">
@@ -330,7 +438,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
               </>
             ) : (
               <div className="text-center space-y-3">
-                <p className="text-xs text-slate-400">All out! No more batters available.</p>
+                <p className="text-xs text-slate-400 font-sans">All out! No more batters available.</p>
                 {isFirstInnings ? (
                   <button onClick={switchTo2ndInnings} className="px-6 py-2.5 bg-amber-500/15 text-amber-400 rounded-xl text-sm font-semibold hover:bg-amber-500/25 transition-colors">
                     Start 2nd Innings
@@ -342,6 +450,28 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 )}
               </div>
             )}
+
+            {/* Quick Batter Addition inside Wicket Modal */}
+            <div className="pt-3 border-t border-slate-800/80">
+              <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Add Batter Inline</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="New batter name..."
+                  value={newWicketBatterName}
+                  onChange={e => setNewWicketBatterName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddPlayerWicket(); }}
+                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPlayerWicket}
+                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -360,7 +490,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
               <p className="text-violet-400 text-sm font-bold mb-1">Over {engine.oversCompleted} Complete</p>
               <p className="text-xs text-slate-400">Select bowler for next over</p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {allBowlers.filter(p => {
                 const lastBowler = engine.bowlers[engine.lastBowlerIdx];
                 return !lastBowler || p.id !== lastBowler.playerId;
@@ -371,6 +501,28 @@ export default function ScoringView({ matchId, onBack }: Props) {
                   {engine.bowlers.find(b=>b.playerId===p.id) && <span className="text-[10px] text-slate-500">{engine.bowlers.find(b=>b.playerId===p.id)!.overs} ov</span>}
                 </button>
               ))}
+            </div>
+
+            {/* Quick Bowler Addition inside Over End Modal */}
+            <div className="pt-3 border-t border-slate-800/80">
+              <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Add Bowler Inline</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="New bowler name..."
+                  value={newOverBowlerName}
+                  onChange={e => setNewOverBowlerName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddPlayerOver(); }}
+                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddPlayerOver}
+                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
         </div>
