@@ -15,11 +15,15 @@ function uid(): string {
 
 interface TeamsViewProps {
   isAdmin: boolean;
+  currentUserId?: string;
 }
 
-export default function TeamsView({ isAdmin }: TeamsViewProps) {
+export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
   const { state, dispatch } = useApp();
-  const { teams } = state;
+  // Filter teams: show only teams owned by the current user
+  const teams = currentUserId
+    ? state.teams.filter(t => t.ownerId === currentUserId)
+    : state.teams;
   const [showForm, setShowForm] = useState(false);
   const [editTeam, setEditTeam] = useState<Team | null>(null);
   const [name, setName] = useState('');
@@ -50,7 +54,7 @@ export default function TeamsView({ isAdmin }: TeamsViewProps) {
     if (editTeam) {
       dispatch({ type: 'UPDATE_TEAM', payload: { ...editTeam, name: name.trim(), shortName: shortName.trim().toUpperCase(), color } });
     } else {
-      const team: Team = { id: uid(), name: name.trim(), shortName: shortName.trim().toUpperCase(), color, players: [] };
+      const team: Team = { id: uid(), name: name.trim(), shortName: shortName.trim().toUpperCase(), color, players: [], ownerId: currentUserId };
       dispatch({ type: 'ADD_TEAM', payload: team });
     }
     resetForm();
@@ -191,7 +195,7 @@ export default function TeamsView({ isAdmin }: TeamsViewProps) {
                     >
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
-                    {isAdmin && (
+                    {isAdmin && (!team.ownerId || team.ownerId === currentUserId) && (
                       <>
                         <button onClick={() => openEdit(team)} className="p-2 text-slate-500 hover:text-blue-400 hover:bg-slate-800/50 rounded-lg transition-all" title="Edit">
                           <Edit3 className="w-4 h-4" />

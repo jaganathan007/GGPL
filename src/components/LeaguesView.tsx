@@ -50,7 +50,12 @@ function generateOTP(): string {
 
 export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inlineCreate, onDone, onStartMatch, currentUserId, onMatchCreated, onScoreMatch }: Props) {
   const { state, dispatch } = useApp();
-  const { leagues, matches, teams } = state;
+  const { leagues, matches } = state;
+  // allTeams = every team (for displaying match info); myTeams = only current user's teams (for selection)
+  const allTeams = state.teams;
+  const myTeams = currentUserId
+    ? allTeams.filter(t => t.ownerId === currentUserId)
+    : allTeams;
   const [showForm, setShowForm] = useState(!!inlineCreate);
   const [name, setName] = useState('');
   const [expandedLeague, setExpandedLeague] = useState<string | null>(focusLeagueId || null);
@@ -102,6 +107,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
       color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
       players: [],
       leagueId,
+      ownerId: currentUserId,
     };
     dispatch({ type: 'ADD_TEAM', payload: team });
     setNewTeamName('');
@@ -111,7 +117,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
   function handleAddPlayer(teamId: string) {
     if (!newPlayerName.trim()) return;
-    const team = teams.find(t => t.id === teamId);
+    const team = allTeams.find(t => t.id === teamId);
     if (!team) return;
     const updated = { ...team, players: [...team.players, { id: uid(), name: newPlayerName.trim() }] };
     dispatch({ type: 'UPDATE_TEAM', payload: updated });
@@ -129,7 +135,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
   function handleCreateLeagueMatch(leagueId: string) {
     const league = (leagues || []).find(l => l.id === leagueId);
     if (!league) return;
-    const leagueTeams = teams.filter(t => t.leagueId === leagueId);
+    const leagueTeams = myTeams.filter(t => t.leagueId === leagueId);
 
     const t1Id = matchTeam1Id;
     const t2Id = matchTeam2Id;
@@ -168,7 +174,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
   // Inline create mode: just show create form + result
   if (inlineCreate) {
-    const inlineLeagueTeams = createdLeagueId ? teams.filter(t => t.leagueId === createdLeagueId) : [];
+    const inlineLeagueTeams = createdLeagueId ? myTeams.filter(t => t.leagueId === createdLeagueId) : [];
     return (
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-lg relative max-w-xl mx-auto">
         <button onClick={onDone} className="absolute top-4 right-4 text-slate-500 hover:text-slate-300"><X className="w-5 h-5" /></button>
@@ -309,7 +315,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
       <div className="space-y-6">
         {visibleLeagues.map(league => {
-          const leagueTeams = teams.filter(t => t.leagueId === league.id);
+          const leagueTeams = myTeams.filter(t => t.leagueId === league.id);
           const leagueMatches = matches.filter(m => m.leagueCode === league.code);
           const isExpanded = expandedLeague === league.id || !!focusLeagueId;
           const isOwner = (!!currentUserId && league.ownerId === currentUserId) || !!isGlobalAdmin;
@@ -320,8 +326,8 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
           leagueMatches.forEach(m => {
             if (!m.isComplete) return;
-            const t1 = teams.find(t => t.id === m.team1Id);
-            const t2 = teams.find(t => t.id === m.team2Id);
+            const t1 = allTeams.find(t => t.id === m.team1Id);
+            const t2 = allTeams.find(t => t.id === m.team2Id);
             if (t1 && !ptMap.has(t1.id)) ptMap.set(t1.id, { id: t1.id, name: t1.name, short: t1.shortName, color: t1.color, M: 0, W: 0, L: 0, T: 0, Pts: 0 });
             if (t2 && !ptMap.has(t2.id)) ptMap.set(t2.id, { id: t2.id, name: t2.name, short: t2.shortName, color: t2.color, M: 0, W: 0, L: 0, T: 0, Pts: 0 });
             const s1 = ptMap.get(m.team1Id); const s2 = ptMap.get(m.team2Id);
@@ -751,8 +757,8 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                         {leagueMatches.length > 0 ? (
                           <div className="space-y-3">
                             {leagueMatches.map(m => {
-                              const t1 = teams.find(t => t.id === m.team1Id);
-                              const t2 = teams.find(t => t.id === m.team2Id);
+                              const t1 = allTeams.find(t => t.id === m.team1Id);
+                              const t2 = allTeams.find(t => t.id === m.team2Id);
                               return (
                                 <div key={m.id} className={`bg-slate-900/50 border rounded-xl p-4 ${m.isComplete ? 'border-slate-800/40' : 'border-emerald-500/20'}`}>
                                   <div className="flex items-center justify-between mb-2">
@@ -808,8 +814,8 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                         leagueMatches.forEach(m => {
                           m.innings.forEach(inn => {
                             inn.battingEntries.forEach(e => {
-                              const pName = getPlayerName(teams, inn.battingTeamId, e.playerId);
-                              const tm = teams.find(t => t.id === inn.battingTeamId);
+                              const pName = getPlayerName(allTeams, inn.battingTeamId, e.playerId);
+                              const tm = allTeams.find(t => t.id === inn.battingTeamId);
                               const prev = batMap.get(e.playerId) || {name:pName,team:tm?.shortName||'',color:tm?.color||'#10b981',M:0,Inn:0,R:0,B:0,HS:0,fours:0,sixes:0,notOuts:0};
                               prev.Inn++; prev.R += e.runs; prev.B += e.balls; prev.fours += e.fours; prev.sixes += e.sixes;
                               if (e.isNotOut) prev.notOuts++;
@@ -817,8 +823,8 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                               batMap.set(e.playerId, prev);
                             });
                             inn.bowlingEntries.forEach(e => {
-                              const pName = getPlayerName(teams, inn.bowlingTeamId, e.playerId);
-                              const tm = teams.find(t => t.id === inn.bowlingTeamId);
+                              const pName = getPlayerName(allTeams, inn.bowlingTeamId, e.playerId);
+                              const tm = allTeams.find(t => t.id === inn.bowlingTeamId);
                               const prev = bowlMap.get(e.playerId) || {name:pName,team:tm?.shortName||'',color:tm?.color||'#10b981',M:0,Inn:0,O:0,Md:0,R:0,W:0,bestW:0,bestR:999};
                               prev.Inn++; prev.O += e.overs; prev.Md += e.maidens; prev.R += e.runsConceded; prev.W += e.wickets;
                               if (e.wickets > prev.bestW || (e.wickets === prev.bestW && e.runsConceded < prev.bestR)) { prev.bestW = e.wickets; prev.bestR = e.runsConceded; }

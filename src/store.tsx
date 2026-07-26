@@ -62,14 +62,52 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, matches: state.matches.map(m => m.id === action.payload.id ? action.payload : m) };
     case 'DELETE_MATCH':
       return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
-    case 'SET_STATE':
-      return {
+    case 'SET_STATE': {
+      const incoming = {
         ...action.payload,
         users: action.payload.users || state.users || [],
       };
+      return migrateTeamOwnership(incoming);
+    }
     default:
       return state;
   }
+}
+
+/**
+ * Migrate legacy teams: assign ownerId to teams that don't have one.
+ * Infer ownership from matches that reference the team.
+ */
+function migrateTeamOwnership(state: AppState): AppState {
+  const hasOrphan = state.teams.some(t => !t.ownerId);
+  if (!hasOrphan) return state;
+
+  // Build a map: teamId -> ownerId from matches
+  const teamOwnerMap: Record<string, string> = {};
+  for (const match of state.matches) {
+    if (match.ownerId) {
+      if (!teamOwnerMap[match.team1Id]) teamOwnerMap[match.team1Id] = match.ownerId;
+      if (!teamOwnerMap[match.team2Id]) teamOwnerMap[match.team2Id] = match.ownerId;
+    }
+  }
+  // Also infer from league ownership
+  const leagueOwnerMap: Record<string, string> = {};
+  for (const league of (state.leagues || [])) {
+    if (league.ownerId) leagueOwnerMap[league.id] = league.ownerId;
+  }
+
+  return {
+    ...state,
+    teams: state.teams.map(t => {
+      if (t.ownerId) return t;
+      // Try to infer from match ownership
+      const fromMatch = teamOwnerMap[t.id];
+      if (fromMatch) return { ...t, ownerId: fromMatch };
+      // Try to infer from league ownership
+      if (t.leagueId && leagueOwnerMap[t.leagueId]) return { ...t, ownerId: leagueOwnerMap[t.leagueId] };
+      return t;
+    }),
+  };
 }
 
 const AppContext = createContext<{ state: AppState; dispatch: Dispatch<Action> }>({
@@ -81,7 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState, () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved) as AppState;
+      if (saved) return migrateTeamOwnership(JSON.parse(saved) as AppState);
     } catch { /* ignore */ }
     return initialState;
   });

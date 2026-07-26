@@ -45,15 +45,20 @@ const TEAM_COLORS = [
 
 export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlobalAdmin, currentUserId }: MatchesViewProps) {
   const { state, dispatch } = useApp();
-  const { teams, matches, leagues } = state;
+  const { matches, leagues } = state;
+  // Filter teams by owner: only show teams created by the current user
+  const allTeams = state.teams;
+  const myTeams = currentUserId
+    ? allTeams.filter(t => t.ownerId === currentUserId)
+    : allTeams;
   const [showForm, setShowForm] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [team1Id, setTeam1Id] = useState('');
   const [team2Id, setTeam2Id] = useState('');
   const [customTeam1Name, setCustomTeam1Name] = useState('');
   const [customTeam2Name, setCustomTeam2Name] = useState('');
-  const [isCreatingTeam1, setIsCreatingTeam1] = useState(teams.length < 2);
-  const [isCreatingTeam2, setIsCreatingTeam2] = useState(teams.length < 2);
+  const [isCreatingTeam1, setIsCreatingTeam1] = useState(myTeams.length < 2);
+  const [isCreatingTeam2, setIsCreatingTeam2] = useState(myTeams.length < 2);
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [totalOvers, setTotalOvers] = useState(10);
@@ -66,8 +71,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
     setTeam2Id('');
     setCustomTeam1Name('');
     setCustomTeam2Name('');
-    setIsCreatingTeam1(teams.length < 2);
-    setIsCreatingTeam2(teams.length < 2);
+    setIsCreatingTeam1(myTeams.length < 2);
+    setIsCreatingTeam2(myTeams.length < 2);
     setVenue('');
     setDate(new Date().toISOString().slice(0, 10));
     setTotalOvers(10);
@@ -104,6 +109,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           shortName: customTeam1Name.trim().slice(0, 4).toUpperCase(),
           color: TEAM_COLORS[Math.floor(Math.random() * TEAM_COLORS.length)],
           players: [],
+          ownerId: currentUserId,
         }
       });
       finalTeam1Id = newId;
@@ -119,6 +125,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           shortName: customTeam2Name.trim().slice(0, 4).toUpperCase(),
           color: TEAM_COLORS[Math.floor(Math.random() * TEAM_COLORS.length)],
           players: [],
+          ownerId: currentUserId,
         }
       });
       finalTeam2Id = newId;
@@ -237,7 +244,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs text-slate-400 font-medium">Team 1</label>
-                      {teams.length >= 2 && (
+                      {myTeams.length >= 2 && (
                         <button
                           type="button"
                           onClick={() => {
@@ -268,7 +275,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         required
                       >
                         <option value="">Select team...</option>
-                        {teams.filter(t => t.id !== team2Id).map(t => (
+                        {myTeams.filter(t => t.id !== team2Id).map(t => (
                           <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
                       </select>
@@ -277,7 +284,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs text-slate-400 font-medium">Team 2</label>
-                      {teams.length >= 2 && (
+                      {myTeams.length >= 2 && (
                         <button
                           type="button"
                           onClick={() => {
@@ -308,7 +315,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         required
                       >
                         <option value="">Select team...</option>
-                        {teams.filter(t => t.id !== team1Id).map(t => (
+                        {myTeams.filter(t => t.id !== team1Id).map(t => (
                           <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
                       </select>
@@ -378,7 +385,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                           : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
                       }`}
                     >
-                      {isCreatingTeam1 ? customTeam1Name || 'Team 1' : teams.find(x => x.id === team1Id)?.name}
+                      {isCreatingTeam1 ? customTeam1Name || 'Team 1' : allTeams.find(x => x.id === team1Id)?.name}
                     </button>
                     <button
                       type="button"
@@ -389,7 +396,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                           : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
                       }`}
                     >
-                      {isCreatingTeam2 ? customTeam2Name || 'Team 2' : teams.find(x => x.id === team2Id)?.name}
+                      {isCreatingTeam2 ? customTeam2Name || 'Team 2' : allTeams.find(x => x.id === team2Id)?.name}
                     </button>
                   </div>
 
@@ -449,8 +456,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           </div>
           <div className="space-y-3">
             {liveMatches.map(match => {
-              const t1 = teams.find(t => t.id === match.team1Id);
-              const t2 = teams.find(t => t.id === match.team2Id);
+              const t1 = allTeams.find(t => t.id === match.team1Id);
+              const t2 = allTeams.find(t => t.id === match.team2Id);
               return (
                 <motion.div
                   key={match.id}
@@ -472,7 +479,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     ) : null; })()}
                     {match.toss && (
                       <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400/90 inline-flex items-center gap-1.5 font-medium">
-                        <span className="text-xs">🪙</span> {teams.find(t => t.id === match.toss!.winnerId)?.name} elected to {match.toss!.decision}
+                        <span className="text-xs">🪙</span> {allTeams.find(t => t.id === match.toss!.winnerId)?.name} elected to {match.toss!.decision}
                       </div>
                     )}
                   </div>
@@ -561,8 +568,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           </div>
           <div className="space-y-2">
             {completedMatches.slice().reverse().map(match => {
-              const t1 = teams.find(t => t.id === match.team1Id);
-              const t2 = teams.find(t => t.id === match.team2Id);
+              const t1 = allTeams.find(t => t.id === match.team1Id);
+              const t2 = allTeams.find(t => t.id === match.team2Id);
               return (
                 <div
                   key={match.id}

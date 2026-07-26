@@ -51,7 +51,7 @@ export default function App() {
   const [createdMatch, setCreatedMatch] = useState<any>(null);
   const [viewingLeagueId, setViewingLeagueId] = useState<string | null>(null);
   const [showLeagueCreate, setShowLeagueCreate] = useState(false);
-  const [viewerTab, setViewerTab] = useState<'matches' | 'leagues'>('matches');
+  const [viewerTab, setViewerTab] = useState<'matches' | 'leagues' | 'teams'>('matches');
   const [scorerLeagueCode, setScorerLeagueCode] = useState('');
 
   const isLoggedIn = !!currentUserId;
@@ -253,12 +253,12 @@ export default function App() {
             <AnimatePresence mode="wait">
               {view === 'dashboard' && (
                 <motion.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <Dashboard onNavigate={(v) => setView(v as View)} onScoreMatch={handleScoreMatch} isAdmin={isAdmin} onViewStats={setStatsMatchId} />
+                  <Dashboard onNavigate={(v) => setView(v as View)} onScoreMatch={handleScoreMatch} isAdmin={isAdmin} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />
                 </motion.div>
               )}
               {view === 'teams' && (
                 <motion.div key="teams" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
-                  <TeamsView isAdmin={isAdmin} />
+                  <TeamsView isAdmin={isAdmin} currentUserId={currentUserId || undefined} />
                 </motion.div>
               )}
               {view === 'matches' && (
@@ -347,6 +347,12 @@ export default function App() {
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${viewerTab === 'leagues' ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
               <Trophy className="w-4 h-4" /> Leagues
             </button>
+            {isLoggedIn && (
+              <button onClick={() => setViewerTab('teams')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-all ${viewerTab === 'teams' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-900/30' : 'text-slate-400 hover:text-slate-200'}`}>
+                <Users className="w-4 h-4" /> My Teams
+              </button>
+            )}
           </div>
 
           {viewerTab === 'matches' ? (
@@ -369,6 +375,10 @@ export default function App() {
               <div>
                 <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={isLoggedIn} isGlobalAdmin={isAdmin} currentUserId={currentUserId || undefined} />
               </div>
+            </>
+          ) : viewerTab === 'teams' ? (
+            <>
+              <TeamsView isAdmin={true} currentUserId={currentUserId || undefined} />
             </>
           ) : (
             <>

@@ -63,10 +63,13 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
   const [tossWinner, setTossWinner] = useState<'team1'|'team2'|''>('');
   const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
 
-  // Filtered teams: if league selected, show only that league's teams
-  const availableTeams = linkedLeague
-    ? teams.filter(t => t.leagueId === linkedLeague.id)
+  // Filtered teams: if league selected, show only that league's teams; also filter by owner
+  const ownerFilteredTeams = ownerId
+    ? teams.filter(t => t.ownerId === ownerId)
     : teams;
+  const availableTeams = linkedLeague
+    ? ownerFilteredTeams.filter(t => t.leagueId === linkedLeague.id)
+    : ownerFilteredTeams;
 
   function handleLeagueStep(hasCode: boolean) {
     if (hasCode) {
@@ -111,7 +114,8 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
         color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
         players: addedPlayers1.map(name => ({
           id: uid(), name, role: 'Batsman', battingStyle: 'Right-hand bat', bowlingStyle: 'Right-arm medium'
-        }))
+        })),
+        ownerId,
       };
       dispatch({ type: 'ADD_TEAM', payload: newTeam });
     } else if (addedPlayers1.length > 0) {
@@ -138,7 +142,8 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
         color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`,
         players: addedPlayers2.map(name => ({
           id: uid(), name, role: 'Batsman', battingStyle: 'Right-hand bat', bowlingStyle: 'Right-arm medium'
-        }))
+        })),
+        ownerId,
       };
       dispatch({ type: 'ADD_TEAM', payload: newTeam });
     } else if (addedPlayers2.length > 0) {

@@ -27,6 +27,7 @@ export interface Team {
   color: string;
   players: Player[];
   leagueId?: string;
+  ownerId?: string;
 }
 
 export interface BattingEntry {

@@ -8,6 +8,7 @@ interface DashboardProps {
   onScoreMatch: (matchId: string) => void;
   isAdmin: boolean;
   onViewStats?: (matchId: string) => void;
+  currentUserId?: string;
 }
 
 function getTeam(teams: Team[], id: string): Team | undefined {
@@ -41,9 +42,14 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
 };
 
-export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewStats }: DashboardProps) {
+export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewStats, currentUserId }: DashboardProps) {
   const { state, dispatch } = useApp();
-  const { teams, matches } = state;
+  const { matches } = state;
+  // allTeams for display (match cards), myTeams for user-specific stats
+  const allTeams = state.teams;
+  const teams = currentUserId
+    ? allTeams.filter(t => t.ownerId === currentUserId)
+    : allTeams;
 
   const completedMatches = matches.filter(m => m.isComplete);
   const liveMatches = matches.filter(m => !m.isComplete);
@@ -119,8 +125,8 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
           </div>
           <div className="space-y-3">
             {liveMatches.map(match => {
-              const t1 = getTeam(teams, match.team1Id);
-              const t2 = getTeam(teams, match.team2Id);
+              const t1 = getTeam(allTeams, match.team1Id);
+              const t2 = getTeam(allTeams, match.team2Id);
               return (
                 <div
                   key={match.id}
@@ -184,8 +190,8 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
           </div>
           <div className="space-y-2">
             {completedMatches.slice(-3).reverse().map(match => {
-              const t1 = getTeam(teams, match.team1Id);
-              const t2 = getTeam(teams, match.team2Id);
+              const t1 = getTeam(allTeams, match.team1Id);
+              const t2 = getTeam(allTeams, match.team2Id);
               return (
                 <div
                   key={match.id}
