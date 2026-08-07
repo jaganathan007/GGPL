@@ -8,7 +8,7 @@ export interface User {
   name: string;
   email?: string;
   phone?: string;
-  pinHash: string;
+  passwordHash: string;
   createdAt: string;
 }
 
