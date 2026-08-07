@@ -1,22 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Trophy, X, ShieldCheck, CheckCircle, Send, Loader2 } from 'lucide-react';
-import emailjs from '@emailjs/browser';
 import { useApp } from '../store';
 import type { User as UserType } from '../types';
 
 const SESSION_KEY = 'ggpl-session';
 
-// ─── EmailJS Config ───
-// Set these environment variables in Vercel Dashboard:
-//   VITE_EMAILJS_SERVICE_ID  → your EmailJS Service ID
-//   VITE_EMAILJS_TEMPLATE_ID → your EmailJS Template ID
-//   VITE_EMAILJS_PUBLIC_KEY  → your EmailJS Public Key
-const EMAILJS_SERVICE_ID  = import.meta.env.VITE_EMAILJS_SERVICE_ID  || '';
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
-const EMAILJS_PUBLIC_KEY  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  || '';
-
-const EMAIL_CONFIGURED = !!(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
+// Sends OTP via /api/send-otp (Vercel serverless → Gmail SMTP)
+async function sendOtpEmail(to_email: string, to_name: string, otp_code: string): Promise<{ ok: boolean; demo?: boolean }> {
+  try {
+    const res = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_email, to_name, otp_code }),
+    });
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => ({}));
+    // If server says not configured, fall back to demo
+    if ((data as { error?: string }).error === 'Email service not configured') return { ok: false, demo: true };
+    return { ok: false };
+  } catch {
+    // Network error or API route not deployed yet → demo fallback
+    return { ok: false, demo: true };
+  }
+}
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -112,36 +119,23 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     setError('');
     setSendingOtp(true);
 
-    if (EMAIL_CONFIGURED) {
-      // ── Send real email via EmailJS ──
-      try {
-        await emailjs.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          {
-            to_email:  emailTrimmed,
-            to_name:   existing.name,
-            otp_code:  otp,
-            app_name:  'GGPL Cricket Score Tracker',
-          },
-          EMAILJS_PUBLIC_KEY
-        );
-        setSendingOtp(false);
-        setPhase('forgotOtp');
-        setOtpSentInfo(emailTrimmed);
-      } catch (err) {
-        console.error('EmailJS error:', err);
-        setSendingOtp(false);
-        setError('Failed to send email. Please try again.');
-      }
-    } else {
-      // ── Demo fallback: show code on screen ──
-      setSendingOtp(false);
+    // ── Send real email via /api/send-otp (Gmail SMTP) ──
+    const result = await sendOtpEmail(emailTrimmed, existing.name, otp);
+    setSendingOtp(false);
+
+    if (result.ok) {
+      // Email sent successfully → show success banner
+      setPhase('forgotOtp');
+      setOtpSentInfo(emailTrimmed);
+    } else if (result.demo) {
+      // API not configured yet → demo fallback (show code on screen)
       setPhase('forgotOtp');
       setOtpSentInfo(null);
       setDemoOtpToast(otp);
       if (demoToastTimer.current) clearTimeout(demoToastTimer.current);
       demoToastTimer.current = setTimeout(() => setDemoOtpToast(null), 20000);
+    } else {
+      setError('Failed to send email. Please try again.');
     }
   }
 
@@ -219,6 +213,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
   }
 
   const isForgotPhase = phase === 'forgotOtp' || phase === 'forgotNewPassword';
+  // Show as partially masked e.g. ra****@gmail.com
   const maskedEmail   = email.replace(/(.{2}).+(@.+)/, '$1****$2');
 
   return (
@@ -453,7 +448,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                     <ShieldCheck className="w-7 h-7 text-emerald-400" />
                   </div>
                   <h3 className="text-lg font-bold text-white">Check Your Inbox</h3>
-                  {EMAIL_CONFIGURED ? (
+                  {otpSentInfo ? (
                     <p className="text-sm text-slate-400">
                       We sent a 4-digit verification code to<br />
                       <span className="font-mono font-bold text-emerald-400">{maskedEmail}</span>
