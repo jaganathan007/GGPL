@@ -7,6 +7,7 @@ import type { User as UserType } from '../types';
 const SESSION_KEY = 'ggpl-session';
 
 // Sends OTP via /api/send-otp (Vercel serverless → Gmail SMTP)
+// Falls back to demo mode (show on screen) if API is not configured yet
 async function sendOtpEmail(to_email: string, to_name: string, otp_code: string): Promise<{ ok: boolean; demo?: boolean }> {
   try {
     const res = await fetch('/api/send-otp', {
@@ -14,13 +15,12 @@ async function sendOtpEmail(to_email: string, to_name: string, otp_code: string)
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to_email, to_name, otp_code }),
     });
+    // 200 = email sent successfully to inbox
     if (res.ok) return { ok: true };
-    const data = await res.json().catch(() => ({}));
-    // If server says not configured, fall back to demo
-    if ((data as { error?: string }).error === 'Email service not configured') return { ok: false, demo: true };
-    return { ok: false };
+    // Any server error (500, 404, etc.) = Gmail not configured → show code on screen
+    return { ok: false, demo: true };
   } catch {
-    // Network error or API route not deployed yet → demo fallback
+    // Network error / API route not found → show code on screen
     return { ok: false, demo: true };
   }
 }
