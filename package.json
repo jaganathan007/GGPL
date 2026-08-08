@@ -21,6 +21,7 @@
     "@emailjs/browser": "^4.4.1",
     "@tailwindcss/vite": "^4.2.2",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "nodemailer": "^9.0.5",

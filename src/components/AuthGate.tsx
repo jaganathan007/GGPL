@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Trophy, X, ShieldCheck, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { useApp } from '../store';
@@ -6,22 +7,32 @@ import type { User as UserType } from '../types';
 
 const SESSION_KEY = 'ggpl-session';
 
-// Sends OTP via /api/send-otp (Vercel serverless → Gmail SMTP)
-// Falls back to demo mode (show on screen) if API is not configured yet
-async function sendOtpEmail(to_email: string, to_name: string, otp_code: string): Promise<{ ok: boolean; demo?: boolean }> {
+// ── EmailJS configuration ──────────────────────────────────────────────────
+const EMAILJS_SERVICE_ID  = 'service_w6agefd';
+const EMAILJS_TEMPLATE_ID = 'template_2m5zl23';
+const EMAILJS_PUBLIC_KEY  = 'CBjWh32MQ43qg95kh';
+
+// Sends OTP email via EmailJS (no backend needed)
+async function sendOtpEmail(
+  to_email: string,
+  to_name: string,
+  otp_code: string,
+): Promise<{ ok: boolean }> {
   try {
-    const res = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to_email, to_name, otp_code }),
-    });
-    // 200 = email sent successfully to inbox
-    if (res.ok) return { ok: true };
-    // Any server error (500, 404, etc.) = Gmail not configured → show code on screen
-    return { ok: false, demo: true };
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      {
+        email:    to_email,   // matches {{email}} in template (To Email field)
+        name:     to_name,    // matches {{name}} in template
+        passcode: otp_code,   // matches {{passcode}} in template
+        time:     '10 minutes', // matches {{time}} in template
+      },
+      EMAILJS_PUBLIC_KEY,
+    );
+    return { ok: true };
   } catch {
-    // Network error / API route not found → show code on screen
-    return { ok: false, demo: true };
+    return { ok: false };
   }
 }
 
@@ -83,10 +94,6 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
   const [newPassword, setNewPassword]             = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
-  // Demo-mode fallback toast (only shown when EmailJS is NOT configured)
-  const [demoOtpToast, setDemoOtpToast] = useState<string | null>(null);
-  const demoToastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-
   // Auto-login if session exists
   useEffect(() => {
     const session = getSession();
@@ -95,10 +102,6 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
       if (user) onLogin(user.id, user.name);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    return () => { if (demoToastTimer.current) clearTimeout(demoToastTimer.current); };
-  }, []);
 
   // ─── Send OTP via EmailJS ───────────────────────────────────────────────
   async function handleSendOtp() {
@@ -119,21 +122,13 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     setError('');
     setSendingOtp(true);
 
-    // ── Send real email via /api/send-otp (Gmail SMTP) ──
+    // ── Send via EmailJS ──────────────────────────────────────────────────
     const result = await sendOtpEmail(emailTrimmed, existing.name, otp);
     setSendingOtp(false);
 
     if (result.ok) {
-      // Email sent successfully → show success banner
       setPhase('forgotOtp');
       setOtpSentInfo(emailTrimmed);
-    } else if (result.demo) {
-      // API not configured yet → demo fallback (show code on screen)
-      setPhase('forgotOtp');
-      setOtpSentInfo(null);
-      setDemoOtpToast(otp);
-      if (demoToastTimer.current) clearTimeout(demoToastTimer.current);
-      demoToastTimer.current = setTimeout(() => setDemoOtpToast(null), 20000);
     } else {
       setError('Failed to send email. Please try again.');
     }
@@ -205,7 +200,6 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     setGeneratedOtp('');
     setEnteredOtp('');
     setOtpSentInfo(null);
-    setDemoOtpToast(null);
     setPassword('');
     setConfirmPassword('');
     setNewPassword('');
@@ -222,36 +216,6 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/8 rounded-full blur-3xl pointer-events-none" />
 
-      {/* ── Demo-mode OTP toast (only shows when EmailJS NOT configured) ── */}
-      <AnimatePresence>
-        {demoOtpToast && (
-          <motion.div
-            initial={{ opacity: 0, y: -60, x: '-50%' }}
-            animate={{ opacity: 1, y: 0,   x: '-50%' }}
-            exit={{ opacity: 0,   y: -60, x: '-50%' }}
-            className="fixed top-4 left-1/2 z-[100] w-[92%] max-w-sm"
-          >
-            <div className="bg-amber-500/90 backdrop-blur-xl border border-amber-400/40 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-amber-950/60">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <X className="w-4 h-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-amber-100 mb-1">⚠ Demo Mode — Email not configured</p>
-                  <p className="text-sm text-white/90">Your OTP code is:</p>
-                  <p className="text-3xl font-mono font-extrabold tracking-[0.35em] mt-1">{demoOtpToast}</p>
-                  <p className="text-[10px] text-amber-200/70 mt-2 leading-relaxed">
-                    To receive codes by email, add your EmailJS keys to Vercel environment variables.
-                  </p>
-                </div>
-                <button onClick={() => setDemoOtpToast(null)} className="text-white/60 hover:text-white transition-colors mt-0.5">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Email sent success banner ── */}
       <AnimatePresence>
@@ -453,11 +417,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                       We sent a 4-digit verification code to<br />
                       <span className="font-mono font-bold text-emerald-400">{maskedEmail}</span>
                     </p>
-                  ) : (
-                    <p className="text-sm text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg py-2 px-3">
-                      ⚠ Demo mode: see the code in the banner above
-                    </p>
-                  )}
+                  ) : null}
                 </div>
 
                 <div>
