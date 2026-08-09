@@ -284,7 +284,7 @@ export default function App() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-lg font-bold text-white">All Matches</h2>
                 {(isLoggedIn || isGuest) && (
-                  <button onClick={() => requestAdminAccess(() => setShowScorerCreate(true))}
+                  <button onClick={() => setShowScorerCreate(true)}
                     className="px-4 py-2 bg-slate-800 text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700">
                     + Create Match
                   </button>
