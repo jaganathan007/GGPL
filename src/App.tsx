@@ -74,9 +74,9 @@ export default function App() {
   function handleScoreMatch(matchId: string) {
     const match = state.matches.find(m => m.id === matchId);
     if (!match || match.isComplete) return;
-    // Allow scoring for the match owner or the PIN-protected admin.
+    // Allow scoring for the match owner, any logged-in user, or PIN-protected admin.
     const isMatchOwner = currentUserId && match.ownerId === currentUserId;
-    if (isMatchOwner || hasAdminAccess) {
+    if (isMatchOwner || hasAdminAccess || isLoggedIn) {
       setScoringMatchId(matchId);
       return;
     }
@@ -303,7 +303,7 @@ export default function App() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h2 className="text-lg font-bold text-white">All Leagues</h2>
                 {(isLoggedIn || isGuest) && (
-                  <button onClick={() => requestAdminAccess(() => setShowLeagueCreate(true))}
+                  <button onClick={() => setShowLeagueCreate(true)}
                     className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-lg hover:bg-amber-500/25 transition-all border border-amber-500/30">
                     <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
                   </button>
