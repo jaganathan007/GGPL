@@ -584,22 +584,44 @@ export default function ScoringView({ matchId, onBack }: Props) {
 
         {/* Batters on crease */}
         <div className="grid grid-cols-2 gap-3">
-          {[{b:engine.striker,label:'Striker',active:true},{b:engine.nonStriker,label:'Non-Striker',active:false}].map(({b,label,active}) => b && (
-            <div key={b.playerId} className={`bg-slate-900/60 border rounded-xl p-3 ${active?'border-emerald-500/30':'border-slate-800/50'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                {active && <CircleDot className="w-3 h-3 text-emerald-400"/>}
-                <p className="text-xs text-slate-400">{label}</p>
+          {/* Striker */}
+          {engine.striker && (
+            <div key="striker-card" className="bg-slate-900/70 border border-emerald-500/40 rounded-xl p-3 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-t-xl" />
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">⚡ Striker</span>
+                <span className="relative flex h-1.5 w-1.5 ml-auto">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
               </div>
-              <p className="text-sm font-bold text-white">{b.name}</p>
-              <div className="flex gap-3 mt-1.5">
-                <span className="text-lg font-extrabold text-white">{b.runs}</span>
-                <span className="text-[10px] text-slate-500 self-end mb-0.5">({b.balls}b)</span>
-                {b.fours > 0 && <span className="text-[10px] text-blue-400 self-end mb-0.5">{b.fours}×4</span>}
-                {b.sixes > 0 && <span className="text-[10px] text-amber-400 self-end mb-0.5">{b.sixes}×6</span>}
+              <p className="text-sm font-bold text-white truncate">{engine.striker.name}</p>
+              <div className="flex items-end gap-2 mt-1.5">
+                <span className="text-2xl font-extrabold text-white leading-none">{engine.striker.runs}</span>
+                <span className="text-[10px] text-slate-500 mb-0.5">({engine.striker.balls}b)</span>
+                {engine.striker.fours > 0 && <span className="text-[10px] text-blue-400 mb-0.5">{engine.striker.fours}×4</span>}
+                {engine.striker.sixes > 0 && <span className="text-[10px] text-amber-400 mb-0.5">{engine.striker.sixes}×6</span>}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Non-Striker */}
+          {engine.nonStriker && (
+            <div key="non-striker-card" className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">🏏 Non-Striker</span>
+              </div>
+              <p className="text-sm font-bold text-slate-300 truncate">{engine.nonStriker.name}</p>
+              <div className="flex items-end gap-2 mt-1.5">
+                <span className="text-2xl font-extrabold text-slate-300 leading-none">{engine.nonStriker.runs}</span>
+                <span className="text-[10px] text-slate-600 mb-0.5">({engine.nonStriker.balls}b)</span>
+                {engine.nonStriker.fours > 0 && <span className="text-[10px] text-blue-400/70 mb-0.5">{engine.nonStriker.fours}×4</span>}
+                {engine.nonStriker.sixes > 0 && <span className="text-[10px] text-amber-400/70 mb-0.5">{engine.nonStriker.sixes}×6</span>}
+              </div>
+            </div>
+          )}
         </div>
+
 
         {/* Current Bowler */}
         {engine.currentBowler && (
