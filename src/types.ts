@@ -50,12 +50,22 @@ export interface BowlingEntry {
   wickets: number;
 }
 
+export interface BallEvent {
+  type: 'run' | 'wicket' | 'wide' | 'noball';
+  runs: number;
+  striker: string;
+  bowler: string;
+  over: number;
+  ball: number;
+}
+
 export interface Innings {
   battingTeamId: string;
   bowlingTeamId: string;
   battingEntries: BattingEntry[];
   bowlingEntries: BowlingEntry[];
   extras: number;
+  ballLog?: BallEvent[];
 }
 
 export interface Toss {

@@ -399,8 +399,120 @@ export default function MatchStats({ matchId, onBack }: Props) {
             </div>
           </motion.div>
         )}
+        {/* ── Over by Over Details ─────────────────────────────────── */}
+        {match.innings.map((inn, innIdx) => {
+          const log = inn.ballLog || [];
+          if (log.length === 0) return null;
 
-        {/* Back Button */}
+          const battingTeam = getTeam(teams, inn.battingTeamId);
+          const bowlingTeam = getTeam(teams, inn.bowlingTeamId);
+
+          // Group balls by over number
+          const overMap: Record<number, typeof log> = {};
+          log.forEach(ball => {
+            if (!overMap[ball.over]) overMap[ball.over] = [];
+            overMap[ball.over].push(ball);
+          });
+          const overNumbers = Object.keys(overMap).map(Number).sort((a, b) => a - b);
+
+          function getBallStyle(ball: typeof log[0]) {
+            if (ball.type === 'wicket') return { bg: 'bg-rose-500', text: 'text-white', label: 'W' };
+            if (ball.type === 'wide')   return { bg: 'bg-cyan-500/20 border border-cyan-500/50', text: 'text-cyan-300', label: 'Wd' };
+            if (ball.type === 'noball') return { bg: 'bg-orange-500/20 border border-orange-500/50', text: 'text-orange-300', label: 'NB' };
+            if (ball.runs === 0)        return { bg: 'bg-slate-700/60', text: 'text-slate-400', label: '•' };
+            if (ball.runs === 4)        return { bg: 'bg-blue-500/25 border border-blue-500/40', text: 'text-blue-300 font-bold', label: '4' };
+            if (ball.runs === 6)        return { bg: 'bg-amber-500/25 border border-amber-500/40', text: 'text-amber-300 font-bold', label: '6' };
+            return { bg: 'bg-slate-600/50', text: 'text-white', label: String(ball.runs) };
+          }
+
+          return (
+            <motion.div
+              key={`over-details-${innIdx}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-900/60 border border-slate-800/60 rounded-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/60">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: battingTeam?.color || '#10b981' }} />
+                <span className="text-sm font-bold text-white">{battingTeam?.name}</span>
+                <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded-full">
+                  {innIdx + 1}{innIdx === 0 ? 'st' : 'nd'} Innings
+                </span>
+                <span className="ml-auto text-[10px] text-slate-500">
+                  Bowling: <span className="text-slate-400">{bowlingTeam?.shortName}</span>
+                </span>
+              </div>
+
+              {/* Overs */}
+              <div className="p-4 space-y-4">
+                {overNumbers.map(overNum => {
+                  const balls = overMap[overNum];
+                  const overRuns = balls.reduce((s, b) => s + (b.type === 'wicket' ? 0 : b.runs), 0);
+                  const overWickets = balls.filter(b => b.type === 'wicket').length;
+                  const bowlerName = balls[0]?.bowler || '';
+
+                  return (
+                    <div key={overNum}>
+                      {/* Over label row */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            Over {overNum + 1}
+                          </span>
+                          {bowlerName && (
+                            <span className="text-[10px] text-slate-600">• {bowlerName}</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {overRuns} runs{overWickets > 0 ? `, ${overWickets}W` : ''}
+                        </span>
+                      </div>
+
+                      {/* Ball bubbles */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {balls.map((ball, bIdx) => {
+                          const style = getBallStyle(ball);
+                          return (
+                            <div
+                              key={bIdx}
+                              className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${style.bg} ${style.text} transition-transform hover:scale-110`}
+                              title={`${ball.striker} • ${ball.bowler}`}
+                            >
+                              {style.label}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-slate-800/40 bg-slate-950/30 flex-wrap">
+                <span className="text-[9px] text-slate-600 uppercase tracking-widest font-bold">Legend:</span>
+                {[
+                  { label: '•', desc: 'Dot', cls: 'bg-slate-700/60 text-slate-400' },
+                  { label: '4', desc: 'Four', cls: 'bg-blue-500/25 border border-blue-500/40 text-blue-300' },
+                  { label: '6', desc: 'Six', cls: 'bg-amber-500/25 border border-amber-500/40 text-amber-300' },
+                  { label: 'W', desc: 'Wicket', cls: 'bg-rose-500 text-white' },
+                  { label: 'Wd', desc: 'Wide', cls: 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300' },
+                  { label: 'NB', desc: 'No Ball', cls: 'bg-orange-500/20 border border-orange-500/50 text-orange-300' },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${item.cls}`}>
+                      {item.label}
+                    </div>
+                    <span className="text-[9px] text-slate-600">{item.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          );
+        })}
+
+
         <div className="text-center pt-2 pb-6">
           <button
             onClick={onBack}

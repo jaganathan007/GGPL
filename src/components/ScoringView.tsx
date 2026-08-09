@@ -194,6 +194,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
         maidens: b.maidens, runsConceded: b.runs, wickets: b.wickets,
       })),
       extras: engine.extras,
+      ballLog: engine.ballLog,
     };
     const newInnings = [...m.innings];
     newInnings[currentInningsIdx] = innings;
