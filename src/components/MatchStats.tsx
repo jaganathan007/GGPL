@@ -119,6 +119,10 @@ export default function MatchStats({ matchId, onBack }: Props) {
   const team1 = getTeam(state.teams, match.team1Id);
   const team2 = getTeam(state.teams, match.team2Id);
 
+  // Correct innings index per team (toss may flip batting order)
+  const t1Inn = getTeamInningsIdx(match, match.team1Id, 0);
+  const t2Inn = getTeamInningsIdx(match, match.team2Id, 1);
+
   // Determine Man of the Match
   let motm: { name: string; teamColor: string; reason: string } | null = null;
   const allPerformers: { name: string; teamColor: string; score: number; reason: string }[] = [];
@@ -182,10 +186,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-br from-slate-900 to-slate-800/50 border border-slate-700/40 rounded-2xl p-5"
         >
-          {(() => {
-            const t1Inn = getTeamInningsIdx(match, match.team1Id, 0);
-            const t2Inn = getTeamInningsIdx(match, match.team2Id, 1);
-            return (
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
               <div className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: team1?.color || '#10b981' }}>
@@ -218,8 +218,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
               <p className="text-sm font-bold text-emerald-400">{match.result}</p>
             </div>
           )}
-            );
-          })()}
         </motion.div>
 
         {/* Man of the Match */}
