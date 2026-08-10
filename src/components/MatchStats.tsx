@@ -400,9 +400,18 @@ export default function MatchStats({ matchId, onBack }: Props) {
           </motion.div>
         )}
         {/* ── Over by Over Details ─────────────────────────────────── */}
+        {match.innings.some(inn => (inn.ballLog || []).length > 0) && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 mt-1">
+            <span className="text-lg">🏏</span>
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Over Summary</h2>
+            <div className="flex-1 h-px bg-slate-800/60" />
+          </motion.div>
+        )}
         {match.innings.map((inn, innIdx) => {
           const log = inn.ballLog || [];
           if (log.length === 0) return null;
+
 
           const battingTeam = getTeam(teams, inn.battingTeamId);
           const bowlingTeam = getTeam(teams, inn.bowlingTeamId);
