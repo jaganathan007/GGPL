@@ -570,6 +570,11 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
             {completedMatches.slice().reverse().map(match => {
               const t1 = allTeams.find(t => t.id === match.team1Id);
               const t2 = allTeams.find(t => t.id === match.team2Id);
+              // Find each team's actual innings (toss may mean team2 batted first)
+              const t1InnIdx = match.innings.findIndex(inn => inn.battingTeamId === match.team1Id);
+              const t2InnIdx = match.innings.findIndex(inn => inn.battingTeamId === match.team2Id);
+              const t1Inn = t1InnIdx >= 0 ? t1InnIdx : 0;
+              const t2Inn = t2InnIdx >= 0 ? t2InnIdx : 1;
               return (
                 <div
                   key={match.id}
@@ -581,13 +586,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ background: t1?.color || '#10b981' }} />
                         <span className="text-xs font-semibold text-slate-300">{t1?.shortName || '??'}</span>
-                        <span className="text-sm font-bold text-white">{getInningsTotal(match, 0)}/{getInningsWickets(match, 0)}</span>
+                        <span className="text-sm font-bold text-white">{getInningsTotal(match, t1Inn)}/{getInningsWickets(match, t1Inn)}</span>
                       </div>
                       <span className="text-[10px] text-slate-600">vs</span>
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ background: t2?.color || '#10b981' }} />
                         <span className="text-xs font-semibold text-slate-300">{t2?.shortName || '??'}</span>
-                        <span className="text-sm font-bold text-white">{getInningsTotal(match, 1)}/{getInningsWickets(match, 1)}</span>
+                        <span className="text-sm font-bold text-white">{t2InnIdx >= 0 ? `${getInningsTotal(match, t2Inn)}/${getInningsWickets(match, t2Inn)}` : '—'}</span>
                       </div>
                       {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
                         <span className="ml-2 px-1.5 py-0.5 bg-amber-500/10 text-amber-400/70 text-[9px] font-bold rounded">{lg.name}</span>

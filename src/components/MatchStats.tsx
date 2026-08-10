@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, MapPin, Calendar, Clock, Award, TrendingUp, Target, Zap } from 'lucide-react';
 import { useApp } from '../store';
-import type { Match, Team, BattingEntry, BowlingEntry } from '../types';
+import type { Match, Team, BattingEntry, BowlingEntry, BallEvent } from '../types';
 
 interface Props {
   matchId: string;
@@ -87,6 +87,23 @@ function bestBowler(entries: BowlingEntry[]): BowlingEntry | undefined {
   return [...entries].sort((a, b) => b.wickets - a.wickets || a.runsConceded - b.runsConceded)[0];
 }
 
+// Returns the innings index for a given team (by battingTeamId), or fallback
+function getTeamInningsIdx(match: Match, teamId: string, fallback: number): number {
+  const idx = match.innings.findIndex(inn => inn.battingTeamId === teamId);
+  return idx >= 0 ? idx : fallback;
+}
+
+// Ball bubble style — defined here to avoid function-in-map issues
+function getBallStyle(ball: BallEvent) {
+  if (ball.type === 'wicket') return { bg: 'bg-rose-500', text: 'text-white', label: 'W' };
+  if (ball.type === 'wide')   return { bg: 'bg-cyan-500/20 border border-cyan-500/50', text: 'text-cyan-300', label: 'Wd' };
+  if (ball.type === 'noball') return { bg: 'bg-orange-500/20 border border-orange-500/50', text: 'text-orange-300', label: 'NB' };
+  if (ball.runs === 0)        return { bg: 'bg-slate-700/60', text: 'text-slate-400', label: '•' };
+  if (ball.runs === 4)        return { bg: 'bg-blue-500/25 border border-blue-500/40', text: 'text-blue-300 font-bold', label: '4' };
+  if (ball.runs === 6)        return { bg: 'bg-amber-500/25 border border-amber-500/40', text: 'text-amber-300 font-bold', label: '6' };
+  return { bg: 'bg-slate-600/50', text: 'text-white', label: String(ball.runs) };
+}
+
 export default function MatchStats({ matchId, onBack }: Props) {
   const { state } = useApp();
   const match = state.matches.find(m => m.id === matchId);
@@ -165,6 +182,10 @@ export default function MatchStats({ matchId, onBack }: Props) {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-br from-slate-900 to-slate-800/50 border border-slate-700/40 rounded-2xl p-5"
         >
+          {(() => {
+            const t1Inn = getTeamInningsIdx(match, match.team1Id, 0);
+            const t2Inn = getTeamInningsIdx(match, match.team2Id, 1);
+            return (
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
               <div className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: team1?.color || '#10b981' }}>
@@ -172,9 +193,9 @@ export default function MatchStats({ matchId, onBack }: Props) {
               </div>
               <p className="text-xs font-semibold text-slate-300">{team1?.name}</p>
               <p className="text-3xl font-extrabold text-white mt-1">
-                {getInningsTotal(match, 0)}<span className="text-lg text-slate-500">/{getInningsWickets(match, 0)}</span>
+                {getInningsTotal(match, t1Inn)}<span className="text-lg text-slate-500">/{getInningsWickets(match, t1Inn)}</span>
               </p>
-              <p className="text-xs text-slate-500">({getInningsOvers(match, 0)} ov)</p>
+              <p className="text-xs text-slate-500">({getInningsOvers(match, t1Inn)} ov)</p>
             </div>
             <div className="px-4">
               <span className="text-xs text-slate-600 font-bold tracking-widest">VS</span>
@@ -186,10 +207,10 @@ export default function MatchStats({ matchId, onBack }: Props) {
               <p className="text-xs font-semibold text-slate-300">{team2?.name}</p>
               <p className="text-3xl font-extrabold text-white mt-1">
                 {match.innings.length > 1 ? (
-                  <>{getInningsTotal(match, 1)}<span className="text-lg text-slate-500">/{getInningsWickets(match, 1)}</span></>
+                  <>{getInningsTotal(match, t2Inn)}<span className="text-lg text-slate-500">/{getInningsWickets(match, t2Inn)}</span></>
                 ) : <span className="text-slate-600">—</span>}
               </p>
-              <p className="text-xs text-slate-500">{match.innings.length > 1 ? `(${getInningsOvers(match, 1)} ov)` : ''}</p>
+              <p className="text-xs text-slate-500">{match.innings.length > 1 ? `(${getInningsOvers(match, t2Inn)} ov)` : ''}</p>
             </div>
           </div>
           {match.result && (
@@ -197,6 +218,8 @@ export default function MatchStats({ matchId, onBack }: Props) {
               <p className="text-sm font-bold text-emerald-400">{match.result}</p>
             </div>
           )}
+            );
+          })()}
         </motion.div>
 
         {/* Man of the Match */}
@@ -424,15 +447,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
           });
           const overNumbers = Object.keys(overMap).map(Number).sort((a, b) => a - b);
 
-          function getBallStyle(ball: typeof log[0]) {
-            if (ball.type === 'wicket') return { bg: 'bg-rose-500', text: 'text-white', label: 'W' };
-            if (ball.type === 'wide')   return { bg: 'bg-cyan-500/20 border border-cyan-500/50', text: 'text-cyan-300', label: 'Wd' };
-            if (ball.type === 'noball') return { bg: 'bg-orange-500/20 border border-orange-500/50', text: 'text-orange-300', label: 'NB' };
-            if (ball.runs === 0)        return { bg: 'bg-slate-700/60', text: 'text-slate-400', label: '•' };
-            if (ball.runs === 4)        return { bg: 'bg-blue-500/25 border border-blue-500/40', text: 'text-blue-300 font-bold', label: '4' };
-            if (ball.runs === 6)        return { bg: 'bg-amber-500/25 border border-amber-500/40', text: 'text-amber-300 font-bold', label: '6' };
-            return { bg: 'bg-slate-600/50', text: 'text-white', label: String(ball.runs) };
-          }
 
           return (
             <motion.div
