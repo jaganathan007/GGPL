@@ -122,6 +122,8 @@ export default function MatchStats({ matchId, onBack }: Props) {
   // Correct innings index per team (toss may flip batting order)
   const t1Inn = getTeamInningsIdx(match, match.team1Id, 0);
   const t2Inn = getTeamInningsIdx(match, match.team2Id, 1);
+  const teams = state.teams;
+
 
   // Determine Man of the Match
   let motm: { name: string; teamColor: string; reason: string } | null = null;
