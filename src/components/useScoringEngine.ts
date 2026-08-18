@@ -60,12 +60,10 @@ export function useScoringEngine() {
   }, []);
 
   const rotateStrike = useCallback(() => {
-    setStrikerIdx(prev => {
-      const tmp = prev;
-      setNonStrikerIdx(tmp);
-      return nonStrikerIdx;
-    });
-  }, [nonStrikerIdx]);
+    // Direct swap — both values fresh from closure, no stale reference
+    setStrikerIdx(nonStrikerIdx);
+    setNonStrikerIdx(strikerIdx);
+  }, [strikerIdx, nonStrikerIdx]);
 
   const handleRun = useCallback((r: number) => {
     if (phase !== 'batting') return;
