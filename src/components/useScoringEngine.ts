@@ -79,7 +79,12 @@ export function useScoringEngine() {
     const newBalls = ballsInOver + 1;
     setBallsInOver(newBalls);
     setBallLog(prev => [...prev, {type:'run',runs:r,striker:striker?.name||'',bowler:currentBowler?.name||'',over:oversCompleted,ball:newBalls}]);
-    if (r%2===1) rotateStrike();
+
+    // ── International cricket rotation rule ──────────────────────────────
+    // Mid-over + odd runs  → rotate once (striker crosses to non-striker end)
+    // Last ball + odd runs → NO rotation (crossing during run + end-of-over = 2 rotations cancel out → striker stays striker)
+    // Last ball + even runs → rotate once at end of over (non-striker becomes striker)
+    if (r % 2 === 1 && newBalls < 6) rotateStrike();
 
     // Check if target reached (2nd innings)
     if (target !== null && newTotal >= target) {
@@ -101,7 +106,8 @@ export function useScoringEngine() {
       const newOversCompleted = oversCompleted + 1;
       setOversCompleted(newOversCompleted); setBallsInOver(0);
       setLastBowlerIdx(currentBowlerIdx);
-      rotateStrike();
+      // Rotate only for even runs on last ball (odd already cancels with crossing)
+      if (r % 2 === 0) rotateStrike();
       if (newOversCompleted >= maxOvers) {
         setPhase('innings_end');
       } else {
@@ -109,6 +115,7 @@ export function useScoringEngine() {
       }
     }
   }, [phase,strikerIdx,currentBowlerIdx,ballsInOver,oversCompleted,maxOvers,target,totalRuns,striker,currentBowler,rotateStrike]);
+
 
   const handleWicket = useCallback((details?: {
     dismissalType: 'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other';
