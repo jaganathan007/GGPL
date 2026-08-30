@@ -104,6 +104,65 @@ function getBallStyle(ball: BallEvent) {
   return { bg: 'bg-slate-600/50', text: 'text-white', label: String(ball.runs) };
 }
 
+// Derives the current striker, non-striker and bowler from ballLog + battingEntries
+function getLiveInfo(inn: import('../types').Innings, teams: import('../types').Team[]): {
+  strikerName: string | null;
+  nonStrikerName: string | null;
+  bowlerName: string | null;
+} {
+  const log = inn.ballLog || [];
+  const notOut = inn.battingEntries
+    .filter(e => e.isNotOut)
+    .map(e => {
+      const team = teams.find(t => t.id === inn.battingTeamId);
+      return team?.players.find(p => p.id === e.playerId)?.name || '';
+    })
+    .filter(Boolean);
+
+  let strikerName: string | null = null;
+  let nonStrikerName: string | null = null;
+  let bowlerName: string | null = null;
+
+  if (log.length > 0) {
+    const last = log[log.length - 1];
+    bowlerName = last.bowler || null;
+    const lastStrikerName = last.striker || null;
+
+    // Determine rotation after last ball (cricket rules)
+    const isOddRun = last.type === 'run' && last.runs % 2 === 1;
+    const isEndOfOver = last.ball === 6;
+    // Odd run not at end of over → striker rotated (last striker is now non-striker)
+    // Odd run at end of over → no net rotation (striker stays)
+    // Even run → at end of over rotates, mid-over stays
+    const strikerRotated = isOddRun && !isEndOfOver;
+    const endOverRotated = !isOddRun && isEndOfOver;
+
+    if (lastStrikerName) {
+      const otherBatter = notOut.find(n => n !== lastStrikerName) || null;
+      if (strikerRotated) {
+        // Last striker crossed → now non-striker
+        strikerName = otherBatter;
+        nonStrikerName = lastStrikerName;
+      } else if (endOverRotated) {
+        // End of over with even runs → non-striker becomes striker
+        strikerName = otherBatter;
+        nonStrikerName = lastStrikerName;
+      } else {
+        // Same striker
+        strikerName = lastStrikerName;
+        nonStrikerName = otherBatter;
+      }
+    }
+  } else if (notOut.length >= 2) {
+    // No balls bowled yet — show both as "at crease"
+    strikerName = notOut[0];
+    nonStrikerName = notOut[1];
+  }
+
+  return { strikerName, nonStrikerName, bowlerName };
+}
+
+
 export default function MatchStats({ matchId, onBack }: Props) {
   const { state } = useApp();
   const match = state.matches.find(m => m.id === matchId);
@@ -222,8 +281,8 @@ export default function MatchStats({ matchId, onBack }: Props) {
           )}
         </motion.div>
 
-        {/* Man of the Match */}
-        {motm && (
+        {/* Man of the Match — only shown after match ends */}
+        {motm && match.isComplete && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -244,6 +303,46 @@ export default function MatchStats({ matchId, onBack }: Props) {
           </motion.div>
         )}
 
+        {/* Now Playing — only shown for live (incomplete) matches */}
+        {!match.isComplete && (() => {
+          const activeInn = match.innings[match.innings.length - 1];
+          if (!activeInn) return null;
+          const { strikerName, nonStrikerName, bowlerName } = getLiveInfo(activeInn, state.teams);
+          if (!strikerName && !bowlerName) return null;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Live — Now Playing</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Striker */}
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mb-1">⚡ Striker</p>
+                  <p className="text-sm font-bold text-white truncate">{strikerName || '—'}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Facing</p>
+                </div>
+                {/* Non-Striker */}
+                <div className="bg-slate-800/60 border border-slate-700/40 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">🏃 Non-Striker</p>
+                  <p className="text-sm font-bold text-white truncate">{nonStrikerName || '—'}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">At crease</p>
+                </div>
+                {/* Bowler */}
+                <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest mb-1">🎯 Bowler</p>
+                  <p className="text-sm font-bold text-white truncate">{bowlerName || '—'}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Bowling</p>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })()}
+
         {/* Innings Scorecards */}
         {match.innings.map((inn, innIdx) => {
           const batTeam = getTeam(state.teams, inn.battingTeamId);
@@ -252,6 +351,10 @@ export default function MatchStats({ matchId, onBack }: Props) {
           const wickets = inn.battingEntries.filter(e => !e.isNotOut).length;
           const best = bestBatter(inn.battingEntries);
           const bestBowl = bestBowler(inn.bowlingEntries);
+
+          // Live info for active innings
+          const isActiveInnings = !match.isComplete && innIdx === match.innings.length - 1;
+          const liveInfo = isActiveInnings ? getLiveInfo(inn, state.teams) : null;
 
           return (
             <motion.div
@@ -267,6 +370,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
                   <span className="text-sm font-bold text-white">{batTeam?.name || '?'}</span>
                   <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">{innIdx === 0 ? '1st' : '2nd'} Innings</span>
+                  {isActiveInnings && <span className="text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-extrabold text-white">{total}<span className="text-sm text-slate-500">/{wickets}</span></span>
@@ -289,22 +393,33 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   <tbody>
                     {inn.battingEntries.map((entry, i) => {
                       const isBest = best && entry.playerId === best.playerId;
+                      const playerName = getPlayerName(state.teams, inn.battingTeamId, entry.playerId);
+                      const isStriker = liveInfo && playerName === liveInfo.strikerName;
+                      const isNonStriker = liveInfo && playerName === liveInfo.nonStrikerName;
                       return (
                         <tr key={i} className={`border-b border-slate-800/20 ${isBest ? 'bg-emerald-500/5' : ''}`}>
                           <td className="py-2">
                             <div className="flex flex-col">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className={`font-semibold ${entry.isNotOut ? 'text-slate-200' : 'text-slate-400 font-medium'}`}>
-                                  {getPlayerName(state.teams, inn.battingTeamId, entry.playerId)}
+                                  {playerName}
                                 </span>
                                 {entry.isNotOut && entry.balls > 0 && <span className="text-emerald-400 text-[9px]">*</span>}
                                 {isBest && <Zap className="w-3 h-3 text-amber-400" />}
+                                {/* Live striker/non-striker badges */}
+                                {isStriker && (
+                                  <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
+                                )}
+                                {isNonStriker && (
+                                  <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
+                                )}
                               </div>
                               <span className="text-[10px] text-slate-500 font-normal">
                                 {getDismissalText(entry, state.teams, inn.bowlingTeamId)}
                               </span>
                             </div>
                           </td>
+
                           <td className="text-right py-2 font-bold text-white">{entry.runs}</td>
                           <td className="text-right py-2 text-slate-400">{entry.balls}</td>
                           <td className="text-right py-2 text-blue-400">{entry.fours}</td>
@@ -348,14 +463,19 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   <tbody>
                     {inn.bowlingEntries.map((entry, i) => {
                       const isBest = bestBowl && entry.playerId === bestBowl.playerId;
+                      const bowlerPlayerName = getPlayerName(state.teams, inn.bowlingTeamId, entry.playerId);
+                      const isCurrentBowler = liveInfo && bowlerPlayerName === liveInfo.bowlerName;
                       return (
                         <tr key={i} className={`border-b border-slate-800/20 ${isBest ? 'bg-violet-500/5' : ''}`}>
                           <td className="py-2">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-medium text-slate-200">
-                                {getPlayerName(state.teams, inn.bowlingTeamId, entry.playerId)}
+                                {bowlerPlayerName}
                               </span>
                               {isBest && <Target className="w-3 h-3 text-violet-400" />}
+                              {isCurrentBowler && (
+                                <span className="text-[8px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 rounded-full">🎯 BOWLING</span>
+                              )}
                             </div>
                           </td>
                           <td className="text-right py-2 text-slate-400">{entry.overs}</td>
