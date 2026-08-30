@@ -90,4 +90,6 @@ export interface Match {
   winnerId?: string;
   isTie?: boolean;
   ownerId?: string;
+  completedAt?: string; // ISO timestamp set when match ends — used for 7-day auto-delete
 }
+

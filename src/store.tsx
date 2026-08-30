@@ -115,14 +115,74 @@ const AppContext = createContext<{ state: AppState; dispatch: Dispatch<Action> }
   dispatch: () => {},
 });
 
+// ── 7-day auto-delete for completed matches ──────────────────────────────────
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+function pruneOldMatches(state: AppState): AppState {
+  const cutoff = Date.now() - SEVEN_DAYS_MS;
+  const filtered = state.matches.filter(m => {
+    if (!m.isComplete) return true; // keep live matches always
+    // Use completedAt if available, otherwise fall back to match date
+    const ts = m.completedAt ? new Date(m.completedAt).getTime() : new Date(m.date).getTime();
+    return ts > cutoff;
+  });
+  return { ...state, matches: filtered };
+}
+
+// ── Smart merge: prevents server from overwriting newer local data ─────────────
+function mergeStates(local: AppState, incoming: AppState): AppState {
+  // Build a map of local matches by id
+  const localMatchMap: Record<string, (typeof local.matches)[0]> = {};
+  local.matches.forEach(m => { localMatchMap[m.id] = m; });
+
+  const merged = [...incoming.matches];
+  // Add any local matches that are NOT in the incoming state
+  local.matches.forEach(lm => {
+    if (!incoming.matches.find(im => im.id === lm.id)) {
+      merged.push(lm);
+    }
+  });
+
+  // For conflicts (same id), keep the one with more innings data or is more complete
+  const finalMatches = merged.map(m => {
+    const local = localMatchMap[m.id];
+    if (!local) return m;
+    // Prefer whichever has more innings, or if both complete, prefer local (user's own data)
+    if (local.innings.length > m.innings.length) return local;
+    if (local.isComplete && !m.isComplete) return local;
+    return m;
+  });
+
+  return {
+    ...incoming,
+    // Keep local users always (server shouldn't wipe user accounts)
+    users: incoming.users?.length ? incoming.users : local.users,
+    matches: finalMatches,
+    // Merge teams and leagues too
+    teams: mergeById(local.teams, incoming.teams),
+    leagues: mergeById(local.leagues || [], incoming.leagues || []),
+  };
+}
+
+function mergeById<T extends { id: string }>(local: T[], incoming: T[]): T[] {
+  const map: Record<string, T> = {};
+  local.forEach(i => { map[i.id] = i; });
+  incoming.forEach(i => { map[i.id] = i; }); // incoming wins for same-id items
+  return Object.values(map);
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState, () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return migrateTeamOwnership(JSON.parse(saved) as AppState);
+      if (saved) {
+        const parsed = migrateTeamOwnership(JSON.parse(saved) as AppState);
+        return pruneOldMatches(parsed); // auto-delete matches older than 7 days
+      }
     } catch { /* ignore */ }
     return initialState;
   });
+
 
   // Track whether a state change came from an external source (WS or storage event)
   // to avoid echo-broadcasting it back
@@ -156,20 +216,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
           try {
             const msg = JSON.parse(event.data);
             if (msg.type === 'STATE_SYNC' && msg.state) {
-              // Ensure leagues array exists
               msg.state.leagues = msg.state.leagues || [];
-              // Rehydrate the server if it woke up from sleep (empty) but we have data
-              if (msg.state.teams?.length === 0 && msg.state.matches?.length === 0 && 
-                 (stateRef.current.teams.length > 0 || stateRef.current.matches.length > 0 || stateRef.current.leagues?.length > 0)) {
+
+              // If server woke up empty → push our full local state to it
+              if (msg.state.teams?.length === 0 && msg.state.matches?.length === 0 &&
+                 (stateRef.current.teams.length > 0 || stateRef.current.matches.length > 0 || (stateRef.current.leagues?.length ?? 0) > 0)) {
                 ws.send(JSON.stringify({ type: 'STATE_UPDATE', state: stateRef.current }));
                 return;
               }
 
+              // Smart merge: never let server wipe real local data
+              const merged = mergeStates(stateRef.current, msg.state as AppState);
               isExternalUpdate.current = true;
-              dispatch({ type: 'SET_STATE', payload: msg.state });
+              dispatch({ type: 'SET_STATE', payload: merged });
             }
           } catch { /* ignore bad messages */ }
         };
+
 
         ws.onclose = () => {
           console.log('🔴 GGPL Sync disconnected, reconnecting...');

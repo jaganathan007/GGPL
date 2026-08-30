@@ -237,7 +237,8 @@ export default function ScoringView({ matchId, onBack }: Props) {
       isTie = true;
     }
 
-    dispatch({ type: 'UPDATE_MATCH', payload: { ...m, isComplete: true, result, winnerId, isTie } });
+    dispatch({ type: 'UPDATE_MATCH', payload: { ...m, isComplete: true, result, winnerId, isTie, completedAt: new Date().toISOString() } });
+
     // Clean up persisted scoring state
     localStorage.removeItem(SCORING_STORAGE_PREFIX + matchId);
     onBack();
