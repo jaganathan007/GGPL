@@ -115,61 +115,69 @@ const AppContext = createContext<{ state: AppState; dispatch: Dispatch<Action> }
   dispatch: () => {},
 });
 
-// ── 7-day auto-delete for completed matches ──────────────────────────────────
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+// ── Match auto-pruning ────────────────────────────────────────────────────────
+const SEVEN_DAYS_MS  = 7  * 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 function pruneOldMatches(state: AppState): AppState {
-  const cutoff = Date.now() - SEVEN_DAYS_MS;
+  const now = Date.now();
   const filtered = state.matches.filter(m => {
-    if (!m.isComplete) return true; // keep live matches always
-    // Use completedAt if available, otherwise fall back to match date
-    const ts = m.completedAt ? new Date(m.completedAt).getTime() : new Date(m.date).getTime();
-    return ts > cutoff;
+    const matchDate = new Date(m.date).getTime();
+
+    if (m.isComplete) {
+      // Completed matches: keep for 7 days after completion (or match date as fallback)
+      const completedTs = m.completedAt ? new Date(m.completedAt).getTime() : matchDate;
+      return now - completedTs <= SEVEN_DAYS_MS;
+    } else {
+      // In-progress: keep only if the match date is within the last 30 days
+      // This removes abandoned/demo matches that were never finished
+      return now - matchDate <= THIRTY_DAYS_MS;
+    }
   });
   return { ...state, matches: filtered };
 }
 
 // ── Smart merge: prevents server from overwriting newer local data ─────────────
 function mergeStates(local: AppState, incoming: AppState): AppState {
-  // Build a map of local matches by id
   const localMatchMap: Record<string, (typeof local.matches)[0]> = {};
   local.matches.forEach(m => { localMatchMap[m.id] = m; });
 
   const merged = [...incoming.matches];
-  // Add any local matches that are NOT in the incoming state
+  // Add local matches not present in incoming
   local.matches.forEach(lm => {
     if (!incoming.matches.find(im => im.id === lm.id)) {
       merged.push(lm);
     }
   });
 
-  // For conflicts (same id), keep the one with more innings data or is more complete
+  // For conflicts (same id) prefer the richer/more-complete version
   const finalMatches = merged.map(m => {
-    const local = localMatchMap[m.id];
-    if (!local) return m;
-    // Prefer whichever has more innings, or if both complete, prefer local (user's own data)
-    if (local.innings.length > m.innings.length) return local;
-    if (local.isComplete && !m.isComplete) return local;
+    const loc = localMatchMap[m.id];
+    if (!loc) return m;
+    if (loc.innings.length > m.innings.length) return loc;
+    if (loc.isComplete && !m.isComplete) return loc;
     return m;
   });
 
-  return {
+  const result: AppState = {
     ...incoming,
-    // Keep local users always (server shouldn't wipe user accounts)
     users: incoming.users?.length ? incoming.users : local.users,
     matches: finalMatches,
-    // Merge teams and leagues too
     teams: mergeById(local.teams, incoming.teams),
     leagues: mergeById(local.leagues || [], incoming.leagues || []),
   };
+
+  // Always prune after merge so the server can NEVER re-inject old/demo matches
+  return pruneOldMatches(result);
 }
 
 function mergeById<T extends { id: string }>(local: T[], incoming: T[]): T[] {
   const map: Record<string, T> = {};
   local.forEach(i => { map[i.id] = i; });
-  incoming.forEach(i => { map[i.id] = i; }); // incoming wins for same-id items
+  incoming.forEach(i => { map[i.id] = i; });
   return Object.values(map);
 }
+
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState, () => {
