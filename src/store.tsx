@@ -137,21 +137,14 @@ function pruneOldMatches(state: AppState): AppState {
   return { ...state, matches: filtered };
 }
 
-// ── Smart merge: prevents server from overwriting newer local data ─────────────
+// ── Smart merge: server decides which matches EXIST, but local wins on content ──
 function mergeStates(local: AppState, incoming: AppState): AppState {
   const localMatchMap: Record<string, (typeof local.matches)[0]> = {};
   local.matches.forEach(m => { localMatchMap[m.id] = m; });
 
-  const merged = [...incoming.matches];
-  // Add local matches not present in incoming
-  local.matches.forEach(lm => {
-    if (!incoming.matches.find(im => im.id === lm.id)) {
-      merged.push(lm);
-    }
-  });
-
-  // For conflicts (same id) prefer the richer/more-complete version
-  const finalMatches = merged.map(m => {
+  // Incoming state is authoritative on WHICH matches exist (respects deletions).
+  // For each match in incoming, prefer the local version if it has more data.
+  const finalMatches = incoming.matches.map(m => {
     const loc = localMatchMap[m.id];
     if (!loc) return m;
     if (loc.innings.length > m.innings.length) return loc;
@@ -167,9 +160,9 @@ function mergeStates(local: AppState, incoming: AppState): AppState {
     leagues: mergeById(local.leagues || [], incoming.leagues || []),
   };
 
-  // Always prune after merge so the server can NEVER re-inject old/demo matches
   return pruneOldMatches(result);
 }
+
 
 function mergeById<T extends { id: string }>(local: T[], incoming: T[]): T[] {
   const map: Record<string, T> = {};
@@ -270,9 +263,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     function onStorage(e: StorageEvent) {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
-          const newState = JSON.parse(e.newValue) as AppState;
+          const incoming = JSON.parse(e.newValue) as AppState;
+          const merged = mergeStates(stateRef.current, incoming);
           isExternalUpdate.current = true;
-          dispatch({ type: 'SET_STATE', payload: newState });
+          dispatch({ type: 'SET_STATE', payload: merged });
         } catch { /* ignore */ }
       }
     }
@@ -280,6 +274,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
   }, []);
+
 
   // ─── Persist to localStorage ───
   useEffect(() => {
