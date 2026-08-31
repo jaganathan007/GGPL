@@ -12,23 +12,28 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function getInningsTotal(match: Match, idx: number): number {
-  const inn = match.innings[idx];
+function getInningsForTeam(match: Match, teamId: string) {
+  return match.innings.find(inn => inn.battingTeamId === teamId) || null;
+}
+
+function getInningsTotal(match: Match, teamId: string): number {
+  const inn = getInningsForTeam(match, teamId);
   if (!inn) return 0;
   return inn.battingEntries.reduce((s, e) => s + e.runs, 0) + inn.extras;
 }
 
-function getInningsWickets(match: Match, idx: number): number {
-  const inn = match.innings[idx];
+function getInningsWickets(match: Match, teamId: string): number {
+  const inn = getInningsForTeam(match, teamId);
   if (!inn) return 0;
   return inn.battingEntries.filter(e => !e.isNotOut).length;
 }
 
-function getInningsOvers(match: Match, idx: number): number {
-  const inn = match.innings[idx];
+function getInningsOvers(match: Match, teamId: string): number | string {
+  const inn = getInningsForTeam(match, teamId);
   if (!inn) return 0;
   return inn.bowlingEntries.reduce((s, e) => s + e.overs, 0);
 }
+
 
 interface MatchesViewProps {
   onScoreMatch: (matchId: string) => void;
@@ -505,8 +510,9 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       <div>
                         <p className="text-xs font-semibold text-slate-300">{t1?.name || 'Unknown'}</p>
                         <p className="text-lg font-extrabold text-white">
-                          {getInningsTotal(match, 0)}/{getInningsWickets(match, 0)}
-                          <span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, 0)} ov)</span>
+                          {getInningsForTeam(match, match.team1Id)
+                            ? <>{getInningsTotal(match, match.team1Id)}/{getInningsWickets(match, match.team1Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team1Id)} ov)</span></>
+                            : <span className="text-slate-600">—</span>}
                         </p>
                       </div>
                     </div>
@@ -515,8 +521,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       <div>
                         <p className="text-xs font-semibold text-slate-300">{t2?.name || 'Unknown'}</p>
                         <p className="text-lg font-extrabold text-white">
-                          {match.innings.length > 1
-                            ? <>{getInningsTotal(match, 1)}/{getInningsWickets(match, 1)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, 1)} ov)</span></>
+                          {getInningsForTeam(match, match.team2Id)
+                            ? <>{getInningsTotal(match, match.team2Id)}/{getInningsWickets(match, match.team2Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team2Id)} ov)</span></>
                             : <span className="text-slate-600">—</span>}
                         </p>
                       </div>
@@ -525,6 +531,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       </div>
                     </div>
                   </div>
+
                   <div className="flex gap-2">
                     {/* Resume Scoring - only for match owner or global admin on live matches */}
                     {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && !match.isComplete && (
