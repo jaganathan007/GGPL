@@ -151,9 +151,9 @@ function pruneOldMatches(state: AppState): AppState {
   return { ...state, matches: filtered };
 }
 
-// ── Smart merge: tombstone union ensures deletes propagate to every device ────
+// ── Smart merge: UNION of local+incoming, tombstone handles explicit deletes ──
 function mergeStates(local: AppState, incoming: AppState): AppState {
-  // Union of both tombstone lists — deletion from EITHER side wins permanently
+  // Union both tombstone lists — explicit deletion from EITHER side wins forever
   const localDeleted  = local.deletedMatchIds  || [];
   const remoteDeleted = incoming.deletedMatchIds || [];
   const allDeleted = Array.from(new Set([...localDeleted, ...remoteDeleted]));
@@ -161,28 +161,37 @@ function mergeStates(local: AppState, incoming: AppState): AppState {
   const localMatchMap: Record<string, (typeof local.matches)[0]> = {};
   local.matches.forEach(m => { localMatchMap[m.id] = m; });
 
-  // Incoming list is authoritative for which matches exist, but local data wins for content.
-  // Tombstoned matches are excluded regardless of where they appear.
-  const finalMatches = incoming.matches
-    .filter(m => !allDeleted.includes(m.id))
-    .map(m => {
-      const loc = localMatchMap[m.id];
-      if (!loc) return m;
-      if (loc.innings.length > m.innings.length) return loc;
-      if (loc.isComplete && !m.isComplete) return loc;
-      return m;
-    });
+  // Start with incoming matches (excluding tombstoned ones)
+  const merged: (typeof local.matches) = incoming.matches.filter(m => !allDeleted.includes(m.id));
+
+  // Add local matches not in incoming AND not tombstoned
+  // This preserves local matches after server resets / code deploys
+  local.matches.forEach(lm => {
+    if (!allDeleted.includes(lm.id) && !merged.find(m => m.id === lm.id)) {
+      merged.push(lm);
+    }
+  });
+
+  // For same-id conflicts, prefer the richer / more complete local version
+  const finalMatches = merged.map(m => {
+    const loc = localMatchMap[m.id];
+    if (!loc) return m;
+    if (loc.innings.length > m.innings.length) return loc;
+    if (loc.isComplete && !m.isComplete) return loc;
+    return m;
+  });
 
   const result: AppState = {
     ...incoming,
     users: incoming.users?.length ? incoming.users : local.users,
     matches: finalMatches,
-    deletedMatchIds: allDeleted,           // merged tombstone list
+    deletedMatchIds: allDeleted,
     teams: mergeById(local.teams, incoming.teams),
     leagues: mergeById(local.leagues || [], incoming.leagues || []),
   };
 
   return pruneOldMatches(result);
+
 }
 
 
