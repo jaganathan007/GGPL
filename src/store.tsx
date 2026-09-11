@@ -11,6 +11,7 @@ interface AppState {
   leagues: League[];
   teams: Team[];
   matches: Match[];
+  deletedMatchIds: string[]; // tombstone list — deleted IDs persist so deletions sync across devices
 }
 
 type Action =
@@ -32,9 +33,11 @@ const initialState: AppState = {
   leagues: [],
   teams: [],
   matches: [],
+  deletedMatchIds: [],
 };
 
 function reducer(state: AppState, action: Action): AppState {
+  const deleted = state.deletedMatchIds || [];
   switch (action.type) {
     case 'ADD_USER':
       return { ...state, users: [...(state.users || []), action.payload] };
@@ -57,15 +60,25 @@ function reducer(state: AppState, action: Action): AppState {
         matches: state.matches.filter(m => m.team1Id !== action.payload && m.team2Id !== action.payload),
       };
     case 'ADD_MATCH':
+      // Never add a match that was already deleted
+      if (deleted.includes(action.payload.id)) return state;
       return { ...state, matches: [...state.matches, action.payload] };
     case 'UPDATE_MATCH':
+      // Never update a match that was already deleted
+      if (deleted.includes(action.payload.id)) return state;
       return { ...state, matches: state.matches.map(m => m.id === action.payload.id ? action.payload : m) };
     case 'DELETE_MATCH':
-      return { ...state, matches: state.matches.filter(m => m.id !== action.payload) };
+      return {
+        ...state,
+        matches: state.matches.filter(m => m.id !== action.payload),
+        // Record the deletion permanently in the tombstone list
+        deletedMatchIds: deleted.includes(action.payload) ? deleted : [...deleted, action.payload],
+      };
     case 'SET_STATE': {
       const incoming = {
         ...action.payload,
         users: action.payload.users || state.users || [],
+        deletedMatchIds: action.payload.deletedMatchIds || [],
       };
       return migrateTeamOwnership(incoming);
     }
@@ -121,47 +134,57 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 function pruneOldMatches(state: AppState): AppState {
   const now = Date.now();
-  const filtered = state.matches.filter(m => {
-    const matchDate = new Date(m.date).getTime();
+  const tombstone = state.deletedMatchIds || [];
 
+  const filtered = state.matches.filter(m => {
+    // Always remove tombstoned matches
+    if (tombstone.includes(m.id)) return false;
+
+    const matchDate = new Date(m.date).getTime();
     if (m.isComplete) {
-      // Completed matches: keep for 7 days after completion (or match date as fallback)
       const completedTs = m.completedAt ? new Date(m.completedAt).getTime() : matchDate;
       return now - completedTs <= SEVEN_DAYS_MS;
     } else {
-      // In-progress: keep only if the match date is within the last 30 days
-      // This removes abandoned/demo matches that were never finished
       return now - matchDate <= THIRTY_DAYS_MS;
     }
   });
   return { ...state, matches: filtered };
 }
 
-// ── Smart merge: server decides which matches EXIST, but local wins on content ──
+// ── Smart merge: tombstone union ensures deletes propagate to every device ────
 function mergeStates(local: AppState, incoming: AppState): AppState {
+  // Union of both tombstone lists — deletion from EITHER side wins permanently
+  const localDeleted  = local.deletedMatchIds  || [];
+  const remoteDeleted = incoming.deletedMatchIds || [];
+  const allDeleted = Array.from(new Set([...localDeleted, ...remoteDeleted]));
+
   const localMatchMap: Record<string, (typeof local.matches)[0]> = {};
   local.matches.forEach(m => { localMatchMap[m.id] = m; });
 
-  // Incoming state is authoritative on WHICH matches exist (respects deletions).
-  // For each match in incoming, prefer the local version if it has more data.
-  const finalMatches = incoming.matches.map(m => {
-    const loc = localMatchMap[m.id];
-    if (!loc) return m;
-    if (loc.innings.length > m.innings.length) return loc;
-    if (loc.isComplete && !m.isComplete) return loc;
-    return m;
-  });
+  // Incoming list is authoritative for which matches exist, but local data wins for content.
+  // Tombstoned matches are excluded regardless of where they appear.
+  const finalMatches = incoming.matches
+    .filter(m => !allDeleted.includes(m.id))
+    .map(m => {
+      const loc = localMatchMap[m.id];
+      if (!loc) return m;
+      if (loc.innings.length > m.innings.length) return loc;
+      if (loc.isComplete && !m.isComplete) return loc;
+      return m;
+    });
 
   const result: AppState = {
     ...incoming,
     users: incoming.users?.length ? incoming.users : local.users,
     matches: finalMatches,
+    deletedMatchIds: allDeleted,           // merged tombstone list
     teams: mergeById(local.teams, incoming.teams),
     leagues: mergeById(local.leagues || [], incoming.leagues || []),
   };
 
   return pruneOldMatches(result);
 }
+
 
 
 function mergeById<T extends { id: string }>(local: T[], incoming: T[]): T[] {
@@ -177,12 +200,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = migrateTeamOwnership(JSON.parse(saved) as AppState);
-        return pruneOldMatches(parsed); // auto-delete matches older than 7 days
+        const raw = JSON.parse(saved) as AppState;
+        // Ensure tombstone list always exists (backward compat with old saves)
+        const parsed = migrateTeamOwnership({ ...raw, deletedMatchIds: raw.deletedMatchIds || [] });
+        return pruneOldMatches(parsed);
       }
     } catch { /* ignore */ }
     return initialState;
   });
+
 
 
   // Track whether a state change came from an external source (WS or storage event)
