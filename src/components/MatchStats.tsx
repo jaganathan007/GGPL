@@ -466,19 +466,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
                 <div className="h-px bg-slate-800/60" />
               </div>
 
-              {/* Bowling Scorecard */}
-              <div className="px-4 py-2">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-slate-500 border-b border-slate-800/30">
-                      <th className="text-left py-2 font-medium">Bowler</th>
-                      <th className="text-right py-2 font-medium w-10">O</th>
-                      <th className="text-right py-2 font-medium w-10">M</th>
-                      <th className="text-right py-2 font-medium w-10">R</th>
-                      <th className="text-right py-2 font-medium w-10">W</th>
-                      <th className="text-right py-2 font-medium w-14">ER</th>
-                    </tr>
-                  </thead>
               {/* Bowling Scorecard — Cricinfo Style */}
               <div className="px-4 pt-3 pb-3">
                 <div className="grid grid-cols-[1fr_40px_36px_36px_36px_48px] text-[11px] text-slate-500 font-semibold border-b border-slate-700/50 pb-1.5 mb-0.5">
@@ -511,6 +498,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   );
                 })}
               </div>
+
 
             </motion.div>
           );
