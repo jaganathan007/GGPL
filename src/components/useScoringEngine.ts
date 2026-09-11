@@ -175,14 +175,49 @@ export function useScoringEngine() {
     if (target !== null && newTotal >= target) { setPhase('target_reached'); }
   }, [phase,currentBowlerIdx,currentBowler,oversCompleted,ballsInOver,target,totalRuns]);
 
-  const handleNoBall = useCallback(() => {
+  const handleNoBall = useCallback((batterRuns: number = 0) => {
     if (phase !== 'batting') return;
-    const newTotal = totalRuns + 1;
-    setExtras(prev=>prev+1);
-    setBowlers(prev => prev.map((b,i) => i===currentBowlerIdx ? {...b, runs:b.runs+1, currentOverRuns:b.currentOverRuns+1} : b));
-    setBallLog(prev => [...prev, {type:'noball',runs:1,striker:'',bowler:currentBowler?.name||'',over:oversCompleted,ball:ballsInOver}]);
+    const totalAdded = 1 + batterRuns; // 1 NB penalty + batsman's runs
+    const newTotal = totalRuns + totalAdded;
+
+    // 1 run to extras (no-ball penalty)
+    setExtras(prev => prev + 1);
+
+    // Credit batsman's runs to striker (no-ball doesn't count as a ball faced)
+    if (batterRuns > 0) {
+      setBatters(prev => prev.map((b, i) => {
+        if (i !== strikerIdx) return b;
+        return {
+          ...b,
+          runs: b.runs + batterRuns,
+          fours: batterRuns === 4 ? b.fours + 1 : b.fours,
+          sixes: batterRuns === 6 ? b.sixes + 1 : b.sixes,
+        };
+      }));
+    }
+
+    // Bowler charged for NB penalty + batsman runs
+    setBowlers(prev => prev.map((b, i) =>
+      i === currentBowlerIdx
+        ? { ...b, runs: b.runs + totalAdded, currentOverRuns: b.currentOverRuns + totalAdded }
+        : b
+    ));
+
+    // Log ball event
+    setBallLog(prev => [...prev, {
+      type: 'noball', runs: totalAdded,
+      striker: striker?.name || '', bowler: currentBowler?.name || '',
+      over: oversCompleted, ball: ballsInOver,
+    }]);
+
+    // Rotate strike if batsman scored odd runs (mid-over rule)
+    if (batterRuns % 2 === 1) rotateStrike();
+
+    // NOTE: ballsInOver does NOT advance — no-ball is a free delivery
+
     if (target !== null && newTotal >= target) { setPhase('target_reached'); }
-  }, [phase,currentBowlerIdx,currentBowler,oversCompleted,ballsInOver,target,totalRuns]);
+  }, [phase, strikerIdx, currentBowlerIdx, striker, currentBowler, oversCompleted, ballsInOver, target, totalRuns, rotateStrike]);
+
 
   const selectNewBatter = useCallback((p: {id:string,name:string}) => {
     const newBatter: BatterState = {playerId:p.id,name:p.name,runs:0,balls:0,fours:0,sixes:0,isOut:false};

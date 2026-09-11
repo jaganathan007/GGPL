@@ -49,6 +49,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
   });
   const [tossWinner, setTossWinner] = useState('');
   const [showDismissalModal, setShowDismissalModal] = useState(false);
+  const [showNoBallModal, setShowNoBallModal] = useState(false);
   const [dismissalType, setDismissalType] = useState<'bowled' | 'caught' | 'lbw' | 'runout' | 'stumped' | 'hitwicket' | 'other'>('bowled');
   const [fielderId, setFielderId] = useState('');
   const [outPlayerId, setOutPlayerId] = useState('');
@@ -56,6 +57,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
   const [newBowlingPlayerName, setNewBowlingPlayerName] = useState('');
   const [newWicketBatterName, setNewWicketBatterName] = useState('');
   const [newOverBowlerName, setNewOverBowlerName] = useState('');
+
   const restoredRef = useRef(false);
 
   // ── Restore persisted ENGINE state on mount (must happen in useEffect since it calls setState) ──
@@ -680,7 +682,8 @@ export default function ScoringView({ matchId, onBack }: Props) {
               setShowDismissalModal(true);
             }} className="py-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/25 active:scale-95 transition-all">WICKET</button>
             <button onClick={engine.handleWide} className="py-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-sm font-bold text-orange-400 hover:bg-orange-500/20 active:scale-95 transition-all">WIDE</button>
-            <button onClick={engine.handleNoBall} className="py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-sm font-bold text-yellow-400 hover:bg-yellow-500/20 active:scale-95 transition-all">NO BALL</button>
+            <button onClick={() => setShowNoBallModal(true)} className="py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-sm font-bold text-yellow-400 hover:bg-yellow-500/20 active:scale-95 transition-all">NO BALL</button>
+
           </div>
         </div>
 
@@ -838,7 +841,60 @@ export default function ScoringView({ matchId, onBack }: Props) {
             </motion.div>
           </div>
         )}
+        {/* ── No Ball Runs Modal ── */}
+        {showNoBallModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              className="w-full max-w-sm bg-slate-900 border border-yellow-500/30 rounded-2xl p-5 shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-base font-bold text-yellow-400">🟡 NO BALL</span>
+                <span className="ml-auto text-[10px] text-slate-500 uppercase tracking-widest font-semibold">+1 Extra</span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">
+                How many runs did <span className="text-white font-semibold">{engine.striker?.name || 'the batsman'}</span> score off this no ball?
+              </p>
+
+              {/* Run buttons */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                {[0, 1, 2, 3].map(r => (
+                  <button
+                    key={r}
+                    onClick={() => { engine.handleNoBall(r); setShowNoBallModal(false); }}
+                    className="py-4 bg-slate-800/80 border border-slate-700/50 rounded-xl text-xl font-bold text-white hover:bg-slate-700 active:scale-95 transition-all"
+                  >{r}</button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button
+                  onClick={() => { engine.handleNoBall(4); setShowNoBallModal(false); }}
+                  className="py-4 bg-blue-500/15 border border-blue-500/30 rounded-xl text-xl font-bold text-blue-400 hover:bg-blue-500/25 active:scale-95 transition-all"
+                >4 <span className="text-xs font-normal text-blue-300">FOUR</span></button>
+                <button
+                  onClick={() => { engine.handleNoBall(6); setShowNoBallModal(false); }}
+                  className="py-4 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xl font-bold text-amber-400 hover:bg-amber-500/25 active:scale-95 transition-all"
+                >6 <span className="text-xs font-normal text-amber-300">SIX</span></button>
+              </div>
+
+              {/* Note */}
+              <p className="text-[10px] text-slate-600 text-center mb-3">
+                Total = 1 (NB) + batsman's runs • No-ball is a free delivery
+              </p>
+
+              {/* Cancel */}
+              <button
+                onClick={() => setShowNoBallModal(false)}
+                className="w-full py-2.5 bg-slate-800 text-slate-400 text-sm font-semibold rounded-xl hover:bg-slate-700 transition-colors"
+              >Cancel</button>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
+
     </div>
   );
 }
