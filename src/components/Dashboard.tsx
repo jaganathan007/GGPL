@@ -33,6 +33,62 @@ function getInningsOvers(match: Match, inningsIndex: number): number | string {
   return inn.bowlingEntries.reduce((s, e) => s + e.overs, 0);
 }
 
+function getBattersState(currentInn: Innings | undefined, battingTeam: Team | undefined) {
+  if (!currentInn) return { b1: null, b2: null };
+
+  const notOutBatters = currentInn.battingEntries.filter(b => b.isNotOut);
+  if (notOutBatters.length === 0) return { b1: null, b2: null };
+
+  // 1. Check if currentStrikerId is explicitly saved in innings
+  let determinedStrikerId: string | null = currentInn.currentStrikerId || null;
+
+  // 2. Otherwise derive from ballLog
+  if (!determinedStrikerId && currentInn.ballLog && currentInn.ballLog.length > 0) {
+    const log = currentInn.ballLog;
+    const last = log[log.length - 1];
+    const lastStrikerName = last.striker || null;
+
+    const isOddRun = (last.type === 'run' || last.type === 'noball') && last.runs % 2 === 1;
+    const isEndOfOver = last.ball === 6;
+    // Mid-over odd runs -> strike rotated
+    // End of over with even runs -> strike rotated
+    // End of over with odd runs -> crossing + change ends cancels out (stays same)
+    const strikeRotated = (isOddRun && !isEndOfOver) || (!isOddRun && isEndOfOver);
+
+    if (lastStrikerName) {
+      const lastStrikerBatter = notOutBatters.find(b => {
+        const p = battingTeam?.players.find(pl => pl.id === b.playerId);
+        return p?.name === lastStrikerName;
+      });
+
+      if (lastStrikerBatter) {
+        const otherBatter = notOutBatters.find(b => b.playerId !== lastStrikerBatter.playerId);
+        if (strikeRotated && otherBatter) {
+          determinedStrikerId = otherBatter.playerId;
+        } else {
+          determinedStrikerId = lastStrikerBatter.playerId;
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: default to first not out batter
+  if (!determinedStrikerId && notOutBatters.length > 0) {
+    determinedStrikerId = notOutBatters[0].playerId;
+  }
+
+  const b1 = notOutBatters[0];
+  const b2 = notOutBatters[1];
+
+  const p1 = battingTeam?.players.find(p => p.id === b1?.playerId);
+  const p2 = battingTeam?.players.find(p => p.id === b2?.playerId);
+
+  return {
+    b1: b1 ? { id: b1.playerId, name: p1?.name || 'Batter 1', runs: b1.runs, balls: b1.balls, isStriker: b1.playerId === determinedStrikerId } : null,
+    b2: b2 ? { id: b2.playerId, name: p2?.name || 'Batter 2', runs: b2.runs, balls: b2.balls, isStriker: b2.playerId === determinedStrikerId } : null,
+  };
+}
+
 export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewStats, currentUserId }: DashboardProps) {
   const { state } = useApp();
   const { teams, matches } = state;
@@ -83,21 +139,8 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
             const prevWickets = hasPrevInnings ? getInningsWickets(match, 0) : null;
             const prevOvers = hasPrevInnings ? getInningsOvers(match, 0) : null;
 
-            // Striker & Non-Striker
-            const notOutBatters = currentInn?.battingEntries.filter(b => b.isNotOut) || [];
-            const striker = notOutBatters[0];
-            const nonStriker = notOutBatters[1];
-
-            const strikerPlayer = battingTeam?.players.find(p => p.id === striker?.playerId);
-            const nonStrikerPlayer = battingTeam?.players.find(p => p.id === nonStriker?.playerId);
-
-            const strikerName = strikerPlayer?.name || 'Striker';
-            const strikerRuns = striker?.runs ?? 0;
-            const strikerBalls = striker?.balls ?? 0;
-
-            const nonStrikerName = nonStrikerPlayer?.name || 'Non-Striker';
-            const nonStrikerRuns = nonStriker?.runs ?? 0;
-            const nonStrikerBalls = nonStriker?.balls ?? 0;
+            // Striker & Non-Striker with dynamic strike detection
+            const { b1, b2 } = getBattersState(currentInn, battingTeam);
 
             // Current Bowler
             const bowlingEntries = currentInn?.bowlingEntries || [];
@@ -139,26 +182,57 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                       </div>
                     </div>
 
-                    {/* Middle Section: Striker & Non-Striker */}
+                    {/* Middle Section: Striker & Non-Striker with dynamic blue light */}
                     <div className="bg-slate-950/70 rounded-xl p-4 border border-slate-800/80 space-y-2.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-200 font-semibold flex items-center gap-2 truncate">
-                          <span className="text-cyan-400 font-extrabold">*</span>
-                          <span className="truncate">{strikerName}</span>
-                        </span>
-                        <span className="font-bold text-white whitespace-nowrap ml-2">
-                          {strikerRuns} <span className="text-xs text-slate-400 font-normal">({strikerBalls})</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm pt-1 border-t border-slate-800/60">
-                        <span className="text-slate-400 font-medium flex items-center gap-2 truncate">
-                          <span className="text-slate-500">•</span>
-                          <span className="truncate">{nonStrikerName}</span>
-                        </span>
-                        <span className="font-bold text-slate-300 whitespace-nowrap ml-2">
-                          {nonStrikerRuns} <span className="text-xs text-slate-500 font-normal">({nonStrikerBalls})</span>
-                        </span>
-                      </div>
+                      {b1 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className={`font-semibold flex items-center gap-2 truncate ${b1.isStriker ? 'text-white' : 'text-slate-400'}`}>
+                            {b1.isStriker ? (
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,1)] animate-pulse inline-block" />
+                                <span className="text-cyan-400 font-black text-base leading-none">*</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 pl-0.5 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
+                                <span className="text-slate-500 font-normal leading-none">•</span>
+                              </span>
+                            )}
+                            <span className="truncate">{b1.name}</span>
+                          </span>
+                          <span className={`whitespace-nowrap ml-2 font-bold ${b1.isStriker ? 'text-white' : 'text-slate-300'}`}>
+                            {b1.runs} <span className="text-xs text-slate-500 font-normal">({b1.balls})</span>
+                          </span>
+                        </div>
+                      )}
+
+                      {b2 && (
+                        <div className="flex items-center justify-between text-sm pt-1 border-t border-slate-800/60">
+                          <span className={`font-semibold flex items-center gap-2 truncate ${b2.isStriker ? 'text-white' : 'text-slate-400'}`}>
+                            {b2.isStriker ? (
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,1)] animate-pulse inline-block" />
+                                <span className="text-cyan-400 font-black text-base leading-none">*</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 pl-0.5 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-600 inline-block" />
+                                <span className="text-slate-500 font-normal leading-none">•</span>
+                              </span>
+                            )}
+                            <span className="truncate">{b2.name}</span>
+                          </span>
+                          <span className={`whitespace-nowrap ml-2 font-bold ${b2.isStriker ? 'text-white' : 'text-slate-300'}`}>
+                            {b2.runs} <span className="text-xs text-slate-500 font-normal">({b2.balls})</span>
+                          </span>
+                        </div>
+                      )}
+
+                      {!b1 && !b2 && (
+                        <div className="text-xs text-slate-500 text-center py-2 italic">
+                          Waiting for batsmen to start
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Box: Bowling Team & Bowler */}

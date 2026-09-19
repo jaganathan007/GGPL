@@ -197,11 +197,13 @@ export default function ScoringView({ matchId, onBack }: Props) {
       })),
       extras: engine.extras,
       ballLog: engine.ballLog,
+      currentStrikerId: engine.striker?.playerId,
+      currentNonStrikerId: engine.nonStriker?.playerId,
     };
     const newInnings = [...m.innings];
     newInnings[currentInningsIdx] = innings;
     dispatch({ type: 'UPDATE_MATCH', payload: { ...m, innings: newInnings } });
-  }, [engine.batters, engine.bowlers, engine.extras, engine.phase, engine.ballLog]);
+  }, [engine.batters, engine.bowlers, engine.extras, engine.phase, engine.ballLog, engine.striker, engine.nonStriker]);
 
   function doStartInnings() {
     const s = battingTeam?.players.find(p => p.id === strikerId);

@@ -129,12 +129,22 @@ function getLiveInfo(inn: import('../types').Innings, teams: import('../types').
   let nonStrikerName: string | null = null;
   let bowlerName: string | null = null;
 
-  if (log.length > 0) {
+  if (inn.currentStrikerId) {
+    const sEntry = notOutBatters.find(b => b.playerId === inn.currentStrikerId);
+    if (sEntry) {
+      strikerName = sEntry.name;
+      const nsEntry = notOutBatters.find(b => b.playerId !== inn.currentStrikerId);
+      nonStrikerName = nsEntry?.name || null;
+    }
+    if (log.length > 0) {
+      bowlerName = log[log.length - 1].bowler || null;
+    }
+  } else if (log.length > 0) {
     const last = log[log.length - 1];
     bowlerName = last.bowler || null;
     const lastStrikerName = last.striker || null;
 
-    const isOddRun = last.type === 'run' && last.runs % 2 === 1;
+    const isOddRun = (last.type === 'run' || last.type === 'noball') && last.runs % 2 === 1;
     const isEndOfOver = last.ball === 6;
     const strikerRotated = isOddRun && !isEndOfOver;
     const endOverRotated = !isOddRun && isEndOfOver;

@@ -66,6 +66,8 @@ export interface Innings {
   bowlingEntries: BowlingEntry[];
   extras: number;
   ballLog?: BallEvent[];
+  currentStrikerId?: string;
+  currentNonStrikerId?: string;
 }
 
 export interface Toss {
