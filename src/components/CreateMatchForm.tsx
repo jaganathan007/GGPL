@@ -55,6 +55,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
   // Step 3: Match Details
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [time, setTime] = useState('10:00');
   const [totalOvers, setTotalOvers] = useState(10);
   const [adminCode, setAdminCode] = useState(() => generateOTP());
   const [viewerCode, setViewerCode] = useState(() => generateOTP());
@@ -172,6 +173,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
         decision: tossDecision as 'bat'|'bowl' 
       },
       date,
+      time,
       venue: venue.trim() || 'TBD',
       totalOvers,
       innings: [],
@@ -409,10 +411,14 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                   <span className="text-xs text-slate-500 font-mono ml-auto">{linkedLeague.code}</span>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Date</label>
                   <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1.5 font-medium">Time</label>
+                  <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Total Overs</label>

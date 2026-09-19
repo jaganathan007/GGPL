@@ -82,6 +82,7 @@ export interface Match {
   team2Id: string;
   toss?: Toss;
   date: string;
+  time?: string;
   venue: string;
   totalOvers: number;
   innings: Innings[];

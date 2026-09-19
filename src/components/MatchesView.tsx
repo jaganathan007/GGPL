@@ -34,21 +34,21 @@ function getInningsOvers(match: Match, teamId: string): number | string {
   return inn.bowlingEntries.reduce((s, e) => s + e.overs, 0);
 }
 
-
 interface MatchesViewProps {
   onScoreMatch: (matchId: string) => void;
   onViewStats?: (matchId: string) => void;
   isAdmin: boolean;
   isGlobalAdmin?: boolean;
   currentUserId?: string;
+  filter?: 'all' | 'live' | 'upcoming' | 'completed';
 }
 
 const TEAM_COLORS = [
-  '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444',
-  '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1',
+  '#06b6d4', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444',
+  '#ec4899', '#10b981', '#f97316', '#14b8a6', '#6366f1',
 ];
 
-export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlobalAdmin, currentUserId }: MatchesViewProps) {
+export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlobalAdmin, currentUserId, filter = 'all' }: MatchesViewProps) {
   const { state, dispatch } = useApp();
   const { matches, leagues } = state;
   // Filter teams by owner: only show teams created by the current user
@@ -66,6 +66,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
   const [isCreatingTeam2, setIsCreatingTeam2] = useState(myTeams.length < 2);
   const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [time, setTime] = useState('10:00');
   const [totalOvers, setTotalOvers] = useState(10);
   const [tossWinner, setTossWinner] = useState('');
   const [tossDecision, setTossDecision] = useState<'bat'|'bowl'|''>('');
@@ -80,6 +81,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
     setIsCreatingTeam2(myTeams.length < 2);
     setVenue('');
     setDate(new Date().toISOString().slice(0, 10));
+    setTime('10:00');
     setTotalOvers(10);
     setTossWinner('');
     setTossDecision('');
@@ -141,61 +143,77 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
       finalTossWinner = finalTeam1Id;
     } else if (tossWinner === 'team2') {
       finalTossWinner = finalTeam2Id;
-    } else if (tossWinner === team1Id) {
-      finalTossWinner = finalTeam1Id;
-    } else if (tossWinner === team2Id) {
-      finalTossWinner = finalTeam2Id;
     }
 
-    const match: Match = {
+    const newMatch: Match = {
       id: uid(),
       viewerCode: generateOTP(),
       adminCode: generateOTP(),
       team1Id: finalTeam1Id,
       team2Id: finalTeam2Id,
-      toss: { winnerId: finalTossWinner, decision: tossDecision as 'bat'|'bowl' },
+      venue: venue.trim() || 'Local Ground',
       date,
-      venue: venue.trim() || 'TBD',
+      time,
       totalOvers,
+      toss: {
+        winnerId: finalTossWinner,
+        decision: tossDecision as 'bat' | 'bowl',
+      },
       innings: [],
       isComplete: false,
       result: '',
       ownerId: currentUserId,
     };
-    dispatch({ type: 'ADD_MATCH', payload: match });
-    setCreatedMatch(match);
+
+    dispatch({ type: 'ADD_MATCH', payload: newMatch });
+    setCreatedMatch(newMatch);
   }
 
-  const liveMatches = matches.filter(m => !m.isComplete);
+  // Categorize matches
+  const upcomingMatches = matches
+    .filter(m => !m.isComplete && m.innings.length === 0)
+    .sort((a, b) => {
+      const tA = new Date(`${a.date}T${a.time || '00:00'}`).getTime();
+      const tB = new Date(`${b.date}T${b.time || '00:00'}`).getTime();
+      return tA - tB;
+    });
+
+  const liveMatches = matches.filter(m => !m.isComplete && m.innings.length > 0);
   const completedMatches = matches.filter(m => m.isComplete);
 
-  return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-white">Matches</h2>
-          <p className="text-xs text-slate-400">{matches.length} match{matches.length !== 1 ? 'es' : ''} total</p>
-        </div>
-        {isAdmin && (
-          <button
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4" /> New Match
-          </button>
-        )}
-      </div>
+  const showUpcoming = filter === 'all' || filter === 'upcoming';
+  const showLive = filter === 'all' || filter === 'live';
+  const showCompleted = filter === 'all' || filter === 'completed';
 
-      {/* Match Form */}
+  return (
+    <div className="space-y-6">
+      {/* Header with Add Match Button (for all or upcoming views) */}
+      {!showForm && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-400 font-medium">
+            {filter === 'upcoming' && `${upcomingMatches.length} upcoming ${upcomingMatches.length === 1 ? 'fixture' : 'fixtures'}`}
+            {filter === 'live' && `${liveMatches.length} live ${liveMatches.length === 1 ? 'match' : 'matches'}`}
+            {filter === 'completed' && `${completedMatches.length} completed ${completedMatches.length === 1 ? 'match' : 'matches'}`}
+            {filter === 'all' && `${matches.length} total matches`}
+          </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-500 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" /> New Match
+          </button>
+        </div>
+      )}
+
+      {/* Match Creation Modal / Form */}
       <AnimatePresence>
-        {showForm && isAdmin && (
+        {showForm && (
           <motion.form
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            onSubmit={(e) => e.preventDefault()}
-            className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-5 overflow-hidden"
+            onSubmit={handleNextStep}
+            className="bg-slate-900 border border-cyan-500/30 rounded-2xl p-5 overflow-hidden shadow-2xl"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-200">
@@ -237,7 +255,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       resetForm();
                       onScoreMatch(mId);
                     }}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg hover:bg-cyan-400 transition-colors"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-colors shadow-lg shadow-cyan-900/30"
                   >
                     Start Scoring <Play className="w-3.5 h-3.5 fill-current" />
                   </button>
@@ -327,8 +345,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="sm:col-span-2">
                     <label className="block text-xs text-slate-400 mb-1 font-medium">Venue</label>
                     <input
                       value={venue}
@@ -347,32 +365,35 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1 font-medium">Total Overs</label>
+                    <label className="block text-xs text-slate-400 mb-1 font-medium">Time</label>
                     <input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={totalOvers}
-                      onChange={e => setTotalOvers(Number(e.target.value))}
+                      type="time"
+                      value={time}
+                      onChange={e => setTime(e.target.value)}
                       className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1 font-medium">Total Overs</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={totalOvers}
+                    onChange={e => setTotalOvers(Number(e.target.value))}
+                    className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
+                  />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <button type="button" onClick={resetForm} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
                     Cancel
                   </button>
                   <button
-                    type="button"
-                    onClick={handleNextStep}
-                    disabled={
-                      (isCreatingTeam1 ? !customTeam1Name.trim() : !team1Id) ||
-                      (isCreatingTeam2 ? !customTeam2Name.trim() : !team2Id) ||
-                      (isCreatingTeam1 ? customTeam1Name.trim() : team1Id) === (isCreatingTeam2 ? customTeam2Name.trim() : team2Id)
-                    }
-                    className="flex items-center gap-1.5 px-5 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="submit"
+                    className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-colors shadow-lg shadow-cyan-900/30"
                   >
-                    Next: Toss <Play className="w-3.5 h-3.5 fill-current" />
+                    Next: Toss →
                   </button>
                 </div>
               </motion.div>
@@ -413,7 +434,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                           <button 
                             type="button"
                             onClick={() => setTossDecision('bat')}
-                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
                           >
                             <span className="text-lg mb-1">🏏</span> Bat
                           </button>
@@ -438,7 +459,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     type="button"
                     onClick={handleCreateMatch}
                     disabled={!tossWinner || !tossDecision}
-                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
                   >
                     <Check className="w-4 h-4" /> Create Match
                   </button>
@@ -449,193 +470,352 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
         )}
       </AnimatePresence>
 
-      {/* Live Matches */}
-      {liveMatches.length > 0 && (
+      {/* UPCOMING MATCHES SECTION */}
+      {showUpcoming && (
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
-            </span>
-            <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">In Progress</h3>
-          </div>
-          <div className="space-y-3">
-            {liveMatches.map(match => {
-              const t1 = allTeams.find(t => t.id === match.team1Id);
-              const t2 = allTeams.find(t => t.id === match.team2Id);
-              return (
-                <motion.div
-                  key={match.id}
-                  layout
-                  className="bg-slate-900/60 border border-cyan-500/15 rounded-2xl p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
-                      <MapPin className="w-3 h-3" /> {match.venue}
-                      <span className="mx-1">•</span>
-                      <Calendar className="w-3 h-3" /> {match.date}
-                      <span className="mx-1">•</span>
-                      <Clock className="w-3 h-3" /> {match.totalOvers} ov
-                    </div>
-                    {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
-                      <span className="px-2 py-0.5 bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-md flex items-center gap-1">
-                        <Trophy className="w-3 h-3" />{lg.name}
-                      </span>
-                    ) : null; })()}
-                    {match.toss && (
-                      <div className="mt-2 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[10px] text-amber-400/90 inline-flex items-center gap-1.5 font-medium">
-                        <span className="text-xs">🪙</span> {allTeams.find(t => t.id === match.toss!.winnerId)?.name} elected to {match.toss!.decision}
+          {filter === 'all' && upcomingMatches.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-amber-400" />
+              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Upcoming Matches ({upcomingMatches.length})</h3>
+            </div>
+          )}
+          
+          {upcomingMatches.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingMatches.map(match => {
+                const t1 = allTeams.find(t => t.id === match.team1Id);
+                const t2 = allTeams.find(t => t.id === match.team2Id);
+                return (
+                  <motion.div
+                    key={match.id}
+                    layout
+                    className="bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/30 transition-all rounded-2xl p-5 shadow-lg"
+                  >
+                    <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+                        <span className="px-2.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md font-bold text-[10px] uppercase tracking-wider">
+                          Upcoming
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-slate-300">
+                          <Calendar className="w-3.5 h-3.5 text-cyan-400" /> {match.date} {match.time ? `at ${match.time}` : ''}
+                        </span>
+                        <span className="text-slate-600">•</span>
+                        <span className="flex items-center gap-1 font-medium text-slate-300">
+                          <MapPin className="w-3.5 h-3.5 text-cyan-400" /> {match.venue}
+                        </span>
+                        <span className="text-slate-600">•</span>
+                        <span className="flex items-center gap-1 font-medium text-slate-300">
+                          <Clock className="w-3.5 h-3.5 text-cyan-400" /> {match.totalOvers} ov
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  {(isGlobalAdmin || currentUserId) && (
-                    <div className={`mb-4 flex gap-3 text-xs bg-slate-950/50 p-2 rounded-lg border border-slate-800/60`}>
-                      <div className={`flex-1 text-center ${(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) ? 'border-r border-slate-800/60' : ''}`}>
-                        <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Viewer Code</p>
-                        <p className="text-cyan-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
-                      </div>
-                      {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
-                        <div className="flex-1 text-center">
-                          <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Scorer Code</p>
-                          <p className="text-amber-400 font-mono tracking-wider font-bold">{match.adminCode}</p>
-                        </div>
+                      {match.leagueCode && (
+                        <span className="px-2.5 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[11px] font-bold rounded-md flex items-center gap-1">
+                          <Trophy className="w-3 h-3" />
+                          {(leagues || []).find((l: League) => l.code === match.leagueCode)?.name || match.leagueCode}
+                        </span>
                       )}
                     </div>
-                  )}
-                  <div className="flex items-center gap-6 mb-3">
-                    <div className="flex-1 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: t1?.color || '#10b981' }}>
-                        {t1?.shortName.slice(0, 2) || '??'}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-300">{t1?.name || 'Unknown'}</p>
-                        <p className="text-lg font-extrabold text-white">
-                          {getInningsForTeam(match, match.team1Id)
-                            ? <>{getInningsTotal(match, match.team1Id)}/{getInningsWickets(match, match.team1Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team1Id)} ov)</span></>
-                            : <span className="text-slate-600">—</span>}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-600 font-bold">VS</span>
-                    <div className="flex-1 flex items-center gap-3 justify-end text-right">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-300">{t2?.name || 'Unknown'}</p>
-                        <p className="text-lg font-extrabold text-white">
-                          {getInningsForTeam(match, match.team2Id)
-                            ? <>{getInningsTotal(match, match.team2Id)}/{getInningsWickets(match, match.team2Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team2Id)} ov)</span></>
-                            : <span className="text-slate-600">—</span>}
-                        </p>
-                      </div>
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: t2?.color || '#10b981' }}>
-                        {t2?.shortName.slice(0, 2) || '??'}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    {/* Resume Scoring - only for match owner or global admin on live matches */}
-                    {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && !match.isComplete && (
+                    {/* Teams Card */}
+                    <div className="flex items-center justify-between gap-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800/60 mb-3.5">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t1?.color || '#06b6d4' }}>
+                          {t1?.shortName?.slice(0, 3) || 'T1'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">{t1?.name || 'Team 1'}</p>
+                          <p className="text-[11px] text-slate-400">{t1?.players?.length || 0} Players</p>
+                        </div>
+                      </div>
+
+                      <span className="px-3 py-1 bg-slate-800/80 text-slate-400 text-xs font-black rounded-lg uppercase tracking-wider">
+                        VS
+                      </span>
+
+                      <div className="flex items-center gap-3 flex-1 justify-end text-right">
+                        <div>
+                          <p className="text-sm font-bold text-white">{t2?.name || 'Team 2'}</p>
+                          <p className="text-[11px] text-slate-400">{t2?.players?.length || 0} Players</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t2?.color || '#3b82f6' }}>
+                          {t2?.shortName?.slice(0, 3) || 'T2'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toss notice if completed */}
+                    {match.toss && (
+                      <div className="mb-3 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-400 flex items-center gap-1.5 font-medium">
+                        <span>🪙</span> {allTeams.find(t => t.id === match.toss!.winnerId)?.name} won toss & elected to {match.toss!.decision}
+                      </div>
+                    )}
+
+                    {/* Codes & Actions */}
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
+                        <div className="flex gap-2 text-xs">
+                          <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
+                            Viewer: <span className="font-mono text-cyan-400 font-bold">{match.viewerCode}</span>
+                          </span>
+                          <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
+                            Scorer: <span className="font-mono text-amber-400 font-bold">{match.adminCode}</span>
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 ml-auto">
+                        {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
+                          <button
+                            onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
+                            className="p-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/60 rounded-xl transition-colors"
+                            title="Delete Match"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onScoreMatch(match.id)}
+                          className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current" /> Start Scoring
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : filter === 'upcoming' ? (
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center space-y-4">
+              <div className="w-14 h-14 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mx-auto text-amber-400">
+                <Calendar className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white mb-1">No Upcoming Matches</h3>
+                <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  Create a new fixture with a scheduled date and time to see it here.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-500 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> Schedule Match
+              </button>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* LIVE MATCHES SECTION */}
+      {showLive && (
+        <div>
+          {filter === 'all' && liveMatches.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+              </span>
+              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">In Progress ({liveMatches.length})</h3>
+            </div>
+          )}
+
+          {liveMatches.length > 0 ? (
+            <div className="space-y-3">
+              {liveMatches.map(match => {
+                const t1 = allTeams.find(t => t.id === match.team1Id);
+                const t2 = allTeams.find(t => t.id === match.team2Id);
+                return (
+                  <motion.div
+                    key={match.id}
+                    layout
+                    className="bg-slate-900/70 border border-cyan-500/20 rounded-2xl p-4 shadow-lg shadow-cyan-950/20"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
+                        <MapPin className="w-3 h-3 text-cyan-400" /> {match.venue}
+                        <span className="mx-1">•</span>
+                        <Calendar className="w-3 h-3 text-cyan-400" /> {match.date} {match.time ? `at ${match.time}` : ''}
+                        <span className="mx-1">•</span>
+                        <Clock className="w-3 h-3 text-cyan-400" /> {match.totalOvers} ov
+                      </div>
+                      {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
+                        <span className="px-2 py-0.5 bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-bold rounded-md flex items-center gap-1">
+                          <Trophy className="w-3 h-3" />{lg.name}
+                        </span>
+                      ) : null; })()}
+                    </div>
+
+                    <div className="flex items-center gap-6 mb-3">
+                      <div className="flex-1 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t1?.color || '#06b6d4' }}>
+                          {t1?.shortName.slice(0, 3) || '??'}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-300">{t1?.name || 'Unknown'}</p>
+                          <p className="text-lg font-extrabold text-white">
+                            {getInningsForTeam(match, match.team1Id)
+                              ? <>{getInningsTotal(match, match.team1Id)}/{getInningsWickets(match, match.team1Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team1Id)} ov)</span></>
+                              : <span className="text-slate-600">—</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-600 font-bold">VS</span>
+                      <div className="flex-1 flex items-center gap-3 justify-end text-right">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-300">{t2?.name || 'Unknown'}</p>
+                          <p className="text-lg font-extrabold text-white">
+                            {getInningsForTeam(match, match.team2Id)
+                              ? <>{getInningsTotal(match, match.team2Id)}/{getInningsWickets(match, match.team2Id)}<span className="text-xs text-slate-500 font-medium ml-1">({getInningsOvers(match, match.team2Id)} ov)</span></>
+                              : <span className="text-slate-600">—</span>}
+                          </p>
+                        </div>
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t2?.color || '#3b82f6' }}>
+                          {t2?.shortName.slice(0, 3) || '??'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
                       <button
                         onClick={() => onScoreMatch(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-cyan-500/15 text-cyan-400 text-sm font-semibold rounded-lg hover:bg-cyan-500/25 transition-colors border border-cyan-500/20"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-md shadow-cyan-900/30"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" /> Resume Scoring
                       </button>
-                    )}
-                    {onViewStats && match.innings.length > 0 && (
-                      <button
-                        onClick={() => onViewStats(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-violet-500/10 text-violet-400 text-sm font-semibold rounded-lg hover:bg-violet-500/20 transition-colors"
-                      >
-                        <BarChart3 className="w-3.5 h-3.5" /> {isAdmin ? '' : 'View'} Stats
-                      </button>
-                    )}
-                    {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
-                      <button
-                        onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
-                        className="px-3 py-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-lg transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Completed Matches */}
-      {completedMatches.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Completed</h3>
-          </div>
-          <div className="space-y-2">
-            {completedMatches.slice().reverse().map(match => {
-              const t1 = allTeams.find(t => t.id === match.team1Id);
-              const t2 = allTeams.find(t => t.id === match.team2Id);
-              // Find each team's actual innings (toss may mean team2 batted first)
-              const hasT1Inn = !!getInningsForTeam(match, match.team1Id);
-              const hasT2Inn = !!getInningsForTeam(match, match.team2Id);
-              return (
-                <div
-                  key={match.id}
-                  className="bg-slate-900/40 border border-slate-800/40 rounded-xl p-3 group hover:border-slate-700/50 transition-all cursor-pointer"
-                  onClick={() => onViewStats?.(match.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ background: t1?.color || '#10b981' }} />
-                        <span className="text-xs font-semibold text-slate-300">{t1?.shortName || '??'}</span>
-                        <span className="text-sm font-bold text-white">
-                          {hasT1Inn ? `${getInningsTotal(match, match.team1Id)}/${getInningsWickets(match, match.team1Id)}` : '—'}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-600">vs</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ background: t2?.color || '#10b981' }} />
-                        <span className="text-xs font-semibold text-slate-300">{t2?.shortName || '??'}</span>
-                        <span className="text-sm font-bold text-white">
-                          {hasT2Inn ? `${getInningsTotal(match, match.team2Id)}/${getInningsWickets(match, match.team2Id)}` : '—'}
-                        </span>
-                      </div>
-
-                      {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
-                        <span className="ml-2 px-1.5 py-0.5 bg-amber-500/10 text-amber-400/70 text-[9px] font-bold rounded">{lg.name}</span>
-                      ) : null; })()}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-[11px] text-cyan-400/80 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
-                      <Eye className="w-3.5 h-3.5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+                      {onViewStats && match.innings.length > 0 && (
+                        <button
+                          onClick={() => onViewStats(match.id)}
+                          className="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700 flex items-center gap-1.5"
+                        >
+                          <BarChart3 className="w-3.5 h-3.5" /> Stats
+                        </button>
+                      )}
                       {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_MATCH', payload: match.id }); }}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-rose-400 transition-all"
+                          onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
+                          className="px-3 py-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-xl transition-all"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : filter === 'live' ? (
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center space-y-4">
+              <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto text-cyan-400">
+                <Play className="w-7 h-7 fill-current opacity-60" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white mb-1">No Live Matches Right Now</h3>
+                <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                  Select an upcoming match or create a new match to start scoring.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-500 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> Create Match
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
 
-      {/* Empty State */}
+      {/* COMPLETED MATCHES SECTION */}
+      {showCompleted && (
+        <div>
+          {filter === 'all' && completedMatches.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Completed Matches ({completedMatches.length})</h3>
+            </div>
+          )}
+          
+          {completedMatches.length > 0 ? (
+            <div className="space-y-2">
+              {completedMatches.slice().reverse().map(match => {
+                const t1 = allTeams.find(t => t.id === match.team1Id);
+                const t2 = allTeams.find(t => t.id === match.team2Id);
+                const hasT1Inn = !!getInningsForTeam(match, match.team1Id);
+                const hasT2Inn = !!getInningsForTeam(match, match.team2Id);
+                return (
+                  <div
+                    key={match.id}
+                    className="bg-slate-900/40 border border-slate-800/60 hover:border-cyan-500/30 rounded-xl p-3.5 group transition-all cursor-pointer shadow-sm"
+                    onClick={() => onViewStats?.(match.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: t1?.color || '#06b6d4' }} />
+                          <span className="text-xs font-semibold text-slate-300">{t1?.shortName || '??'}</span>
+                          <span className="text-sm font-bold text-white">
+                            {hasT1Inn ? `${getInningsTotal(match, match.team1Id)}/${getInningsWickets(match, match.team1Id)}` : '—'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-600">vs</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: t2?.color || '#3b82f6' }} />
+                          <span className="text-xs font-semibold text-slate-300">{t2?.shortName || '??'}</span>
+                          <span className="text-sm font-bold text-white">
+                            {hasT2Inn ? `${getInningsTotal(match, match.team2Id)}/${getInningsWickets(match, match.team2Id)}` : '—'}
+                          </span>
+                        </div>
+
+                        {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
+                          <span className="ml-2 px-2 py-0.5 bg-amber-500/10 text-amber-400/80 text-[10px] font-bold rounded">{lg.name}</span>
+                        ) : null; })()}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-[11px] text-cyan-400 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
+                        <Eye className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                        {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_MATCH', payload: match.id }); }}
+                            className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-rose-400 transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : filter === 'completed' ? (
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center space-y-4">
+              <div className="w-14 h-14 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
+                <Trophy className="w-7 h-7 opacity-60" />
+              </div>
+              <h3 className="text-base font-bold text-white">No Completed Matches</h3>
+              <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                Matches that finish will automatically appear in this section.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* OVERALL EMPTY STATE */}
       {matches.length === 0 && !showForm && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
           <div className="w-16 h-16 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Swords className="w-7 h-7 text-slate-500" />
           </div>
-          <p className="text-sm text-slate-400 mb-1">No matches yet.</p>
-          <p className="text-xs text-slate-500 mb-4">Create a match to start scoring.</p>
+          <p className="text-sm font-semibold text-slate-300 mb-1">No matches yet</p>
+          <p className="text-xs text-slate-500 mb-4">Create a match to get started.</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-500 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" /> Create Match
+          </button>
         </motion.div>
       )}
     </div>

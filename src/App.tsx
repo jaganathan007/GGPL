@@ -194,56 +194,51 @@ export default function App() {
       case 'dashboard':
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
       
-      case 'matches':
       case 'live-matches':
-      case 'upcoming-matches':
         return (
           <>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <h2 className="text-xl font-bold text-white">
-                {activeView === 'live-matches' ? 'Live Matches' : activeView === 'upcoming-matches' ? 'Upcoming Matches' : 'All Matches'}
-              </h2>
+              <h2 className="text-xl font-bold text-white">Live Matches</h2>
               {(isLoggedIn || isGuest) && (
                 <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
                   + Create Match
                 </button>
               )}
             </div>
-            <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
+            <MatchesView filter="live" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>
         );
 
-      case 'leagues':
-      case 'tournaments':
+      case 'upcoming-matches':
         return (
           <>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <h2 className="text-xl font-bold text-white">{activeView === 'tournaments' ? 'Tournaments' : 'All Leagues'}</h2>
+              <h2 className="text-xl font-bold text-white">Upcoming Matches</h2>
               {(isLoggedIn || isGuest) && (
-                <button onClick={() => setShowLeagueCreate(true)} className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-xl hover:bg-amber-500/25 transition-all border border-amber-500/30">
-                  <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
+                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
+                  + Create Match
                 </button>
               )}
             </div>
-            <AnimatePresence>
-              {showLeagueCreate && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-4">
-                  <LeaguesView isAdmin={true} isGlobalAdmin={false} inlineCreate onDone={() => setShowLeagueCreate(false)}
-                    onStartMatch={(code) => { setShowLeagueCreate(false); setScorerLeagueCode(code); setShowScorerCreate(true); }}
-                    currentUserId={currentUserId || undefined} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <LeaguesView isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
+            <MatchesView filter="upcoming" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>
         );
 
-      case 'teams':
-      case 'players':
-        return <TeamsView isAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />;
-
+      case 'matches':
       case 'statistics':
-        return <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />;
+        return (
+          <>
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+              <h2 className="text-xl font-bold text-white">{activeView === 'statistics' ? 'Match Statistics' : 'All Matches'}</h2>
+              {(isLoggedIn || isGuest) && (
+                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
+                  + Create Match
+                </button>
+              )}
+            </div>
+            <MatchesView filter={activeView === 'statistics' ? 'completed' : 'all'} onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
+          </>
+        );
 
       default:
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
