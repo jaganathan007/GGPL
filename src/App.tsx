@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Swords, Trophy, LogOut, Eye, User, Lock, ShieldCheck, Search, Bell, Sun, Home, Radio, BarChart3, Target, Settings, Heart, Menu, X, ChevronDown } from 'lucide-react';
+import { Users, Swords, Trophy, LogOut, Eye, User, Lock, ShieldCheck, Search, Bell, Sun, Home, Radio, BarChart3, Calendar, Menu, ChevronDown } from 'lucide-react';
 import TeamsView from './components/TeamsView';
 import MatchesView from './components/MatchesView';
 import CreateMatchForm from './components/CreateMatchForm';
@@ -45,7 +45,7 @@ export default function App() {
   function handleNavigate(view: string) {
     setActiveView(view);
     setSidebarOpen(false);
-    if (view === 'score-tools' || view === 'create-match') {
+    if (view === 'create-match') {
       setShowScorerCreate(true);
     } else {
       setShowScorerCreate(false);
@@ -134,21 +134,20 @@ export default function App() {
     return <MatchStats matchId={statsMatchId} onBack={() => { setStatsMatchId(null); setLandingCode(''); }} />;
   }
 
+  // Nav items from the wireframe
   const navItems = [
-    { id: 'dashboard', label: 'Home/Dashboard', icon: Home },
+    { id: 'dashboard', label: 'Home', icon: Home },
     { id: 'live-matches', label: 'Live Matches', icon: Radio },
-    { id: 'matches', label: 'Matches', icon: Swords },
-    { id: 'leagues', label: 'Leagues', icon: Trophy },
+    { id: 'upcoming-matches', label: 'Upcoming Matches', icon: Calendar },
     { id: 'teams', label: 'Teams', icon: Users },
+    { id: 'leagues', label: 'Leagues', icon: Trophy },
+    { id: 'tournaments', label: 'Tournaments', icon: Swords },
     { id: 'players', label: 'Players', icon: User },
     { id: 'statistics', label: 'Statistics', icon: BarChart3 },
-    { id: 'score-tools', label: 'Score Tools', icon: Target },
-    { id: 'my-teams', label: 'My Teams', icon: Heart },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   function renderMainContent() {
-    if (showScorerCreate || activeView === 'score-tools' || activeView === 'create-match') {
+    if (showScorerCreate || activeView === 'create-match') {
       if (createdMatch) {
         return (
           <div className="max-w-md mx-auto pt-10">
@@ -170,7 +169,7 @@ export default function App() {
               </div>
               <button 
                 onClick={() => { setScoringMatchId(createdMatch.id); setCreatedMatch(null); setShowScorerCreate(false); handleNavigate('dashboard'); }}
-                className="w-full py-4 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-all text-lg"
+                className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl transition-all text-lg shadow-lg shadow-cyan-900/30"
               >
                 Start Scoring Now
               </button>
@@ -180,7 +179,7 @@ export default function App() {
       }
 
       return (
-        <div className="pt-10">
+        <div className="pt-6">
           <CreateMatchForm 
             onCancel={() => { setShowScorerCreate(false); setScorerLeagueCode(''); handleNavigate('dashboard'); }} 
             onCreated={(m) => setCreatedMatch(m)}
@@ -194,26 +193,34 @@ export default function App() {
     switch (activeView) {
       case 'dashboard':
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
+      
       case 'matches':
       case 'live-matches':
+      case 'upcoming-matches':
         return (
           <>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <h2 className="text-xl font-bold text-white">{activeView === 'live-matches' ? 'Live Matches' : 'All Matches'}</h2>
+              <h2 className="text-xl font-bold text-white">
+                {activeView === 'live-matches' ? 'Live Matches' : activeView === 'upcoming-matches' ? 'Upcoming Matches' : 'All Matches'}
+              </h2>
               {(isLoggedIn || isGuest) && (
-                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-500 transition-all">+ Create Match</button>
+                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
+                  + Create Match
+                </button>
               )}
             </div>
             <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>
         );
+
       case 'leagues':
+      case 'tournaments':
         return (
           <>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <h2 className="text-xl font-bold text-white">All Leagues</h2>
+              <h2 className="text-xl font-bold text-white">{activeView === 'tournaments' ? 'Tournaments' : 'All Leagues'}</h2>
               {(isLoggedIn || isGuest) && (
-                <button onClick={() => setShowLeagueCreate(true)} className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-lg hover:bg-amber-500/25 transition-all border border-amber-500/30">
+                <button onClick={() => setShowLeagueCreate(true)} className="px-4 py-2 bg-amber-500/15 text-amber-400 text-sm font-bold rounded-xl hover:bg-amber-500/25 transition-all border border-amber-500/30">
                   <Trophy className="w-3.5 h-3.5 inline mr-1.5" />Create League
                 </button>
               )}
@@ -230,12 +237,14 @@ export default function App() {
             <LeaguesView isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
           </>
         );
+
       case 'teams':
       case 'players':
-      case 'my-teams':
         return <TeamsView isAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />;
+
       case 'statistics':
         return <MatchesView onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />;
+
       default:
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
     }
@@ -249,41 +258,43 @@ export default function App() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 bottom-0 w-60 bg-slate-950 border-r border-slate-800/50 flex flex-col z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} overflow-y-auto sidebar-scroll`}>
+      <aside className={`fixed left-0 top-0 bottom-0 w-60 bg-slate-950 border-r border-slate-800/60 flex flex-col z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} overflow-y-auto sidebar-scroll`}>
         {/* Header area */}
-        <div className="p-6 flex flex-col items-center border-b border-slate-800/50">
-          <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center mb-3">
-            <Trophy className="w-7 h-7 text-blue-500" />
+        <div className="p-6 flex flex-col items-center border-b border-slate-800/60">
+          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 rounded-2xl flex items-center justify-center mb-2.5 shadow-lg shadow-cyan-950">
+            <Trophy className="w-6 h-6 text-cyan-400" />
           </div>
           <h1 className="text-xl font-extrabold text-white tracking-tight">Cricverse</h1>
-          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest mt-1">Play Beyond Borders</p>
+          <p className="text-[10px] text-cyan-400/80 font-semibold uppercase tracking-widest mt-0.5">Play Beyond Borders</p>
         </div>
 
         {/* Navigation items */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
+        <nav className="flex-1 px-3 py-5 space-y-1.5">
           {navItems.map(item => {
             const isActive = activeView === item.id;
             const Icon = item.icon;
             return (
-              <button key={item.id} onClick={() => handleNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all ${
+              <button
+                key={item.id}
+                onClick={() => handleNavigate(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                   isActive 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg shadow-blue-900/30' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-900/30 font-bold' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/80'
                 }`}
               >
-                <Icon className="w-4.5 h-4.5" />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                 {item.label}
               </button>
-            )
+            );
           })}
         </nav>
 
         {/* Footer area */}
-        <div className="p-4 mt-auto">
-          <div className="bg-slate-900 border border-slate-800/50 rounded-xl p-4 text-center">
+        <div className="p-4 mt-auto border-t border-slate-800/40">
+          <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-center">
             <p className="text-xs text-slate-400 font-medium">
-              <span className="text-cyan-400 block mb-1">Good cricket,</span>
+              <span className="text-cyan-400 font-bold block mb-0.5">Good cricket,</span>
               better together!
             </p>
           </div>
@@ -293,73 +304,75 @@ export default function App() {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-60 min-h-screen">
         {/* Top Bar */}
-        <header className="h-16 bg-slate-950/80 backdrop-blur-sm border-b border-slate-800/50 flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-20">
+        <header className="h-16 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/60 flex items-center px-4 sm:px-6 gap-4 sticky top-0 z-20">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg">
             <Menu className="w-5 h-5" />
           </button>
           
+          {/* SEARCH CODE input */}
           <form onSubmit={handleCodeSubmit} className="flex-1 max-w-md relative flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5" />
             <input 
               type="text" 
               value={landingCode}
               onChange={e => { setLandingError(''); setLandingCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8)); }}
-              placeholder="Search code..." 
-              className={`w-full bg-slate-900 border ${landingError ? 'border-red-500' : 'border-slate-800'} rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors uppercase`}
+              placeholder="SEARCH CODE" 
+              className={`w-full bg-slate-900/80 border ${landingError ? 'border-red-500' : 'border-slate-800'} rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors uppercase font-medium tracking-wide`}
             />
             {landingError && (
-              <div className="absolute top-full left-0 mt-1 bg-red-500/10 border border-red-500/50 text-red-400 text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
+              <div className="absolute top-full left-0 mt-1 bg-red-500/10 border border-red-500/50 text-red-400 text-xs px-2.5 py-1 rounded-lg shadow-lg whitespace-nowrap z-50">
                 {landingError}
               </div>
             )}
           </form>
 
-          <div className="flex-1 flex justify-end gap-1 sm:gap-3 items-center">
-            <button className="hidden sm:block p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-full transition-colors">
-              <Sun className="w-5 h-5" />
+          {/* Right Header Controls */}
+          <div className="flex-1 flex justify-end gap-2 sm:gap-3 items-center">
+            <button className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-xl transition-colors">
+              <Sun className="w-4.5 h-4.5" />
             </button>
-            <button className="hidden sm:block p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-full transition-colors relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-950"></span>
+            <button className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-xl transition-colors relative">
+              <Bell className="w-4.5 h-4.5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cyan-400 rounded-full border-2 border-slate-950"></span>
             </button>
             
-            <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-800/50">
+            <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-800">
               {isLoggedIn ? (
                 <div className="flex items-center gap-2 cursor-pointer group">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
                     {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <span className="text-sm font-medium text-white hidden sm:block">{currentUserName}</span>
-                  <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white hidden sm:block" />
+                  <span className="text-sm font-semibold text-slate-200 hidden sm:block">{currentUserName}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white hidden sm:block" />
                 </div>
               ) : (
-                <button onClick={() => setIsGuest(false)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-all">
+                <button onClick={() => setIsGuest(false)} className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold rounded-xl transition-all shadow-md">
                   <User className="w-3.5 h-3.5" />
                   <span>Login</span>
                 </button>
               )}
               
               {isLoggedIn && (
-                <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/50 rounded-lg transition-colors ml-1" title="Logout">
-                  <LogOut className="w-4 h-4" />
+                <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-900 rounded-xl transition-colors ml-1" title="Logout">
+                  <LogOut className="w-4.5 h-4.5" />
                 </button>
               )}
               <button
                 onClick={() => requestAdminAccess()}
-                className={`p-2 rounded-lg transition-colors ml-1 ${hasAdminAccess ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                className={`p-2 rounded-xl transition-colors ml-1 ${hasAdminAccess ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
                 title={hasAdminAccess ? 'Admin active' : 'Enter Admin PIN'}
               >
-                {hasAdminAccess ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                {hasAdminAccess ? <ShieldCheck className="w-4.5 h-4.5" /> : <Lock className="w-4.5 h-4.5" />}
               </button>
             </div>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {viewingLeagueId ? (
             <div className="space-y-4">
-              <button onClick={() => { setViewingLeagueId(null); setLandingCode(''); }} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition-all border border-slate-700">← Back</button>
+              <button onClick={() => { setViewingLeagueId(null); setLandingCode(''); }} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700">← Back</button>
               <LeaguesView isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} focusLeagueId={viewingLeagueId} currentUserId={currentUserId || undefined} onScoreMatch={handleScoreMatch} />
             </div>
           ) : renderMainContent()}
