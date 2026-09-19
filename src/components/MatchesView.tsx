@@ -751,54 +751,123 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           )}
           
           {completedMatches.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {completedMatches.slice().reverse().map(match => {
                 const t1 = allTeams.find(t => t.id === match.team1Id);
                 const t2 = allTeams.find(t => t.id === match.team2Id);
                 const hasT1Inn = !!getInningsForTeam(match, match.team1Id);
                 const hasT2Inn = !!getInningsForTeam(match, match.team2Id);
-                return (
-                  <div
-                    key={match.id}
-                    className="bg-slate-900/40 border border-slate-800/60 hover:border-cyan-500/30 rounded-xl p-3.5 group transition-all cursor-pointer shadow-sm"
-                    onClick={() => onViewStats?.(match.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: t1?.color || '#06b6d4' }} />
-                          <span className="text-xs font-semibold text-slate-300">{t1?.shortName || '??'}</span>
-                          <span className="text-sm font-bold text-white">
-                            {hasT1Inn ? `${getInningsTotal(match, match.team1Id)}/${getInningsWickets(match, match.team1Id)}` : '—'}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-slate-600">vs</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: t2?.color || '#3b82f6' }} />
-                          <span className="text-xs font-semibold text-slate-300">{t2?.shortName || '??'}</span>
-                          <span className="text-sm font-bold text-white">
-                            {hasT2Inn ? `${getInningsTotal(match, match.team2Id)}/${getInningsWickets(match, match.team2Id)}` : '—'}
-                          </span>
-                        </div>
+                const isT1Winner = match.winnerId === match.team1Id;
+                const isT2Winner = match.winnerId === match.team2Id;
 
-                        {(() => { const lg = match.leagueCode && (leagues || []).find((l: League) => l.code === match.leagueCode); return lg ? (
-                          <span className="ml-2 px-2 py-0.5 bg-amber-500/10 text-amber-400/80 text-[10px] font-bold rounded">{lg.name}</span>
-                        ) : null; })()}
+                return (
+                  <motion.div
+                    key={match.id}
+                    layout
+                    className="bg-slate-900/80 border border-slate-800/80 hover:border-cyan-500/30 rounded-2xl p-4 sm:p-5 group transition-all shadow-lg"
+                  >
+                    {/* Top match header */}
+                    <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+                        <span className="px-2.5 py-0.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-md font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Finished
+                        </span>
+                        <span>{match.date} {match.time ? `at ${match.time}` : ''}</span>
+                        <span className="text-slate-600">•</span>
+                        <span>{match.venue}</span>
+                        <span className="text-slate-600">•</span>
+                        <span>{match.totalOvers} ov</span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-[11px] text-cyan-400 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
-                        <Eye className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
-                        {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); dispatch({ type: 'DELETE_MATCH', payload: match.id }); }}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-500 hover:text-rose-400 transition-all"
+
+                      {match.result && (
+                        <span className="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                          <Trophy className="w-3.5 h-3.5 text-amber-400" /> {match.result}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Teams and Scores row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3.5">
+                      {/* Team 1 */}
+                      <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                        isT1Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
+                            style={{ backgroundColor: t1?.color || '#06b6d4' }}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                            {t1?.shortName?.slice(0, 3).toUpperCase() || 'T1'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                              {t1?.name || 'Team 1'}
+                              {isT1Winner && <span className="text-xs text-amber-400">★</span>}
+                            </p>
+                            <p className="text-[11px] text-slate-400">{t1?.shortName}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-base font-extrabold text-white">
+                            {hasT1Inn ? `${getInningsTotal(match, match.team1Id)}/${getInningsWickets(match, match.team1Id)}` : '—'}
+                          </p>
+                          {hasT1Inn && <p className="text-[11px] text-slate-400">({getInningsOvers(match, match.team1Id)} ov)</p>}
+                        </div>
+                      </div>
+
+                      {/* Team 2 */}
+                      <div className={`p-3 rounded-xl border flex items-center justify-between ${
+                        isT2Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
+                            style={{ backgroundColor: t2?.color || '#3b82f6' }}
+                          >
+                            {t2?.shortName?.slice(0, 3).toUpperCase() || 'T2'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white flex items-center gap-1.5">
+                              {t2?.name || 'Team 2'}
+                              {isT2Winner && <span className="text-xs text-amber-400">★</span>}
+                            </p>
+                            <p className="text-[11px] text-slate-400">{t2?.shortName}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-base font-extrabold text-white">
+                            {hasT2Inn ? `${getInningsTotal(match, match.team2Id)}/${getInningsWickets(match, match.team2Id)}` : '—'}
+                          </p>
+                          {hasT2Inn && <p className="text-[11px] text-slate-400">({getInningsOvers(match, match.team2Id)} ov)</p>}
+                        </div>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Footer with View Stats button */}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-800/70">
+                      <span className="text-xs text-slate-400">
+                        Viewer Code: <span className="font-mono text-cyan-400 font-bold">{match.viewerCode}</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
+                          <button
+                            onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
+                            className="p-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-xl transition-all"
+                            title="Delete Match"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => onViewStats?.(match.id)}
+                          className="px-4 py-2 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 hover:from-cyan-500/30 hover:to-blue-600/30 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          View Match Stats
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -807,9 +876,9 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
               <div className="w-14 h-14 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto text-slate-400">
                 <Trophy className="w-7 h-7 opacity-60" />
               </div>
-              <h3 className="text-base font-bold text-white">No Completed Matches</h3>
+              <h3 className="text-base font-bold text-white">No Finished Matches Yet</h3>
               <p className="text-xs text-slate-400 max-w-xs mx-auto">
-                Matches that finish will automatically appear in this section.
+                Completed matches and their full statistics and history will appear here.
               </p>
             </div>
           ) : null}
