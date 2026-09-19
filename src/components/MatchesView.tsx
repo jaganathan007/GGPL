@@ -551,36 +551,43 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     )}
 
                     {/* Codes & Actions */}
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
-                        <div className="flex gap-2 text-xs">
-                          <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
-                            Viewer: <span className="font-mono text-cyan-400 font-bold">{match.viewerCode}</span>
-                          </span>
-                          <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
-                            Scorer: <span className="font-mono text-amber-400 font-bold">{match.adminCode}</span>
-                          </span>
-                        </div>
-                      )}
+                    {(() => {
+                      const isMatchCreator = Boolean(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId)));
+                      return (
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex gap-2 text-xs">
+                            <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
+                              Viewer: <span className="font-mono text-cyan-400 font-bold">{match.viewerCode}</span>
+                            </span>
+                            {isMatchCreator && (
+                              <span className="px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-400">
+                                Scorer: <span className="font-mono text-amber-400 font-bold">{match.adminCode}</span>
+                              </span>
+                            )}
+                          </div>
 
-                      <div className="flex items-center gap-2 ml-auto">
-                        {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
-                          <button
-                            onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
-                            className="p-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/60 rounded-xl transition-colors"
-                            title="Delete Match"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onScoreMatch(match.id)}
-                          className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current" /> Start Scoring
-                        </button>
-                      </div>
-                    </div>
+                          <div className="flex items-center gap-2 ml-auto">
+                            {isMatchCreator && (
+                              <>
+                                <button
+                                  onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
+                                  className="p-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/60 rounded-xl transition-colors"
+                                  title="Delete Match"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => onScoreMatch(match.id)}
+                                  className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all"
+                                >
+                                  <Play className="w-3.5 h-3.5 fill-current" /> Start Scoring
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 );
               })}
@@ -676,30 +683,37 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onScoreMatch(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-md shadow-cyan-900/30"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" /> Resume Scoring
-                      </button>
-                      {onViewStats && match.innings.length > 0 && (
-                        <button
-                          onClick={() => onViewStats(match.id)}
-                          className="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700 flex items-center gap-1.5"
-                        >
-                          <BarChart3 className="w-3.5 h-3.5" /> Stats
-                        </button>
-                      )}
-                      {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
-                        <button
-                          onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
-                          className="px-3 py-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-xl transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+                    {(() => {
+                      const isMatchCreator = Boolean(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId)));
+                      return (
+                        <div className="flex gap-2">
+                          {isMatchCreator && (
+                            <button
+                              onClick={() => onScoreMatch(match.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all shadow-md shadow-cyan-900/30"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-current" /> Resume Scoring
+                            </button>
+                          )}
+                          {onViewStats && (
+                            <button
+                              onClick={() => onViewStats(match.id)}
+                              className={`${isMatchCreator ? 'px-4' : 'flex-1'} py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-700 transition-colors border border-slate-700 flex items-center justify-center gap-1.5`}
+                            >
+                              <BarChart3 className="w-3.5 h-3.5" /> Stats
+                            </button>
+                          )}
+                          {isMatchCreator && (
+                            <button
+                              onClick={() => dispatch({ type: 'DELETE_MATCH', payload: match.id })}
+                              className="px-3 py-2 text-slate-500 hover:text-rose-400 hover:bg-slate-800/50 rounded-xl transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 );
               })}

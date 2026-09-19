@@ -88,8 +88,8 @@ export default function App() {
   function handleScoreMatch(matchId: string) {
     const match = state.matches.find(m => m.id === matchId);
     if (!match || match.isComplete) return;
-    const isMatchOwner = currentUserId && match.ownerId === currentUserId;
-    if (isMatchOwner || hasAdminAccess || isLoggedIn) {
+    const isMatchOwner = Boolean(currentUserId && match.ownerId === currentUserId);
+    if (isMatchOwner || hasAdminAccess) {
       setScoringMatchId(matchId);
       return;
     }

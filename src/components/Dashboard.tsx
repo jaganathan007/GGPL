@@ -33,7 +33,7 @@ function getInningsOvers(match: Match, inningsIndex: number): number | string {
   return inn.bowlingEntries.reduce((s, e) => s + e.overs, 0);
 }
 
-export default function Dashboard({ onNavigate, onScoreMatch, onViewStats }: DashboardProps) {
+export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewStats, currentUserId }: DashboardProps) {
   const { state } = useApp();
   const { teams, matches } = state;
 
@@ -106,6 +106,8 @@ export default function Dashboard({ onNavigate, onScoreMatch, onViewStats }: Das
             const bowlerName = bowlerPlayer?.name || 'Bowler';
             const bowlerRunsConceded = activeBowler?.runsConceded ?? 0;
             const bowlerOvers = activeBowler?.overs ?? '0.0';
+
+            const isMatchCreator = (Boolean(currentUserId) && match.ownerId === currentUserId) || isAdmin;
 
             return (
               <motion.div
@@ -196,14 +198,16 @@ export default function Dashboard({ onNavigate, onScoreMatch, onViewStats }: Das
                       className="px-5 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-sm font-bold transition-all flex items-center gap-1.5"
                     >
                       <Eye className="w-4 h-4" />
-                      View Stats
+                      View Scorecard
                     </button>
-                    <button
-                      onClick={() => onScoreMatch(match.id)}
-                      className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-cyan-900/30 transition-all flex items-center gap-1.5"
-                    >
-                      Score Match
-                    </button>
+                    {isMatchCreator && (
+                      <button
+                        onClick={() => onScoreMatch(match.id)}
+                        className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-cyan-900/30 transition-all flex items-center gap-1.5"
+                      >
+                        Score Match
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
