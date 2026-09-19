@@ -184,7 +184,7 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
             value={v}
             onChange={e => handleForgotDigit(i, e.target.value, isConfirm)}
             onKeyDown={e => handleForgotKeyDown(e, i, isConfirm)}
-            className="w-14 h-14 text-center text-2xl font-bold text-white bg-slate-800/80 border-2 border-slate-700/60 rounded-xl focus:outline-none focus:border-emerald-500 transition-all caret-emerald-400"
+            className="w-14 h-14 text-center text-2xl font-bold text-white bg-slate-800/80 border-2 border-slate-700/60 rounded-xl focus:outline-none focus:border-cyan-500 transition-all caret-cyan-400"
             autoComplete="off"
           />
         ))}
@@ -203,17 +203,17 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
             initial={{ opacity: 0, y: -50, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -50, x: '-50%' }}
-            className="fixed top-4 left-1/2 z-[100] bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-emerald-900/50 border border-emerald-400/30 max-w-sm w-[90%]"
+            className="fixed top-4 left-1/2 z-[100] bg-gradient-to-r from-cyan-600 to-sky-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-cyan-900/50 border border-cyan-400/30 max-w-sm w-[90%]"
           >
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-bold text-emerald-100 uppercase tracking-wider mb-1">SMS sent to {formattedPhone}</p>
+                <p className="text-xs font-bold text-cyan-100 uppercase tracking-wider mb-1">SMS sent to {formattedPhone}</p>
                 <p className="text-sm text-white/90">Your OTP is:</p>
                 <p className="text-3xl font-mono font-extrabold tracking-[0.3em] mt-1">{otpToast}</p>
-                <p className="text-[10px] text-emerald-200/60 mt-2">⚠ Demo mode — OTP shown here instead of SMS</p>
+                <p className="text-[10px] text-cyan-200/60 mt-2">⚠ Demo mode — OTP shown here instead of SMS</p>
               </div>
               <button onClick={() => setOtpToast(null)} className="text-white/60 hover:text-white transition-colors">
                 <X className="w-4 h-4" />
@@ -234,8 +234,8 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
             <motion.div key="normal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
               {/* Header */}
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-emerald-400" />
+                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-sky-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8 text-cyan-400" />
                 </div>
                 <h2 className="text-lg font-bold text-white">Enter Admin PIN</h2>
                 <p className="text-xs text-slate-400 mt-1">
@@ -255,7 +255,7 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
                     value={v}
                     onChange={e => handleDigit(i, e.target.value)}
                     onKeyDown={e => handleKeyDown(e, i)}
-                    className="w-14 h-14 text-center text-2xl font-bold text-white bg-slate-800/80 border-2 border-slate-700/60 rounded-xl focus:outline-none focus:border-emerald-500 transition-all caret-emerald-400"
+                    className="w-14 h-14 text-center text-2xl font-bold text-white bg-slate-800/80 border-2 border-slate-700/60 rounded-xl focus:outline-none focus:border-cyan-500 transition-all caret-cyan-400"
                     autoComplete="off"
                   />
                 ))}
@@ -308,8 +308,8 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
                 <p className="text-xs text-slate-400 mt-1">Verify your identity to reset the PIN</p>
               </div>
               <div className="bg-slate-950/50 border border-slate-800/60 rounded-xl p-4 text-center space-y-3">
-                <div className="w-12 h-12 bg-emerald-500/15 rounded-xl flex items-center justify-center mx-auto">
-                  <Smartphone className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 bg-cyan-500/15 rounded-xl flex items-center justify-center mx-auto">
+                  <Smartphone className="w-6 h-6 text-cyan-400" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 mb-1">OTP will be sent to</p>
@@ -318,7 +318,7 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
                 <p className="text-[10px] text-slate-500">A 4-digit verification code will be sent to this number</p>
               </div>
               <button onClick={handleSendOtp}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all flex items-center justify-center gap-2">
+                className="w-full py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all flex items-center justify-center gap-2">
                 <MessageSquare className="w-4 h-4" /> Send OTP
               </button>
               <button onClick={resetForgotState}
@@ -329,16 +329,16 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
           ) : forgotPhase === 'otp_verify' ? (
             <motion.div key="otp_verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
               <div className="text-center">
-                <div className="w-12 h-12 bg-emerald-500/15 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <MessageSquare className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 bg-cyan-500/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="w-6 h-6 text-cyan-400" />
                 </div>
                 <h2 className="text-base font-bold text-white">Enter Verification Code</h2>
-                <p className="text-xs text-slate-400 mt-1">OTP sent to <span className="text-emerald-400 font-mono font-bold">{formattedPhone}</span></p>
+                <p className="text-xs text-slate-400 mt-1">OTP sent to <span className="text-cyan-400 font-mono font-bold">{formattedPhone}</span></p>
               </div>
               <input type="text" inputMode="numeric" maxLength={4} value={enteredOtp}
                 onChange={e => { setEnteredOtp(e.target.value.replace(/\D/g, '').slice(0, 4)); setError(''); }}
                 placeholder="Enter 4-digit OTP"
-                className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-3 text-lg text-white text-center tracking-[0.5em] font-mono font-bold focus:outline-none focus:border-emerald-500/50" autoFocus />
+                className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-3 text-lg text-white text-center tracking-[0.5em] font-mono font-bold focus:outline-none focus:border-cyan-500/50" autoFocus />
               {error && (
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-rose-400 font-medium text-center">{error}</motion.p>
               )}
@@ -349,7 +349,7 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
                 </button>
                 <button onClick={handleVerifyOtp}
                   disabled={enteredOtp.length !== 4}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   Verify
                 </button>
               </div>
@@ -361,10 +361,10 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
           ) : forgotPhase === 'new_pin' ? (
             <motion.div key="new_pin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
               <div className="text-center">
-                <div className="w-12 h-12 bg-emerald-500/15 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <KeyRound className="w-6 h-6 text-emerald-400" />
+                <div className="w-12 h-12 bg-cyan-500/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <KeyRound className="w-6 h-6 text-cyan-400" />
                 </div>
-                <p className="text-xs text-emerald-400 font-semibold mb-2">✓ OTP Verified</p>
+                <p className="text-xs text-cyan-400 font-semibold mb-2">✓ OTP Verified</p>
                 <h2 className="text-base font-bold text-white">Create New Admin PIN</h2>
                 <p className="text-xs text-slate-400 mt-1">Enter a new 4-digit PIN</p>
               </div>
@@ -387,7 +387,7 @@ export default function PinGate({ onSuccess, onCancel }: PinGateProps) {
           ) : (
             <motion.div key="confirm_pin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-2 text-sm text-emerald-400 font-medium mb-2">
+                <div className="flex items-center justify-center gap-2 text-sm text-cyan-400 font-medium mb-2">
                   <KeyRound className="w-4 h-4" /> Confirm your new PIN
                 </div>
                 <p className="text-xs text-slate-500">Re-enter the same 4 digits</p>

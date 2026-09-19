@@ -224,7 +224,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Header */}
-      <header className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-lg shadow-emerald-900/30">
+      <header className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-sky-500 shadow-lg shadow-cyan-900/30">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={onBack} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -232,10 +232,10 @@ export default function MatchStats({ matchId, onBack }: Props) {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-white">{team1?.shortName || '??'}</span>
-              <span className="text-[10px] text-emerald-100/50 font-bold">VS</span>
+              <span className="text-[10px] text-cyan-100/50 font-bold">VS</span>
               <span className="text-sm font-bold text-white">{team2?.shortName || '??'}</span>
             </div>
-            <p className="text-[10px] text-emerald-100/60">Match Stats & Scorecard</p>
+            <p className="text-[10px] text-cyan-100/60">Match Stats & Scorecard</p>
           </div>
           {match.isComplete && (
             <div className="ml-auto flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-lg px-3 py-1.5">
@@ -289,7 +289,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
           </div>
           {match.result && (
             <div className="mt-4 text-center">
-              <p className="text-sm font-bold text-emerald-400">{match.result}</p>
+              <p className="text-sm font-bold text-cyan-400">{match.result}</p>
             </div>
           )}
         </motion.div>
@@ -326,19 +326,19 @@ export default function MatchStats({ matchId, onBack }: Props) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-4"
+              className="bg-slate-900/80 border border-cyan-500/20 rounded-2xl p-4"
             >
               <div className="flex items-center gap-2 mb-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Live — Now Playing</span>
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Live — Now Playing</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {/* Striker */}
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
-                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mb-1.5">⚡ Striker</p>
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 text-center">
+                  <p className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest mb-1.5">⚡ Striker</p>
                   <p className="text-sm font-bold text-white truncate leading-tight">{strikerName || '—'}</p>
                   {strikerScore && (
-                    <p className="text-base font-extrabold text-emerald-300 mt-1 leading-none">{strikerScore}</p>
+                    <p className="text-base font-extrabold text-cyan-300 mt-1 leading-none">{strikerScore}</p>
                   )}
                   <p className="text-[10px] text-slate-500 mt-1">Facing</p>
                 </div>
@@ -393,7 +393,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
                   <span className="text-sm font-bold text-white">{batTeam?.name || '?'}</span>
                   <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">{innIdx === 0 ? '1st' : '2nd'} Innings</span>
-                  {isActiveInnings && <span className="text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
+                  {isActiveInnings && <span className="text-[9px] font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-extrabold text-white">{total}<span className="text-sm text-slate-500">/{wickets}</span></span>
@@ -418,17 +418,17 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   const isStriker = liveInfo && playerName === liveInfo.strikerName;
                   const isNonStriker = liveInfo && playerName === liveInfo.nonStrikerName;
                   return (
-                    <div key={i} className={`grid grid-cols-[1fr_36px_36px_36px_36px_48px] items-start py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-emerald-500/5 -mx-4 px-4' : ''}`}>
+                    <div key={i} className={`grid grid-cols-[1fr_36px_36px_36px_36px_48px] items-start py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-cyan-500/5 -mx-4 px-4' : ''}`}>
                       {/* Name + dismissal */}
                       <div className="flex flex-col gap-0.5 pr-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className={`text-[13px] font-medium leading-tight ${entry.isNotOut ? 'text-slate-100' : 'text-slate-300'}`}>
                             {playerName}
-                            {entry.isNotOut && entry.balls > 0 && <span className="text-emerald-400 ml-0.5 text-[10px]">*</span>}
+                            {entry.isNotOut && entry.balls > 0 && <span className="text-cyan-400 ml-0.5 text-[10px]">*</span>}
                           </span>
                           {isBest && <Zap className="w-3 h-3 text-amber-400 shrink-0" />}
                           {isStriker && (
-                            <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
+                            <span className="text-[8px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
                           )}
                           {isNonStriker && (
                             <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
@@ -439,7 +439,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
                         </span>
                       </div>
                       {/* Stats */}
-                      <span className={`text-right text-[13px] font-bold leading-tight pt-0.5 ${entry.runs >= 50 ? 'text-amber-300' : entry.runs >= 30 ? 'text-emerald-300' : 'text-white'}`}>{entry.runs}</span>
+                      <span className={`text-right text-[13px] font-bold leading-tight pt-0.5 ${entry.runs >= 50 ? 'text-amber-300' : entry.runs >= 30 ? 'text-cyan-300' : 'text-white'}`}>{entry.runs}</span>
                       <span className="text-right text-[12px] text-slate-400 leading-tight pt-0.5">{entry.balls}</span>
                       <span className="text-right text-[12px] text-blue-400 leading-tight pt-0.5">{entry.fours}</span>
                       <span className="text-right text-[12px] text-amber-400 leading-tight pt-0.5">{entry.sixes}</span>
@@ -513,7 +513,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
             className="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-4"
           >
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <TrendingUp className="w-4 h-4 text-cyan-400" />
               <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Match Highlights</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -544,7 +544,7 @@ export default function MatchStats({ matchId, onBack }: Props) {
                       </div>
                       <div className="flex justify-between text-[10px]">
                         <span className="text-slate-500">Highest</span>
-                        <span className="text-emerald-400 font-bold">{highestScore}</span>
+                        <span className="text-cyan-400 font-bold">{highestScore}</span>
                       </div>
                     </div>
                   </div>

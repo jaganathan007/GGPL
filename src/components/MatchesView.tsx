@@ -180,7 +180,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
         {isAdmin && (
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" /> New Match
           </button>
@@ -208,14 +208,14 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
 
             {createdMatch ? (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-3">
-                  <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
-                    <Check className="w-4 h-4 text-emerald-400" /> Match Setup Complete!
+                <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2 text-cyan-400 font-semibold text-sm">
+                    <Check className="w-4 h-4 text-cyan-400" /> Match Setup Complete!
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                     <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
                       <div className="text-slate-500 text-[9px] font-sans font-bold uppercase tracking-wider mb-1">Viewer Code</div>
-                      <div className="text-emerald-400 font-bold text-sm tracking-wider">{createdMatch.viewerCode}</div>
+                      <div className="text-cyan-400 font-bold text-sm tracking-wider">{createdMatch.viewerCode}</div>
                     </div>
                     <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
                       <div className="text-slate-500 text-[9px] font-sans font-bold uppercase tracking-wider mb-1">Scorer Code</div>
@@ -237,7 +237,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       resetForm();
                       onScoreMatch(mId);
                     }}
-                    className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg hover:bg-cyan-400 transition-colors"
                   >
                     Start Scoring <Play className="w-3.5 h-3.5 fill-current" />
                   </button>
@@ -257,7 +257,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                             setTeam1Id('');
                             setCustomTeam1Name('');
                           }}
-                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
+                          className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium"
                         >
                           {isCreatingTeam1 ? 'Select Existing' : 'Create Custom'}
                         </button>
@@ -269,14 +269,14 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         placeholder="Type Team 1 name..."
                         value={customTeam1Name}
                         onChange={e => setCustomTeam1Name(e.target.value)}
-                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all font-semibold"
                         required
                       />
                     ) : (
                       <select
                         value={team1Id}
                         onChange={e => setTeam1Id(e.target.value)}
-                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all font-semibold"
                         required
                       >
                         <option value="">Select team...</option>
@@ -297,7 +297,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                             setTeam2Id('');
                             setCustomTeam2Name('');
                           }}
-                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium"
+                          className="text-[10px] text-cyan-400 hover:text-cyan-300 font-medium"
                         >
                           {isCreatingTeam2 ? 'Select Existing' : 'Create Custom'}
                         </button>
@@ -309,14 +309,14 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         placeholder="Type Team 2 name..."
                         value={customTeam2Name}
                         onChange={e => setCustomTeam2Name(e.target.value)}
-                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all font-semibold"
                         required
                       />
                     ) : (
                       <select
                         value={team2Id}
                         onChange={e => setTeam2Id(e.target.value)}
-                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all font-semibold"
+                        className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all font-semibold"
                         required
                       >
                         <option value="">Select team...</option>
@@ -334,7 +334,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       value={venue}
                       onChange={e => setVenue(e.target.value)}
                       placeholder="e.g. Local Ground"
-                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all"
                     />
                   </div>
                   <div>
@@ -343,7 +343,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       type="date"
                       value={date}
                       onChange={e => setDate(e.target.value)}
-                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
                     />
                   </div>
                   <div>
@@ -354,7 +354,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       max={50}
                       value={totalOvers}
                       onChange={e => setTotalOvers(Number(e.target.value))}
-                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all"
                     />
                   </div>
                 </div>
@@ -370,7 +370,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       (isCreatingTeam2 ? !customTeam2Name.trim() : !team2Id) ||
                       (isCreatingTeam1 ? customTeam1Name.trim() : team1Id) === (isCreatingTeam2 ? customTeam2Name.trim() : team2Id)
                     }
-                    className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-5 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next: Toss <Play className="w-3.5 h-3.5 fill-current" />
                   </button>
@@ -413,7 +413,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                           <button 
                             type="button"
                             onClick={() => setTossDecision('bat')}
-                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
                           >
                             <span className="text-lg mb-1">🏏</span> Bat
                           </button>
@@ -438,7 +438,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     type="button"
                     onClick={handleCreateMatch}
                     disabled={!tossWinner || !tossDecision}
-                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
                   >
                     <Check className="w-4 h-4" /> Create Match
                   </button>
@@ -454,8 +454,8 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
             </span>
             <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">In Progress</h3>
           </div>
@@ -467,7 +467,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                 <motion.div
                   key={match.id}
                   layout
-                  className="bg-slate-900/60 border border-emerald-500/15 rounded-2xl p-4"
+                  className="bg-slate-900/60 border border-cyan-500/15 rounded-2xl p-4"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 flex-wrap">
@@ -492,7 +492,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     <div className={`mb-4 flex gap-3 text-xs bg-slate-950/50 p-2 rounded-lg border border-slate-800/60`}>
                       <div className={`flex-1 text-center ${(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) ? 'border-r border-slate-800/60' : ''}`}>
                         <p className="text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5">Viewer Code</p>
-                        <p className="text-emerald-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
+                        <p className="text-cyan-400 font-mono tracking-wider font-bold">{match.viewerCode}</p>
                       </div>
                       {(isGlobalAdmin || (currentUserId && match.ownerId === currentUserId)) && (
                         <div className="flex-1 text-center">
@@ -537,7 +537,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && !match.isComplete && (
                       <button
                         onClick={() => onScoreMatch(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-500/15 text-emerald-400 text-sm font-semibold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-cyan-500/15 text-cyan-400 text-sm font-semibold rounded-lg hover:bg-cyan-500/25 transition-colors border border-cyan-500/20"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" /> Resume Scoring
                       </button>
@@ -609,7 +609,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                       ) : null; })()}
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-[11px] text-emerald-400/80 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
+                      <p className="text-[11px] text-cyan-400/80 font-medium max-w-[160px] text-right truncate hidden sm:block">{match.result}</p>
                       <Eye className="w-3.5 h-3.5 text-slate-600 group-hover:text-violet-400 transition-colors" />
                       {(isGlobalAdmin || (currentUserId && (match.ownerId === currentUserId || !match.ownerId))) && (
                         <button

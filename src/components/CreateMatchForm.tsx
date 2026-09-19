@@ -280,19 +280,19 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Team 1</label>
                   <div className="flex gap-2 bg-slate-900 p-1 rounded-lg">
-                    <button type="button" onClick={() => setTeam1Mode('existing')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team1Mode === 'existing' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Existing</button>
-                    <button type="button" onClick={() => setTeam1Mode('new')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team1Mode === 'new' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>New</button>
+                    <button type="button" onClick={() => setTeam1Mode('existing')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team1Mode === 'existing' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Existing</button>
+                    <button type="button" onClick={() => setTeam1Mode('new')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team1Mode === 'new' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>New</button>
                   </div>
                 </div>
                 {team1Mode === 'existing' ? (
-                  <select value={team1Id} onChange={e => setTeam1Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                  <select value={team1Id} onChange={e => setTeam1Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                     <option value="">Select team...</option>
                     {availableTeams.map(t => <option key={t.id} value={t.id} disabled={t.id === team2Id}>{t.name}</option>)}
                   </select>
                 ) : (
                   <div className="flex gap-2">
-                    <input placeholder="Full Name (e.g. India)" value={newTeam1Name} onChange={e=>setNewTeam1Name(e.target.value)} className="flex-[2] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
-                    <input placeholder="Short" value={newTeam1Short} onChange={e=>setNewTeam1Short(e.target.value)} maxLength={4} className="flex-[1] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input placeholder="Full Name (e.g. India)" value={newTeam1Name} onChange={e=>setNewTeam1Name(e.target.value)} className="flex-[2] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
+                    <input placeholder="Short" value={newTeam1Short} onChange={e=>setNewTeam1Short(e.target.value)} maxLength={4} className="flex-[1] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   </div>
                 )}
               </div>
@@ -302,19 +302,19 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-slate-400 font-bold uppercase tracking-wider">Team 2</label>
                   <div className="flex gap-2 bg-slate-900 p-1 rounded-lg">
-                    <button type="button" onClick={() => setTeam2Mode('existing')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team2Mode === 'existing' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Existing</button>
-                    <button type="button" onClick={() => setTeam2Mode('new')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team2Mode === 'new' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>New</button>
+                    <button type="button" onClick={() => setTeam2Mode('existing')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team2Mode === 'existing' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Existing</button>
+                    <button type="button" onClick={() => setTeam2Mode('new')} className={`text-[10px] px-2 py-1 rounded font-bold transition-all ${team2Mode === 'new' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>New</button>
                   </div>
                 </div>
                 {team2Mode === 'existing' ? (
-                  <select value={team2Id} onChange={e => setTeam2Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                  <select value={team2Id} onChange={e => setTeam2Id(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                     <option value="">Select team...</option>
                     {availableTeams.map(t => <option key={t.id} value={t.id} disabled={t.id === team1Id}>{t.name}</option>)}
                   </select>
                 ) : (
                   <div className="flex gap-2">
-                    <input placeholder="Full Name (e.g. Australia)" value={newTeam2Name} onChange={e=>setNewTeam2Name(e.target.value)} className="flex-[2] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
-                    <input placeholder="Short" value={newTeam2Short} onChange={e=>setNewTeam2Short(e.target.value)} maxLength={4} className="flex-[1] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    <input placeholder="Full Name (e.g. Australia)" value={newTeam2Name} onChange={e=>setNewTeam2Name(e.target.value)} className="flex-[2] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
+                    <input placeholder="Short" value={newTeam2Short} onChange={e=>setNewTeam2Short(e.target.value)} maxLength={4} className="flex-[1] bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   </div>
                 )}
               </div>
@@ -323,7 +323,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 type="button"
                 onClick={() => handleNext(2)}
                 disabled={(team1Mode==='existing'&&!team1Id) || (team1Mode==='new'&&(!newTeam1Name||!newTeam1Short)) || (team2Mode==='existing'&&!team2Id) || (team2Mode==='new'&&(!newTeam2Name||!newTeam2Short)) || (team1Mode==='existing'&&team2Mode==='existing'&&team1Id===team2Id)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-6"
               >
                 Next: Players <Play className="w-4 h-4 fill-current" />
               </button>
@@ -337,9 +337,9 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
               
               {/* TEAM 1 PLAYERS */}
               <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
-                <label className="block text-xs text-emerald-400 font-bold uppercase tracking-wider mb-3">{getTeamName(1)}</label>
+                <label className="block text-xs text-cyan-400 font-bold uppercase tracking-wider mb-3">{getTeamName(1)}</label>
                 <div className="flex gap-2 mb-3">
-                  <input placeholder="Player name..." value={p1Input} onChange={e=>setP1Input(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if(p1Input.trim()) { setAddedPlayers1([...addedPlayers1, p1Input.trim()]); setP1Input(''); }}}} className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                  <input placeholder="Player name..." value={p1Input} onChange={e=>setP1Input(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if(p1Input.trim()) { setAddedPlayers1([...addedPlayers1, p1Input.trim()]); setP1Input(''); }}}} className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   <button type="button" onClick={() => { if(p1Input.trim()) { setAddedPlayers1([...addedPlayers1, p1Input.trim()]); setP1Input(''); }}} className="px-3 bg-slate-800 text-white text-sm font-semibold rounded-lg hover:bg-slate-700">Add</button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
@@ -347,8 +347,8 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                     <span key={p.id} className="inline-flex items-center px-2 py-1 bg-slate-800 text-slate-300 text-xs rounded-md">{p.name}</span>
                   ))}
                   {addedPlayers1.map((p, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-md border border-emerald-500/30">
-                      {p} <button type="button" onClick={() => setAddedPlayers1(addedPlayers1.filter((_, idx) => idx !== i))} className="hover:text-emerald-200 ml-1"><X className="w-3 h-3" /></button>
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-medium rounded-md border border-cyan-500/30">
+                      {p} <button type="button" onClick={() => setAddedPlayers1(addedPlayers1.filter((_, idx) => idx !== i))} className="hover:text-cyan-200 ml-1"><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                   {getExistingPlayers(1).length === 0 && addedPlayers1.length === 0 && <span className="text-xs text-slate-500 italic">No players yet</span>}
@@ -357,9 +357,9 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
 
               {/* TEAM 2 PLAYERS */}
               <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/80">
-                <label className="block text-xs text-emerald-400 font-bold uppercase tracking-wider mb-3">{getTeamName(2)}</label>
+                <label className="block text-xs text-cyan-400 font-bold uppercase tracking-wider mb-3">{getTeamName(2)}</label>
                 <div className="flex gap-2 mb-3">
-                  <input placeholder="Player name..." value={p2Input} onChange={e=>setP2Input(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if(p2Input.trim()) { setAddedPlayers2([...addedPlayers2, p2Input.trim()]); setP2Input(''); }}}} className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                  <input placeholder="Player name..." value={p2Input} onChange={e=>setP2Input(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if(p2Input.trim()) { setAddedPlayers2([...addedPlayers2, p2Input.trim()]); setP2Input(''); }}}} className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   <button type="button" onClick={() => { if(p2Input.trim()) { setAddedPlayers2([...addedPlayers2, p2Input.trim()]); setP2Input(''); }}} className="px-3 bg-slate-800 text-white text-sm font-semibold rounded-lg hover:bg-slate-700">Add</button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
@@ -367,8 +367,8 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                     <span key={p.id} className="inline-flex items-center px-2 py-1 bg-slate-800 text-slate-300 text-xs rounded-md">{p.name}</span>
                   ))}
                   {addedPlayers2.map((p, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-md border border-emerald-500/30">
-                      {p} <button type="button" onClick={() => setAddedPlayers2(addedPlayers2.filter((_, idx) => idx !== i))} className="hover:text-emerald-200 ml-1"><X className="w-3 h-3" /></button>
+                    <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-medium rounded-md border border-cyan-500/30">
+                      {p} <button type="button" onClick={() => setAddedPlayers2(addedPlayers2.filter((_, idx) => idx !== i))} className="hover:text-cyan-200 ml-1"><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                   {getExistingPlayers(2).length === 0 && addedPlayers2.length === 0 && <span className="text-xs text-slate-500 italic">No players yet</span>}
@@ -378,7 +378,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
               <button
                 type="button"
                 onClick={() => handleNext(3)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors"
               >
                 Next: Match Details <Play className="w-4 h-4 fill-current" />
               </button>
@@ -390,7 +390,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
             <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-medium">Venue</label>
-                <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. Local Ground" className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+                <input value={venue} onChange={e => setVenue(e.target.value)} placeholder="e.g. Local Ground" className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -399,7 +399,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Viewer Code</label>
-                  <input value={viewerCode} onChange={e => setViewerCode(e.target.value.toUpperCase())} maxLength={8} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-emerald-400 font-bold tracking-widest focus:outline-none focus:border-emerald-500/50 transition-all uppercase" />
+                  <input value={viewerCode} onChange={e => setViewerCode(e.target.value.toUpperCase())} maxLength={8} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-cyan-400 font-bold tracking-widest focus:outline-none focus:border-cyan-500/50 transition-all uppercase" />
                 </div>
               </div>
               {linkedLeague && (
@@ -412,17 +412,17 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Date</label>
-                  <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all" />
                 </div>
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Total Overs</label>
-                  <input type="number" min={1} max={50} value={totalOvers} onChange={e => setTotalOvers(Number(e.target.value))} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  <input type="number" min={1} max={50} value={totalOvers} onChange={e => setTotalOvers(Number(e.target.value))} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all" />
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => handleNext(4)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors mt-6"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors mt-6"
               >
                 Next: Toss <Play className="w-4 h-4 fill-current" />
               </button>
@@ -459,7 +459,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                         <button 
                           type="button"
                           onClick={() => setTossDecision('bat')}
-                          className={`py-4 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                          className={`py-4 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
                         >
                           <span className="text-2xl mb-1.5">🏏</span> Bat
                         </button>
@@ -480,7 +480,7 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 type="button"
                 onClick={handleFinish}
                 disabled={!tossWinner || !tossDecision}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="w-5 h-5" /> Finish & Get Codes
               </button>

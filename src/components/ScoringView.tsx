@@ -299,7 +299,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                   <button 
                     onClick={() => handleTossSubmit('bat')}
-                    className="flex flex-col items-center justify-center py-5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-900/20"
+                    className="flex flex-col items-center justify-center py-5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-xl hover:bg-cyan-500/20 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-900/20"
                   >
                     <span className="text-2xl mb-2">🏏</span>
                     <span className="font-bold text-sm">Bat First</span>
@@ -324,16 +324,16 @@ export default function ScoringView({ matchId, onBack }: Props) {
   if (!inningsStarted || engine.phase === 'setup') {
     return (
       <div className="min-h-screen bg-slate-950">
-        <header className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-lg shadow-emerald-900/30">
+        <header className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-sky-500 shadow-lg shadow-cyan-900/30">
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
             <button onClick={onBack} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5" /></button>
-            <div><div className="flex items-center gap-2"><span className="text-sm font-bold text-white">{team1?.shortName}</span><span className="text-[10px] text-emerald-100/50 font-bold">VS</span><span className="text-sm font-bold text-white">{team2?.shortName}</span></div>
-            <p className="text-[10px] text-emerald-100/60">{match.venue} • {match.totalOvers} overs</p></div>
+            <div><div className="flex items-center gap-2"><span className="text-sm font-bold text-white">{team1?.shortName}</span><span className="text-[10px] text-cyan-100/50 font-bold">VS</span><span className="text-sm font-bold text-white">{team2?.shortName}</span></div>
+            <p className="text-[10px] text-cyan-100/60">{match.venue} • {match.totalOvers} overs</p></div>
           </div>
         </header>
         <div className="max-w-lg mx-auto px-4 py-8 space-y-5">
           <div className="text-center mb-6">
-            <div className="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><Zap className="w-7 h-7 text-emerald-400"/></div>
+            <div className="w-14 h-14 bg-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><Zap className="w-7 h-7 text-cyan-400"/></div>
             <h2 className="text-lg font-bold text-white">{isFirstInnings ? '1st' : '2nd'} Innings Setup</h2>
             <p className="text-xs text-slate-400 mt-1">{battingTeam?.name} batting • {bowlingTeam?.name} bowling</p>
             {target && <p className="text-xs text-amber-400 mt-1">Target: {target} runs</p>}
@@ -341,21 +341,21 @@ export default function ScoringView({ matchId, onBack }: Props) {
           <div className="bg-slate-900/70 border border-slate-800/50 rounded-2xl p-5 space-y-4">
             <div>
               <label className="block text-xs text-slate-400 mb-1.5 font-medium">⚡ Striker</label>
-              <select value={strikerId} onChange={e=>setStrikerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+              <select value={strikerId} onChange={e=>setStrikerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                 <option value="">Select striker...</option>
                 {(battingTeam?.players||[]).filter(p=>p.id!==nonStrikerId).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-400 mb-1.5 font-medium">🏏 Non-Striker</label>
-              <select value={nonStrikerId} onChange={e=>setNonStrikerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+              <select value={nonStrikerId} onChange={e=>setNonStrikerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                 <option value="">Select non-striker...</option>
                 {(battingTeam?.players||[]).filter(p=>p.id!==strikerId).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-slate-400 mb-1.5 font-medium">🎯 Opening Bowler</label>
-              <select value={bowlerId} onChange={e=>setBowlerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+              <select value={bowlerId} onChange={e=>setBowlerId(e.target.value)} className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                 <option value="">Select bowler...</option>
                 {allBowlers.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -372,12 +372,12 @@ export default function ScoringView({ matchId, onBack }: Props) {
                     value={newBattingPlayerName}
                     onChange={e => setNewBattingPlayerName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer(true); }}
-                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddPlayer(true)}
-                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                    className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 text-xs font-bold rounded-lg border border-cyan-500/20 hover:bg-cyan-500/20 transition-all"
                   >
                     Add
                   </button>
@@ -392,12 +392,12 @@ export default function ScoringView({ matchId, onBack }: Props) {
                     value={newBowlingPlayerName}
                     onChange={e => setNewBowlingPlayerName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer(false); }}
-                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                    className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddPlayer(false)}
-                    className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                    className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 text-xs font-bold rounded-lg border border-cyan-500/20 hover:bg-cyan-500/20 transition-all"
                   >
                     Add
                   </button>
@@ -406,7 +406,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
             </div>
 
             <button onClick={doStartInnings} disabled={!strikerId||!nonStrikerId||!bowlerId}
-              className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all disabled:opacity-30 disabled:pointer-events-none text-sm">
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all disabled:opacity-30 disabled:pointer-events-none text-sm">
               Start Innings
             </button>
           </div>
@@ -434,7 +434,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {availableBatters.map(p => (
                     <button key={p.id} onClick={() => engine.selectNewBatter({id:p.id,name:p.name})}
-                      className="w-full py-2.5 px-4 bg-slate-800/60 border border-slate-700/50 rounded-lg text-sm text-white hover:border-emerald-500/50 hover:bg-slate-800 transition-all text-left">
+                      className="w-full py-2.5 px-4 bg-slate-800/60 border border-slate-700/50 rounded-lg text-sm text-white hover:border-cyan-500/50 hover:bg-slate-800 transition-all text-left">
                       {p.name}
                     </button>
                   ))}
@@ -448,7 +448,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
                     Start 2nd Innings
                   </button>
                 ) : (
-                  <button onClick={handleEndMatch} className="px-6 py-2.5 bg-emerald-500/15 text-emerald-400 rounded-xl text-sm font-semibold hover:bg-emerald-500/25 transition-colors">
+                  <button onClick={handleEndMatch} className="px-6 py-2.5 bg-cyan-500/15 text-cyan-400 rounded-xl text-sm font-semibold hover:bg-cyan-500/25 transition-colors">
                     <Trophy className="w-4 h-4 inline mr-1" /> End Match
                   </button>
                 )}
@@ -465,12 +465,12 @@ export default function ScoringView({ matchId, onBack }: Props) {
                   value={newWicketBatterName}
                   onChange={e => setNewWicketBatterName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleAddPlayerWicket(); }}
-                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
                 />
                 <button
                   type="button"
                   onClick={handleAddPlayerWicket}
-                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                  className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 text-xs font-bold rounded-lg border border-cyan-500/20 hover:bg-cyan-500/20 transition-all"
                 >
                   Add
                 </button>
@@ -517,12 +517,12 @@ export default function ScoringView({ matchId, onBack }: Props) {
                   value={newOverBowlerName}
                   onChange={e => setNewOverBowlerName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleAddPlayerOver(); }}
-                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
                 />
                 <button
                   type="button"
                   onClick={handleAddPlayerOver}
-                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                  className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 text-xs font-bold rounded-lg border border-cyan-500/20 hover:bg-cyan-500/20 transition-all"
                 >
                   Add
                 </button>
@@ -544,14 +544,14 @@ export default function ScoringView({ matchId, onBack }: Props) {
         <ScoringHeader t1={team1} t2={team2} match={match} onBack={onBack} />
         <div className="max-w-lg mx-auto px-4 py-8 text-center space-y-5">
           <ScoreBar batting={battingTeam} total={engine.totalRuns} wickets={engine.totalWickets} overs={oversDisplay} maxOvers={match.totalOvers} target={target} runsNeeded={runsNeeded} />
-          <motion.div initial={{scale:0.8,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:'spring',stiffness:200,damping:15}} className="bg-gradient-to-br from-emerald-900/40 to-teal-900/30 border border-emerald-500/30 rounded-2xl p-6 space-y-3">
-            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
-              <Trophy className="w-8 h-8 text-emerald-400" />
+          <motion.div initial={{scale:0.8,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:'spring',stiffness:200,damping:15}} className="bg-gradient-to-br from-cyan-900/40 to-sky-900/30 border border-cyan-500/30 rounded-2xl p-6 space-y-3">
+            <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto">
+              <Trophy className="w-8 h-8 text-cyan-400" />
             </div>
-            <h2 className="text-xl font-extrabold text-emerald-400">🎉 Target Reached!</h2>
+            <h2 className="text-xl font-extrabold text-cyan-400">🎉 Target Reached!</h2>
             <p className="text-white font-bold text-lg">{winningTeam?.name} won by {wicketsRemaining} wicket{wicketsRemaining !== 1 ? 's' : ''}</p>
             <p className="text-xs text-slate-400">with {ballsRemaining} ball{ballsRemaining !== 1 ? 's' : ''} remaining</p>
-            <button onClick={() => handleEndMatch()} className="mt-3 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/40 hover:shadow-emerald-900/60 transition-all text-sm">
+            <button onClick={() => handleEndMatch()} className="mt-3 px-8 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-cyan-900/40 hover:shadow-cyan-900/60 transition-all text-sm">
               <Trophy className="w-4 h-4 inline mr-1" /> Finish Match
             </button>
           </motion.div>
@@ -571,7 +571,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
           {isFirstInnings ? (
             <button onClick={switchTo2ndInnings} className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg text-sm">Start 2nd Innings</button>
           ) : (
-            <button onClick={() => handleEndMatch()} className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg text-sm"><Trophy className="w-4 h-4 inline mr-1" /> End Match</button>
+            <button onClick={() => handleEndMatch()} className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-semibold rounded-xl shadow-lg text-sm"><Trophy className="w-4 h-4 inline mr-1" /> End Match</button>
           )}
         </div>
       </div>
@@ -589,13 +589,13 @@ export default function ScoringView({ matchId, onBack }: Props) {
         <div className="grid grid-cols-2 gap-3">
           {/* Striker */}
           {engine.striker && (
-            <div key="striker-card" className="bg-slate-900/70 border border-emerald-500/40 rounded-xl p-3 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-t-xl" />
+            <div key="striker-card" className="bg-slate-900/70 border border-cyan-500/40 rounded-xl p-3 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 to-sky-400 rounded-t-xl" />
               <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">⚡ Striker</span>
+                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">⚡ Striker</span>
                 <span className="relative flex h-1.5 w-1.5 ml-auto">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
                 </span>
               </div>
               <p className="text-sm font-bold text-white truncate">{engine.striker.name}</p>
@@ -647,7 +647,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 e.type==='wicket'?'bg-rose-500/20 text-rose-400':
                 e.type==='wide'?'bg-amber-500/20 text-amber-400':
                 e.type==='noball'?'bg-orange-500/20 text-orange-400':
-                e.runs>=4?'bg-emerald-500/20 text-emerald-400':
+                e.runs>=4?'bg-cyan-500/20 text-cyan-400':
                 'bg-slate-800 text-slate-300'
               }`}>
                 {e.type==='wicket'?'W':e.type==='wide'?'WD':e.type==='noball'?'NB':e.runs}
@@ -693,7 +693,7 @@ export default function ScoringView({ matchId, onBack }: Props) {
             <button onClick={()=>{ engine.endInnings(); }} className="flex-1 py-2.5 bg-amber-500/10 text-amber-400 text-xs font-semibold rounded-lg hover:bg-amber-500/20 transition-colors">End Innings</button>
           )}
           {!isFirstInnings && (
-            <button onClick={handleEndMatch} className="flex-1 py-2.5 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-1"><Trophy className="w-3.5 h-3.5"/>End Match</button>
+            <button onClick={handleEndMatch} className="flex-1 py-2.5 bg-cyan-500/10 text-cyan-400 text-xs font-semibold rounded-lg hover:bg-cyan-500/20 transition-colors flex items-center justify-center gap-1"><Trophy className="w-3.5 h-3.5"/>End Match</button>
           )}
         </div>
 
@@ -902,11 +902,11 @@ export default function ScoringView({ matchId, onBack }: Props) {
 // ── Sub-components ──
 function ScoringHeader({t1,t2,match,onBack}:{t1:any,t2:any,match:Match,onBack:()=>void}) {
   return (
-    <header className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-lg shadow-emerald-900/30">
+    <header className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-sky-500 shadow-lg shadow-cyan-900/30">
       <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
         <button onClick={onBack} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5"/></button>
-        <div><div className="flex items-center gap-2"><span className="text-sm font-bold text-white">{t1?.shortName||'??'}</span><span className="text-[10px] text-emerald-100/50 font-bold">VS</span><span className="text-sm font-bold text-white">{t2?.shortName||'??'}</span></div>
-        <p className="text-[10px] text-emerald-100/60">{match.venue} • {match.totalOvers} overs</p></div>
+        <div><div className="flex items-center gap-2"><span className="text-sm font-bold text-white">{t1?.shortName||'??'}</span><span className="text-[10px] text-cyan-100/50 font-bold">VS</span><span className="text-sm font-bold text-white">{t2?.shortName||'??'}</span></div>
+        <p className="text-[10px] text-cyan-100/60">{match.venue} • {match.totalOvers} overs</p></div>
       </div>
     </header>
   );
@@ -925,7 +925,7 @@ function ScoreBar({batting,total,wickets,overs,maxOvers,target,runsNeeded}:{batt
         <div className="mt-2 flex items-center justify-center gap-3">
           <span className="flex items-center gap-1 text-xs"><Target className="w-3 h-3 text-amber-400"/><span className="text-amber-400 font-semibold">Target: {target}</span></span>
           <span className="text-slate-600">•</span>
-          <span className={`text-xs font-semibold ${runsNeeded!<=0?'text-emerald-400':'text-rose-400'}`}>{runsNeeded!<=0?'Target reached!':`Need ${runsNeeded}`}</span>
+          <span className={`text-xs font-semibold ${runsNeeded!<=0?'text-cyan-400':'text-rose-400'}`}>{runsNeeded!<=0?'Target reached!':`Need ${runsNeeded}`}</span>
         </div>
       )}
     </motion.div>

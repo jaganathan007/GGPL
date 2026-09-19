@@ -86,7 +86,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
         {isAdmin && (
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" /> Add Team
           </button>
@@ -117,7 +117,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Royal Warriors"
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
                   required
                 />
               </div>
@@ -129,7 +129,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
                   onChange={e => setShortName(e.target.value.slice(0, 4))}
                   placeholder="e.g. RW"
                   maxLength={4}
-                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all uppercase"
+                  className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all uppercase"
                   required
                 />
               </div>
@@ -155,7 +155,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
               <button
                 id="team-save-btn"
                 type="submit"
-                className="flex items-center gap-1.5 px-5 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-400 transition-colors"
+                className="flex items-center gap-1.5 px-5 py-2 bg-cyan-500 text-white text-sm font-semibold rounded-lg hover:bg-cyan-400 transition-colors"
               >
                 <Check className="w-4 h-4" /> {editTeam ? 'Update' : 'Create'}
               </button>
@@ -249,11 +249,11 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
                               onChange={e => setNewPlayerName(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPlayer(team.id); }}}
                               placeholder="Player name..."
-                              className="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-all"
+                              className="flex-1 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-all"
                             />
                             <button
                               onClick={() => addPlayer(team.id)}
-                              className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-sm font-medium rounded-lg hover:bg-emerald-500/30 transition-colors flex items-center gap-1"
+                              className="px-3 py-1.5 bg-cyan-500/20 text-cyan-400 text-sm font-medium rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-1"
                             >
                               <UserPlus className="w-3.5 h-3.5" /> Add
                             </button>
@@ -282,7 +282,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
           {isAdmin && (
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/50 transition-all"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all"
             >
               <Plus className="w-4 h-4" /> Create First Team
             </button>

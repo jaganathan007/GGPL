@@ -213,8 +213,8 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sky-500/8 rounded-full blur-3xl pointer-events-none" />
 
 
       {/* ── Email sent success banner ── */}
@@ -226,16 +226,16 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
             exit={{ opacity: 0,   y: -60, x: '-50%' }}
             className="fixed top-4 left-1/2 z-[100] w-[92%] max-w-sm"
           >
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 backdrop-blur-xl border border-emerald-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-emerald-950/60">
+            <div className="bg-gradient-to-r from-cyan-600 to-sky-600 backdrop-blur-xl border border-cyan-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-cyan-950/60">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 animate-bounce">
                   <Send className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-100 mb-1">Verification email sent!</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-100 mb-1">Verification email sent!</p>
                   <p className="text-sm text-white/95 font-medium">Check your inbox at</p>
-                  <p className="text-sm font-mono font-bold text-emerald-200 mt-0.5 break-all">{otpSentInfo}</p>
-                  <p className="text-[10px] text-emerald-200/60 mt-1">Didn't receive it? Check your spam folder.</p>
+                  <p className="text-sm font-mono font-bold text-cyan-200 mt-0.5 break-all">{otpSentInfo}</p>
+                  <p className="text-[10px] text-cyan-200/60 mt-1">Didn't receive it? Check your spam folder.</p>
                 </div>
                 <button onClick={() => setOtpSentInfo(null)} className="text-white/60 hover:text-white transition-colors">
                   <X className="w-4 h-4" />
@@ -258,11 +258,11 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-            className="w-20 h-20 bg-gradient-to-br from-emerald-500/25 via-teal-500/15 to-emerald-600/20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-emerald-950/40 border border-emerald-500/10"
+            className="w-20 h-20 bg-gradient-to-br from-cyan-500/25 via-sky-500/15 to-cyan-600/20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-cyan-950/40 border border-cyan-500/10"
           >
-            <Trophy className="w-10 h-10 text-emerald-400" />
+            <Trophy className="w-10 h-10 text-cyan-400" />
           </motion.div>
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent tracking-tight">GGPL</h1>
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 bg-clip-text text-transparent tracking-tight">GGPL</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Cricket Score Tracker</p>
         </div>
 
@@ -279,7 +279,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                   onClick={() => { setMode(m); resetToInfo(); }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
                     mode === m
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/50'
+                      ? 'bg-gradient-to-r from-cyan-600 to-sky-600 text-white shadow-lg shadow-cyan-950/50'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -312,7 +312,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                         value={name}
                         onChange={e => { setName(e.target.value); setError(''); }}
                         placeholder="e.g. Raman"
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                       />
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                       value={email}
                       onChange={e => { setEmail(e.target.value); setError(''); }}
                       placeholder="your@email.com"
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -343,7 +343,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                         type="button"
                         onClick={handleSendOtp}
                         disabled={sendingOtp}
-                        className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors disabled:opacity-50"
+                        className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition-colors disabled:opacity-50"
                       >
                         Forgot Password?
                       </button>
@@ -356,7 +356,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                       value={password}
                       onChange={e => { setPassword(e.target.value); setError(''); }}
                       placeholder={mode === 'signup' ? 'Min 4 characters' : '••••••••'}
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
                     <button
                       type="button"
@@ -378,7 +378,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                         value={confirmPassword}
                         onChange={e => { setConfirmPassword(e.target.value); setError(''); }}
                         placeholder="••••••••"
-                        className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                        className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                       />
                     </div>
                   </div>
@@ -392,7 +392,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                 )}
 
                 <button type="submit"
-                  className="w-full py-3.5 mt-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98] transition-all duration-200 border border-emerald-400/20">
+                  className="w-full py-3.5 mt-1 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/30 active:scale-[0.98] transition-all duration-200 border border-cyan-400/20">
                   {mode === 'login' ? 'Login' : 'Create Account'}
                 </button>
               </motion.form>
@@ -408,14 +408,14 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                 className="space-y-5"
               >
                 <div className="text-center space-y-2">
-                  <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto">
-                    <ShieldCheck className="w-7 h-7 text-emerald-400" />
+                  <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-7 h-7 text-cyan-400" />
                   </div>
                   <h3 className="text-lg font-bold text-white">Check Your Inbox</h3>
                   {otpSentInfo ? (
                     <p className="text-sm text-slate-400">
                       We sent a 4-digit verification code to<br />
-                      <span className="font-mono font-bold text-emerald-400">{maskedEmail}</span>
+                      <span className="font-mono font-bold text-cyan-400">{maskedEmail}</span>
                     </p>
                   ) : null}
                 </div>
@@ -429,7 +429,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                     value={enteredOtp}
                     onChange={e => { setEnteredOtp(e.target.value.replace(/\D/g, '').slice(0, 4)); setError(''); }}
                     placeholder="• • • •"
-                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-4 text-2xl text-white text-center tracking-[0.6em] font-mono font-bold focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-4 text-2xl text-white text-center tracking-[0.6em] font-mono font-bold focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     autoFocus
                   />
                 </div>
@@ -454,7 +454,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                     type="button"
                     onClick={handleVerifyOtp}
                     disabled={enteredOtp.length !== 4}
-                    className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-emerald-400/20"
+                    className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-cyan-400/20"
                   >
                     Verify Code
                   </button>
@@ -478,10 +478,10 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                 className="space-y-4"
               >
                 <div className="text-center space-y-1">
-                  <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-1">
-                    <CheckCircle className="w-7 h-7 text-emerald-400" />
+                  <div className="w-14 h-14 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto mb-1">
+                    <CheckCircle className="w-7 h-7 text-cyan-400" />
                   </div>
-                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">✓ Code Verified</p>
+                  <p className="text-xs font-bold text-cyan-400 uppercase tracking-wider">✓ Code Verified</p>
                   <h3 className="text-lg font-bold text-white">Set New Password</h3>
                   <p className="text-xs text-slate-400">Choose a new password for your account</p>
                 </div>
@@ -496,7 +496,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                       onChange={e => { setNewPassword(e.target.value); setError(''); }}
                       placeholder="Min 4 characters"
                       autoFocus
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
                     <button type="button" onClick={() => setShowPassword(p => !p)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
@@ -514,7 +514,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                       value={confirmNewPassword}
                       onChange={e => { setConfirmNewPassword(e.target.value); setError(''); }}
                       placeholder="••••••••"
-                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                      className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                 )}
 
                 <button type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/30 active:scale-[0.98] transition-all duration-200 border border-emerald-400/20">
+                  className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/30 active:scale-[0.98] transition-all duration-200 border border-cyan-400/20">
                   Reset Password &amp; Login
                 </button>
                 <button type="button" onClick={resetToInfo}

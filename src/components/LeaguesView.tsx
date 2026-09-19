@@ -198,11 +198,11 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
               <div className="mb-3 bg-slate-950/40 border border-slate-800/50 rounded-xl p-3 space-y-2">
                 <div className="flex gap-2">
                   <input placeholder="Team Name" value={newTeamName} onChange={e => setNewTeamName(e.target.value)}
-                    className="flex-[2] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    className="flex-[2] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   <input placeholder="Short" value={newTeamShort} onChange={e => setNewTeamShort(e.target.value)} maxLength={4}
-                    className="flex-[1] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                    className="flex-[1] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                   <button onClick={() => handleAddTeam(createdLeagueId)} disabled={!newTeamName.trim() || !newTeamShort.trim()}
-                    className="px-4 py-2 bg-emerald-500 text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-emerald-400 transition-colors">Add</button>
+                    className="px-4 py-2 bg-cyan-500 text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-cyan-400 transition-colors">Add</button>
                 </div>
               </div>
 
@@ -218,7 +218,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                           <span className="text-xs text-slate-500">({team.shortName})</span>
                         </div>
                         <button onClick={() => { setAddPlayerTeam(addPlayerTeam === team.id ? null : team.id); setNewPlayerName(''); }}
-                          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold">
+                          className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 font-semibold">
                           <UserPlus className="w-3 h-3" /> Add Player
                         </button>
                       </div>
@@ -230,9 +230,9 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                               <input placeholder="Player name" value={newPlayerName}
                                 onChange={e => setNewPlayerName(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlayer(team.id); } }}
-                                className="flex-1 bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50" />
+                                className="flex-1 bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/50" />
                               <button onClick={() => handleAddPlayer(team.id)} disabled={!newPlayerName.trim()}
-                                className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
+                                className="px-3 py-1.5 bg-cyan-500 text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
                             </div>
                           </motion.div>
                         )}
@@ -258,7 +258,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
             <div className="flex gap-2">
               <button onClick={onDone} className="flex-1 py-3 bg-slate-800 text-slate-300 font-bold rounded-xl hover:bg-slate-700 transition-all border border-slate-700">Done</button>
               {inlineLeagueTeams.length >= 2 && (
-                <button onClick={() => onStartMatch?.(createdCode)} className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all">🏏 Start a Match</button>
+                <button onClick={() => onStartMatch?.(createdCode)} className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all">🏏 Start a Match</button>
               )}
             </div>
           </div>
@@ -269,9 +269,9 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">League Name</label>
                 <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Summer Championship 2026"
-                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all" />
               </div>
-              <button type="submit" disabled={!name.trim()} className="w-full py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 disabled:opacity-50 transition-colors">Create League</button>
+              <button type="submit" disabled={!name.trim()} className="w-full py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-50 transition-colors">Create League</button>
             </form>
           </>
         )}
@@ -283,12 +283,12 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-emerald-400" />
+          <Trophy className="w-5 h-5 text-cyan-400" />
           {focusLeagueId ? visibleLeagues[0]?.name || 'League' : 'Leagues & Tournaments'}
         </h2>
         {isAdmin && !focusLeagueId && (
           <button onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-emerald-900/40 transition-all hover:scale-[1.02]">
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-cyan-900/40 transition-all hover:scale-[1.02]">
             <Plus className="w-4 h-4" /> New League
           </button>
         )}
@@ -305,9 +305,9 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">League Name</label>
                 <input autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Summer Championship 2026"
-                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all" />
               </div>
-              <button type="submit" disabled={!name.trim()} className="w-full py-3.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 disabled:opacity-50 transition-colors mt-2">Create League</button>
+              <button type="submit" disabled={!name.trim()} className="w-full py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-50 transition-colors mt-2">Create League</button>
             </form>
           </motion.div>
         )}
@@ -342,7 +342,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
           return (
             <motion.div key={league.id} layout
-              className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-emerald-500/30 transition-all">
+              className="bg-gradient-to-br from-slate-900/90 to-slate-800/50 border border-slate-800/80 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-all">
               <div className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -353,7 +353,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Code: </span>
-                      <span className="text-sm font-mono text-emerald-400 font-bold tracking-widest">{league.code}</span></div>
+                      <span className="text-sm font-mono text-cyan-400 font-bold tracking-widest">{league.code}</span></div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-800/50 px-2 py-1 rounded-md">
                       <Users className="w-3.5 h-3.5 text-blue-400" /><span>{leagueTeams.length} Teams</span></div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-800/50 px-2 py-1 rounded-md">
@@ -396,7 +396,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                       <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800/50 rounded-xl p-1">
                         {([['matches','Matches',Swords],['table','Table',Trophy],['stats','Stats',BarChart3]] as const).map(([key,label,Icon]) => (
                           <button key={key} onClick={() => setLeagueTab(key as any)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${leagueTab === key ? (key==='matches'?'bg-emerald-500 text-white shadow-lg shadow-emerald-900/30':key==='table'?'bg-amber-500 text-white shadow-lg shadow-amber-900/30':'bg-violet-500 text-white shadow-lg shadow-violet-900/30') : 'text-slate-400 hover:text-slate-200'}`}>
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${leagueTab === key ? (key==='matches'?'bg-cyan-500 text-white shadow-lg shadow-cyan-900/30':key==='table'?'bg-amber-500 text-white shadow-lg shadow-amber-900/30':'bg-violet-500 text-white shadow-lg shadow-violet-900/30') : 'text-slate-400 hover:text-slate-200'}`}>
                             <Icon className="w-3.5 h-3.5" /> {label}
                           </button>
                         ))}
@@ -409,7 +409,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                           <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Teams</h4>
                           {isOwner && (
                             <button onClick={() => { setAddTeamLeague(addTeamLeague === league.id ? null : league.id); setNewTeamName(''); setNewTeamShort(''); }}
-                              className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                              className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
                               <Plus className="w-3.5 h-3.5" /> Add Team
                             </button>
                           )}
@@ -421,13 +421,13 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                               className="mb-3 bg-slate-900/60 border border-slate-800/50 rounded-xl p-3 space-y-2 overflow-hidden">
                               <div className="flex gap-2">
                                 <input placeholder="Team Name" value={newTeamName} onChange={e => setNewTeamName(e.target.value)}
-                                  className="flex-[2] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                  className="flex-[2] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                                 <input placeholder="Short" value={newTeamShort} onChange={e => setNewTeamShort(e.target.value)} maxLength={4}
-                                  className="flex-[1] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                  className="flex-[1] bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                               </div>
                               <div className="flex gap-2">
                                 <button onClick={() => handleAddTeam(league.id)} disabled={!newTeamName.trim() || !newTeamShort.trim()}
-                                  className="flex-1 py-2 bg-emerald-500 text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-emerald-400 transition-colors">Add</button>
+                                  className="flex-1 py-2 bg-cyan-500 text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-cyan-400 transition-colors">Add</button>
                                 <button onClick={() => setAddTeamLeague(null)} className="px-4 py-2 text-slate-400 text-sm hover:text-white transition-colors">Cancel</button>
                               </div>
                             </motion.div>
@@ -446,7 +446,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                   </div>
                                   {isOwner && (
                                     <button onClick={() => { setAddPlayerTeam(addPlayerTeam === team.id ? null : team.id); setNewPlayerName(''); }}
-                                      className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold">
+                                      className="flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 font-semibold">
                                       <UserPlus className="w-3 h-3" /> Add Player
                                     </button>
                                   )}
@@ -460,9 +460,9 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                         <input placeholder="Player name" value={newPlayerName}
                                           onChange={e => setNewPlayerName(e.target.value)}
                                           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddPlayer(team.id); } }}
-                                          className="flex-1 bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50" />
+                                          className="flex-1 bg-slate-800/80 border border-slate-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500/50" />
                                         <button onClick={() => handleAddPlayer(team.id)} disabled={!newPlayerName.trim()}
-                                          className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
+                                          className="px-3 py-1.5 bg-cyan-500 text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
                                       </div>
                                     </motion.div>
                                   )}
@@ -498,7 +498,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                   <th className="pb-2 font-medium w-8">#</th>
                                   <th className="pb-2 font-medium">Team</th>
                                   <th className="pb-2 font-medium text-center w-12">M</th>
-                                  <th className="pb-2 font-medium text-center w-12 text-emerald-400">W</th>
+                                  <th className="pb-2 font-medium text-center w-12 text-cyan-400">W</th>
                                   <th className="pb-2 font-medium text-center w-12 text-rose-400">L</th>
                                   <th className="pb-2 font-medium text-center w-12 text-amber-400">T</th>
                                   <th className="pb-2 font-bold text-center w-16 text-white">Pts</th>
@@ -516,7 +516,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                       </div>
                                     </td>
                                     <td className="py-3 text-center text-slate-400">{team.M}</td>
-                                    <td className="py-3 text-center text-emerald-400/80">{team.W}</td>
+                                    <td className="py-3 text-center text-cyan-400/80">{team.W}</td>
                                     <td className="py-3 text-center text-rose-400/80">{team.L}</td>
                                     <td className="py-3 text-center text-amber-400/80">{team.T}</td>
                                     <td className="py-3 text-center text-white font-bold text-base bg-slate-800/20">{team.Pts}</td>
@@ -543,7 +543,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                             <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Create Match</h4>
                             {createMatchLeague !== league.id && (
                               <button onClick={() => { setCreateMatchLeague(league.id); resetMatchForm(); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 text-emerald-400 text-xs font-bold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20">
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/15 text-cyan-400 text-xs font-bold rounded-lg hover:bg-cyan-500/25 transition-colors border border-cyan-500/20">
                                 <Swords className="w-3.5 h-3.5" /> New Match
                               </button>
                             )}
@@ -552,10 +552,10 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                           <AnimatePresence>
                             {createMatchLeague === league.id && !createdMatchResult && (
                               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                                className="bg-slate-900/60 border border-emerald-500/15 rounded-2xl p-5 space-y-4 overflow-hidden mb-4">
+                                className="bg-slate-900/60 border border-cyan-500/15 rounded-2xl p-5 space-y-4 overflow-hidden mb-4">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <Swords className="w-4 h-4 text-emerald-400" />
+                                    <Swords className="w-4 h-4 text-cyan-400" />
                                     <span className="text-sm font-bold text-white">
                                       {matchStep === 0 ? 'Select Teams' : matchStep === 1 ? 'Match Details' : 'Toss'}
                                     </span>
@@ -568,7 +568,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                 {/* Step indicator */}
                                 <div className="flex items-center gap-2">
                                   {[0,1,2].map(s => (
-                                    <div key={s} className={`flex-1 h-1 rounded-full transition-all ${s <= matchStep ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+                                    <div key={s} className={`flex-1 h-1 rounded-full transition-all ${s <= matchStep ? 'bg-cyan-500' : 'bg-slate-800'}`} />
                                   ))}
                                 </div>
 
@@ -580,7 +580,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                       <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50 space-y-2">
                                         <label className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Team 1</label>
                                         <select value={matchTeam1Id} onChange={e => setMatchTeam1Id(e.target.value)}
-                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                                           <option value="">Select team...</option>
                                           {leagueTeams.filter(t => t.id !== matchTeam2Id).map(t => (
                                             <option key={t.id} value={t.id}>{t.name} ({t.shortName})</option>
@@ -590,7 +590,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                       <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800/50 space-y-2">
                                         <label className="block text-xs text-slate-400 font-bold uppercase tracking-wider">Team 2</label>
                                         <select value={matchTeam2Id} onChange={e => setMatchTeam2Id(e.target.value)}
-                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50">
+                                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50">
                                           <option value="">Select team...</option>
                                           {leagueTeams.filter(t => t.id !== matchTeam1Id).map(t => (
                                             <option key={t.id} value={t.id}>{t.name} ({t.shortName})</option>
@@ -624,7 +624,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
 
                                       <button onClick={() => setMatchStep(1)}
                                         disabled={!matchTeam1Id || !matchTeam2Id || matchTeam1Id === matchTeam2Id}
-                                        className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-2">
+                                        className="w-full flex items-center justify-center gap-2 py-3 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-2">
                                         Next: Details <Play className="w-4 h-4 fill-current" />
                                       </button>
                                     </motion.div>
@@ -636,18 +636,18 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                       <div>
                                         <label className="block text-xs text-slate-400 mb-1 font-medium">Venue</label>
                                         <input value={matchVenue} onChange={e => setMatchVenue(e.target.value)} placeholder="e.g. Local Ground"
-                                          className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50" />
+                                          className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50" />
                                       </div>
                                       <div className="grid grid-cols-2 gap-3">
                                         <div>
                                           <label className="block text-xs text-slate-400 mb-1 font-medium">Date</label>
                                           <input type="date" value={matchDate} onChange={e => setMatchDate(e.target.value)}
-                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                                         </div>
                                         <div>
                                           <label className="block text-xs text-slate-400 mb-1 font-medium">Overs</label>
                                           <input type="number" min={1} max={50} value={matchOvers} onChange={e => setMatchOvers(Number(e.target.value))}
-                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+                                            className="w-full bg-slate-950/50 border border-slate-700/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/50" />
                                         </div>
                                       </div>
                                       <div className="flex gap-2 mt-2">
@@ -655,7 +655,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                           ← Back
                                         </button>
                                         <button onClick={() => setMatchStep(2)}
-                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-400 transition-colors">
+                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors">
                                           Next: Toss <Play className="w-4 h-4 fill-current" />
                                         </button>
                                       </div>
@@ -684,7 +684,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                             <p className="text-center text-xs text-slate-400 font-medium">What did they choose?</p>
                                             <div className="grid grid-cols-2 gap-3">
                                               <button onClick={() => setMatchTossDecision('bat')}
-                                                className={`py-3.5 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${matchTossDecision === 'bat' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                                                className={`py-3.5 flex flex-col items-center justify-center border-2 rounded-xl transition-all ${matchTossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}>
                                                 <span className="text-xl mb-1">🏏</span>
                                                 <span className="text-xs font-bold">Bat</span>
                                               </button>
@@ -704,7 +704,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                         </button>
                                         <button onClick={() => handleCreateLeagueMatch(league.id)}
                                           disabled={!matchTossWinner || !matchTossDecision}
-                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                                           <Check className="w-4 h-4" /> Create Match
                                         </button>
                                       </div>
@@ -717,9 +717,9 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                             {/* Match Created Success */}
                             {createdMatchResult && createMatchLeague === league.id && (
                               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                                className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-5 text-center space-y-3 mb-4">
-                                <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
-                                  <Check className="w-7 h-7 text-emerald-400" />
+                                className="bg-cyan-950/30 border border-cyan-500/20 rounded-2xl p-5 text-center space-y-3 mb-4">
+                                <div className="w-14 h-14 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto">
+                                  <Check className="w-7 h-7 text-cyan-400" />
                                 </div>
                                 <h4 className="text-lg font-bold text-white">Match Created!</h4>
                                 <p className="text-xs text-slate-400">Save these codes to score or share the match</p>
@@ -730,7 +730,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                   </div>
                                   <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800">
                                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Viewer Code</p>
-                                    <p className="text-lg font-mono font-bold text-emerald-400 tracking-[0.15em]">{createdMatchResult.viewerCode}</p>
+                                    <p className="text-lg font-mono font-bold text-cyan-400 tracking-[0.15em]">{createdMatchResult.viewerCode}</p>
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -740,7 +740,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                   </button>
                                   {onScoreMatch && (
                                     <button onClick={() => { onScoreMatch(createdMatchResult.id); setCreateMatchLeague(null); resetMatchForm(); }}
-                                      className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-emerald-900/40 transition-all">
+                                      className="flex-1 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all">
                                       🏏 Start Scoring
                                     </button>
                                   )}
@@ -760,7 +760,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                               const t1 = allTeams.find(t => t.id === m.team1Id);
                               const t2 = allTeams.find(t => t.id === m.team2Id);
                               return (
-                                <div key={m.id} className={`bg-slate-900/50 border rounded-xl p-4 ${m.isComplete ? 'border-slate-800/40' : 'border-emerald-500/20'}`}>
+                                <div key={m.id} className={`bg-slate-900/50 border rounded-xl p-4 ${m.isComplete ? 'border-slate-800/40' : 'border-cyan-500/20'}`}>
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                       <span>{m.venue}</span><span>•</span><span>{m.date}</span><span>•</span><span>{m.totalOvers} ov</span>
@@ -784,12 +784,12 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                       <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold" style={{ background: t2?.color || '#10b981' }}>{t2?.shortName?.slice(0,2)}</div>
                                     </div>
                                   </div>
-                                  {m.result && <p className="text-[11px] text-emerald-400 font-medium mt-2 text-center">{m.result}</p>}
+                                  {m.result && <p className="text-[11px] text-cyan-400 font-medium mt-2 text-center">{m.result}</p>}
                                   {/* Resume Scoring - only for match owner on live matches */}
                                   {currentUserId && m.ownerId === currentUserId && !m.isComplete && onScoreMatch && (
                                     <button
                                       onClick={() => onScoreMatch(m.id)}
-                                      className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-emerald-500/15 text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-500/25 transition-colors border border-emerald-500/20"
+                                      className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 bg-cyan-500/15 text-cyan-400 text-xs font-semibold rounded-lg hover:bg-cyan-500/25 transition-colors border border-cyan-500/20"
                                     >
                                       <Play className="w-3 h-3 fill-current" /> Resume Scoring
                                     </button>
@@ -868,7 +868,7 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
                                           <td className="py-2.5"><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{backgroundColor:p.color}}/><span className="font-semibold text-white">{p.name}</span><span className="text-slate-500 text-[10px]">{p.team}</span></div></td>
                                           <td className="py-2.5 text-center text-slate-400">{p.Inn}</td>
                                           <td className="py-2.5 text-center font-bold text-white">{p.R}</td>
-                                          <td className="py-2.5 text-center text-emerald-400">{p.HS}{p.notOuts > 0 ? '*' : ''}</td>
+                                          <td className="py-2.5 text-center text-cyan-400">{p.HS}{p.notOuts > 0 ? '*' : ''}</td>
                                           <td className="py-2.5 text-center text-blue-400">{p.fours}</td>
                                           <td className="py-2.5 text-center text-amber-400">{p.sixes}</td>
                                           <td className="py-2.5 text-center text-slate-400">{p.B > 0 ? ((p.R/p.B)*100).toFixed(1) : '0.0'}</td>
