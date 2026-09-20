@@ -27,6 +27,7 @@ export interface League {
   ballType?: string;         // 'stumper' | 'strich' | 'weight' | custom
   contact?: string;          // organizer contact
   ownerName?: string;        // display name of host
+  joinedBy?: string[];       // userIds who clicked Join
 }
 
 export interface Team {
