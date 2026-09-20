@@ -18,6 +18,7 @@ export interface League {
   code: string;
   ownerId?: string;
   editorCode?: string;
+  isTournament?: boolean;
 }
 
 export interface Team {

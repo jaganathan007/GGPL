@@ -16,9 +16,10 @@ function uid(): string {
 interface TeamsViewProps {
   isAdmin: boolean;
   currentUserId?: string;
+  isLoggedIn?: boolean;
 }
 
-export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
+export default function TeamsView({ isAdmin, currentUserId, isLoggedIn }: TeamsViewProps) {
   const { state, dispatch } = useApp();
   // Filter teams: show only teams owned by the current user
   const teams = currentUserId
@@ -83,7 +84,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
           <h2 className="text-lg font-bold text-white">Teams</h2>
           <p className="text-xs text-slate-400">{teams.length} team{teams.length !== 1 ? 's' : ''} registered</p>
         </div>
-        {isAdmin && (
+        {(isLoggedIn || isAdmin) && (
           <button
             onClick={() => { resetForm(); setShowForm(true); }}
             className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -95,7 +96,7 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
 
       {/* Team Form */}
       <AnimatePresence>
-        {showForm && isAdmin && (
+        {showForm && (isLoggedIn || isAdmin) && (
           <motion.form
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -278,8 +279,12 @@ export default function TeamsView({ isAdmin, currentUserId }: TeamsViewProps) {
           <div className="w-16 h-16 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Users className="w-7 h-7 text-slate-500" />
           </div>
-          <p className="text-sm text-slate-400 mb-4">{isAdmin ? 'No teams yet. Create your first team to get started.' : 'No teams have been created yet.'}</p>
-          {isAdmin && (
+          <p className="text-sm text-slate-400 mb-4">
+            {(isLoggedIn || isAdmin)
+              ? "You haven't created any teams yet. Create your first team to get started!"
+              : 'No teams have been created yet.'}
+          </p>
+          {(isLoggedIn || isAdmin) && (
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-cyan-900/30 hover:shadow-cyan-900/50 transition-all"

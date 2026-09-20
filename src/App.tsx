@@ -11,6 +11,9 @@ import { useApp } from './store';
 import LeaguesView from './components/LeaguesView';
 import PinGate from './components/PinGate';
 import Dashboard from './components/Dashboard';
+import TournamentsView from './components/TournamentsView';
+import PlayersView from './components/PlayersView';
+import StatsView from './components/StatsView';
 
 export default function App() {
   const { state } = useApp();
@@ -205,7 +208,7 @@ export default function App() {
                   onClick={() => handleNavigate('matches')}
                   className="px-3 py-1 bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-cyan-400 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
                 >
-                  <Swords className="w-3.5 h-3.5" /> Matches (Finished & Stats) →
+                  <Swords className="w-3.5 h-3.5" /> Matches (Finished &amp; Stats) →
                 </button>
               </div>
               {(isLoggedIn || isGuest) && (
@@ -259,25 +262,55 @@ export default function App() {
           </>
         );
 
+      case 'teams':
+        return (
+          <TeamsView
+            isAdmin={hasAdminAccess}
+            currentUserId={currentUserId || undefined}
+            isLoggedIn={isLoggedIn}
+          />
+        );
+
+      case 'leagues':
+        return (
+          <LeaguesView
+            isAdmin={hasAdminAccess}
+            isGlobalAdmin={hasAdminAccess}
+            currentUserId={currentUserId || undefined}
+            onScoreMatch={handleScoreMatch}
+          />
+        );
+
+      case 'tournaments':
+        return (
+          <TournamentsView
+            currentUserId={currentUserId || undefined}
+            isLoggedIn={isLoggedIn}
+            isAdmin={hasAdminAccess}
+            onScoreMatch={handleScoreMatch}
+            onViewStats={setStatsMatchId}
+          />
+        );
+
+      case 'players':
+        return (
+          <PlayersView
+            currentUserId={currentUserId || undefined}
+            isLoggedIn={isLoggedIn}
+            onNavigateToTeams={() => handleNavigate('teams')}
+          />
+        );
+
       case 'statistics':
         return (
-          <>
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <h2 className="text-xl font-bold text-white">Match Statistics</h2>
-              {(isLoggedIn || isGuest) && (
-                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
-                  + Create Match
-                </button>
-              )}
-            </div>
-            <MatchesView filter="completed" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
-          </>
+          <StatsView currentUserId={currentUserId || undefined} />
         );
 
       default:
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
     }
   }
+
 
   return (
     <div className="min-h-screen bg-slate-950 flex">
