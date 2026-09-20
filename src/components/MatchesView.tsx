@@ -95,13 +95,14 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
     const t1 = isCreatingTeam1 ? customTeam1Name.trim() : team1Id;
     const t2 = isCreatingTeam2 ? customTeam2Name.trim() : team2Id;
     if (!t1 || !t2 || t1 === t2) return;
-    setFormStep(2);
+    // Skip toss — create the match directly as a scheduled fixture
+    handleCreateMatch();
   }
 
   function handleCreateMatch() {
     const t1 = isCreatingTeam1 ? customTeam1Name.trim() : team1Id;
     const t2 = isCreatingTeam2 ? customTeam2Name.trim() : team2Id;
-    if (!t1 || !t2 || t1 === t2 || !tossWinner || !tossDecision) return;
+    if (!t1 || !t2 || t1 === t2) return;
 
     let finalTeam1Id = team1Id;
     let finalTeam2Id = team2Id;
@@ -155,10 +156,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
       date,
       time,
       totalOvers,
-      toss: {
-        winnerId: finalTossWinner,
-        decision: tossDecision as 'bat' | 'bowl',
-      },
+      // toss is captured when scoring starts, not at scheduling
       innings: [],
       isComplete: false,
       result: '',
@@ -211,7 +209,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-200">
-                {createdMatch ? 'Match Created Successfully' : formStep === 1 ? 'New Match Details' : 'Match Toss'}
+                {createdMatch ? 'Match Scheduled!' : 'New Match Details'}
               </h3>
               <button type="button" onClick={resetForm} className="text-slate-500 hover:text-slate-300 transition-colors">
                 <X className="w-4 h-4" />
@@ -255,7 +253,7 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   </button>
                 </div>
               </motion.div>
-            ) : formStep === 1 ? (
+            ) : (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -385,77 +383,9 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-colors shadow-lg shadow-cyan-900/30"
+                    className="flex items-center gap-1.5 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-colors shadow-lg shadow-cyan-900/30"
                   >
-                    Next: Toss →
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/50">
-                  <p className="text-center text-sm font-medium text-slate-300 mb-3">Who won the toss?</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setTossWinner(isCreatingTeam1 ? 'team1' : team1Id)}
-                      className={`py-3 rounded-xl border transition-all truncate px-2 ${
-                        tossWinner === (isCreatingTeam1 ? 'team1' : team1Id)
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                          : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
-                      }`}
-                    >
-                      {isCreatingTeam1 ? customTeam1Name || 'Team 1' : allTeams.find(x => x.id === team1Id)?.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTossWinner(isCreatingTeam2 ? 'team2' : team2Id)}
-                      className={`py-3 rounded-xl border transition-all truncate px-2 ${
-                        tossWinner === (isCreatingTeam2 ? 'team2' : team2Id)
-                          ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                          : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
-                      }`}
-                    >
-                      {isCreatingTeam2 ? customTeam2Name || 'Team 2' : allTeams.find(x => x.id === team2Id)?.name}
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {tossWinner && (
-                      <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} className="pt-5 overflow-hidden">
-                        <p className="text-center text-sm font-medium text-slate-300 mb-3">What did they choose?</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button 
-                            type="button"
-                            onClick={() => setTossDecision('bat')}
-                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bat' ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400 font-bold shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
-                          >
-                            <span className="text-lg mb-1">🏏</span> Bat
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => setTossDecision('bowl')}
-                            className={`py-3 flex flex-col items-center justify-center border rounded-xl transition-all ${tossDecision === 'bowl' ? 'bg-violet-500/20 border-violet-500 text-violet-400 font-bold shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500'}`}
-                          >
-                            <span className="text-lg mb-1">🎯</span> Bowl
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                <div className="flex justify-between items-center pt-2">
-                  <button type="button" onClick={() => setFormStep(1)} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateMatch}
-                    disabled={!tossWinner || !tossDecision}
-                    className="flex items-center gap-1.5 px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
-                  >
-                    <Check className="w-4 h-4" /> Create Match
+                    <Calendar className="w-3.5 h-3.5" /> Schedule Match
                   </button>
                 </div>
               </motion.div>

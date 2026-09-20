@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Swords, Trophy, LogOut, Eye, User, Lock, ShieldCheck, Search, Bell, Sun, Home, Radio, BarChart3, Calendar, Menu, ChevronDown } from 'lucide-react';
+import { Users, Swords, Trophy, LogOut, Eye, User, Lock, ShieldCheck, Search, Bell, Sun, Home, Radio, BarChart3, Calendar, Menu, ChevronDown, X, Clock, MapPin, Play } from 'lucide-react';
 import TeamsView from './components/TeamsView';
 import MatchesView from './components/MatchesView';
 import CreateMatchForm from './components/CreateMatchForm';
@@ -44,6 +44,73 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isLoggedIn = !!currentUserId;
+
+  // Notification state
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  const upcomingReminders = useMemo(() => {
+    return (state.matches || [])
+      .filter(m => !m.isComplete && m.innings.length === 0)
+      .sort((a, b) => {
+        const tA = new Date(`${a.date}T${a.time || '00:00'}`).getTime();
+        const tB = new Date(`${b.date}T${b.time || '00:00'}`).getTime();
+        return tA - tB;
+      });
+  }, [state.matches]);
+
+  const liveMatchesList = useMemo(() => {
+    return (state.matches || []).filter(m => !m.isComplete && m.innings.length > 0);
+  }, [state.matches]);
+
+  const totalNotifications = upcomingReminders.length + liveMatchesList.length;
+
+  const getTeam = (teamId: string) => (state.teams || []).find(t => t.id === teamId);
+
+  function formatReminderDate(dateStr: string, timeStr?: string) {
+    if (!dateStr) return timeStr || '';
+    try {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      let prefix = '';
+      if (dateStr === todayStr) {
+        prefix = 'Today';
+      } else if (dateStr === tomorrowStr) {
+        prefix = 'Tomorrow';
+      } else {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          const d = parts[0].length === 4 
+            ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+            : new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+          prefix = d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+        } else {
+          prefix = dateStr;
+        }
+      }
+      return timeStr ? `${prefix} at ${timeStr}` : prefix;
+    } catch {
+      return `${dateStr} ${timeStr || ''}`.trim();
+    }
+  }
 
   function handleNavigate(view: string) {
     setActiveView(view);
@@ -363,10 +430,167 @@ export default function App() {
             <button className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-xl transition-colors">
               <Sun className="w-4.5 h-4.5" />
             </button>
-            <button className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-xl transition-colors relative">
-              <Bell className="w-4.5 h-4.5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cyan-400 rounded-full border-2 border-slate-950"></span>
-            </button>
+            {/* Notifications / Reminders */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`flex p-2 rounded-xl transition-colors relative ${showNotifications ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+                title="Notifications & Match Reminders"
+              >
+                <Bell className="w-4.5 h-4.5" />
+                {totalNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-gradient-to-r from-amber-500 to-rose-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center border-2 border-slate-950 shadow-md">
+                    {totalNotifications > 9 ? '9+' : totalNotifications}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    {/* Header */}
+                    <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-amber-400" />
+                        <h3 className="text-sm font-bold text-white">Notifications & Reminders</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {totalNotifications > 0 && (
+                          <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-bold rounded-full border border-amber-500/30">
+                            {totalNotifications} active
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setShowNotifications(false)}
+                          className="p-1 text-slate-500 hover:text-slate-300 rounded-lg transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-96 overflow-y-auto p-3 space-y-2.5">
+                      {/* Live Matches */}
+                      {liveMatchesList.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5 px-1">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+                            Live Now ({liveMatchesList.length})
+                          </p>
+                          {liveMatchesList.map(m => {
+                            const t1 = getTeam(m.team1Id);
+                            const t2 = getTeam(m.team2Id);
+                            return (
+                              <div
+                                key={m.id}
+                                className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 hover:border-rose-400/60 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setShowNotifications(false);
+                                  handleScoreMatch(m.id);
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-white">
+                                    {t1?.name || 'Team 1'} vs {t2?.name || 'Team 2'}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded-full uppercase">
+                                    Live
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-slate-500" /> {m.venue || 'Local Ground'}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Scheduled Matches */}
+                      {upcomingReminders.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 px-1">
+                            <Calendar className="w-3 h-3 text-amber-400" />
+                            Scheduled Fixtures ({upcomingReminders.length})
+                          </p>
+                          {upcomingReminders.map(m => {
+                            const t1 = getTeam(m.team1Id);
+                            const t2 = getTeam(m.team2Id);
+                            const dateFormatted = formatReminderDate(m.date, m.time);
+                            return (
+                              <div
+                                key={m.id}
+                                className="bg-slate-800/60 border border-slate-700/60 hover:border-amber-500/40 rounded-xl p-3 transition-all cursor-pointer group"
+                                onClick={() => {
+                                  setShowNotifications(false);
+                                  handleNavigate('upcoming-matches');
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-white truncate">
+                                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: t1?.color || '#38bdf8' }} />
+                                      <span className="truncate">{t1?.name || 'Team 1'}</span>
+                                      <span className="text-slate-500 text-[10px] font-normal">vs</span>
+                                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: t2?.color || '#f43f5e' }} />
+                                      <span className="truncate">{t2?.name || 'Team 2'}</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-slate-400">
+                                      <span className="flex items-center gap-1 text-amber-300 font-medium">
+                                        <Clock className="w-3 h-3 text-amber-400" /> {dateFormatted}
+                                      </span>
+                                      <span className="flex items-center gap-1 text-slate-400">
+                                        <MapPin className="w-3 h-3 text-slate-500" /> {m.venue || 'Local Ground'}
+                                      </span>
+                                      <span className="text-slate-500">
+                                        {m.totalOvers} Ov
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Empty state */}
+                      {totalNotifications === 0 && (
+                        <div className="text-center py-8">
+                          <div className="w-12 h-12 bg-slate-800/60 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Bell className="w-6 h-6 text-slate-600" />
+                          </div>
+                          <p className="text-xs font-semibold text-slate-300">No match reminders</p>
+                          <p className="text-[11px] text-slate-500 mt-1 max-w-[14rem] mx-auto">
+                            When matches are scheduled or live, reminders will appear here.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-3 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between">
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          handleNavigate('upcoming-matches');
+                        }}
+                        className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                      >
+                        View all scheduled fixtures →
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-800">
               {isLoggedIn ? (

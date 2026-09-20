@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Play, ChevronLeft, Trophy } from 'lucide-react';
+import { X, Check, Play, ChevronLeft, Trophy, Calendar } from 'lucide-react';
 import { useApp } from '../store';
 import type { Match, Team, League } from '../types';
 
@@ -168,10 +168,10 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
       leagueCode: leagueCode.trim().toUpperCase() || undefined,
       team1Id: finalTeam1Id,
       team2Id: finalTeam2Id,
-      toss: { 
+      toss: (tossWinner && tossDecision) ? { 
         winnerId: tossWinner === 'team1' ? finalTeam1Id : finalTeam2Id, 
         decision: tossDecision as 'bat'|'bowl' 
-      },
+      } : undefined,
       date,
       time,
       venue: venue.trim() || 'TBD',
@@ -425,13 +425,22 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                   <input type="number" min={1} max={50} value={totalOvers} onChange={e => setTotalOvers(Number(e.target.value))} className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all" />
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => handleNext(4)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors mt-6"
-              >
-                Next: Toss <Play className="w-4 h-4 fill-current" />
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 transition-colors"
+                >
+                  <Calendar className="w-4 h-4 text-amber-400" /> Schedule (Toss Later)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNext(4)}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors"
+                >
+                  Next: Toss <Play className="w-4 h-4 fill-current" />
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -482,14 +491,23 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
                 </AnimatePresence>
               </div>
               
-              <button
-                type="button"
-                onClick={handleFinish}
-                disabled={!tossWinner || !tossDecision}
-                className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Check className="w-5 h-5" /> Finish & Get Codes
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  disabled={!tossWinner || !tossDecision}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-cyan-900/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Check className="w-5 h-5" /> Finish & Get Codes
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  className="w-full py-2.5 text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  Or schedule without toss
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
