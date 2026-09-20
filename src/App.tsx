@@ -201,21 +201,9 @@ export default function App() {
       case 'live-matches':
         return (
           <>
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-white">Live Matches</h2>
-                <button
-                  onClick={() => handleNavigate('matches')}
-                  className="px-3 py-1 bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-cyan-400 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-                >
-                  <Swords className="w-3.5 h-3.5" /> Matches (Finished &amp; Stats) →
-                </button>
-              </div>
-              {(isLoggedIn || isGuest) && (
-                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
-                  + Create Match
-                </button>
-              )}
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-white">Live Matches</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Matches currently in progress</p>
             </div>
             <MatchesView filter="live" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>
@@ -224,39 +212,20 @@ export default function App() {
       case 'matches':
         return (
           <>
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-white">Matches</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Finished match history and statistics</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleNavigate('live-matches')}
-                  className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-slate-300 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-                >
-                  <Radio className="w-3.5 h-3.5 text-cyan-400" /> View Live
-                </button>
-                {(isLoggedIn || isGuest) && (
-                  <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
-                    + Create Match
-                  </button>
-                )}
-              </div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-white">Matches</h2>
+              <p className="text-xs text-slate-400 mt-0.5">All matches — live, finished &amp; upcoming</p>
             </div>
-            <MatchesView filter="completed" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
+            <MatchesView filter="all" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>
         );
 
       case 'upcoming-matches':
         return (
           <>
-            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div className="mb-4">
               <h2 className="text-xl font-bold text-white">Upcoming Matches</h2>
-              {(isLoggedIn || isGuest) && (
-                <button onClick={() => { setShowScorerCreate(true); setScorerLeagueCode(''); }} className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-cyan-900/30 transition-all">
-                  + Create Match
-                </button>
-              )}
+              <p className="text-xs text-slate-400 mt-0.5">Scheduled fixtures</p>
             </div>
             <MatchesView filter="upcoming" onScoreMatch={handleScoreMatch} onViewStats={setStatsMatchId} isAdmin={hasAdminAccess} isGlobalAdmin={hasAdminAccess} currentUserId={currentUserId || undefined} />
           </>

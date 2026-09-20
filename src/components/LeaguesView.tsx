@@ -284,12 +284,12 @@ export default function LeaguesView({ isAdmin, isGlobalAdmin, focusLeagueId, inl
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <Trophy className="w-5 h-5 text-cyan-400" />
-          {focusLeagueId ? visibleLeagues[0]?.name || 'League' : 'Leagues & Tournaments'}
+          {focusLeagueId ? visibleLeagues[0]?.name || 'League' : 'Leagues'}
         </h2>
-        {isAdmin && !focusLeagueId && (
+        {(isAdmin || !!currentUserId) && !focusLeagueId && (
           <button onClick={() => setShowForm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-sky-500 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-cyan-900/40 transition-all hover:scale-[1.02]">
-            <Plus className="w-4 h-4" /> New League
+            <Plus className="w-4 h-4" /> Create League
           </button>
         )}
       </div>

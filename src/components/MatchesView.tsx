@@ -196,12 +196,6 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
             {filter === 'completed' && `${completedMatches.length} completed ${completedMatches.length === 1 ? 'match' : 'matches'}`}
             {filter === 'all' && `${matches.length} total matches`}
           </p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-900/30 hover:from-cyan-400 hover:to-blue-500 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" /> New Match
-          </button>
         </div>
       )}
 
