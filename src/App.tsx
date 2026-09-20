@@ -254,6 +254,7 @@ export default function App() {
         return (
           <TournamentsView
             currentUserId={currentUserId || undefined}
+            currentUserName={currentUserName || undefined}
             isLoggedIn={isLoggedIn}
             isAdmin={hasAdminAccess}
             onScoreMatch={handleScoreMatch}

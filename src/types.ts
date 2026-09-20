@@ -19,6 +19,14 @@ export interface League {
   ownerId?: string;
   editorCode?: string;
   isTournament?: boolean;
+  // Tournament-specific details
+  location?: string;
+  prizeCount?: number;       // number of prize positions (1, 2, 3, etc.)
+  prizes?: number[];         // prize amounts per position [1st, 2nd, 3rd, ...]
+  entryFee?: number;         // per team entry fee
+  ballType?: string;         // 'stumper' | 'strich' | 'weight' | custom
+  contact?: string;          // organizer contact
+  ownerName?: string;        // display name of host
 }
 
 export interface Team {
