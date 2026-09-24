@@ -109,6 +109,7 @@ export default function TournamentsView({ currentUserId, currentUserName, isLogg
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name || 'Unknown';
   const teamShort = (id: string) => teams.find((t) => t.id === id)?.shortName || '??';
   const teamColor = (id: string) => teams.find((t) => t.id === id)?.color || '#64748b';
+  const teamLogo = (id: string) => teams.find((t) => t.id === id)?.logo;
   const canAct = isLoggedIn || isAdmin;
 
   // ── HOST FORM ──────────────────────────────────────────────────────────────
@@ -363,9 +364,9 @@ export default function TournamentsView({ currentUserId, currentUserName, isLogg
             <p className="text-xs text-slate-600 italic py-4 text-center">No matches scheduled yet.</p>
           ) : (
             <div className="space-y-2">
-              {live.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} onScore={onScoreMatch} isLive />)}
-              {upcoming.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} />)}
-              {done.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} onStats={onViewStats} />)}
+              {live.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} teamLogo={teamLogo} onScore={onScoreMatch} isLive />)}
+              {upcoming.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} teamLogo={teamLogo} />)}
+              {done.map((m) => <MRow key={m.id} m={m} teamName={teamName} teamShort={teamShort} teamColor={teamColor} teamLogo={teamLogo} onStats={onViewStats} />)}
             </div>
           )}
         </div>
@@ -491,14 +492,30 @@ function TCard({ t, onClick, isOwner, hasJoined, onDelete }: {
 }
 
 // ── Match row ────────────────────────────────────────────────────────────────
-interface MRowProps { m: Match; teamName: (id: string) => string; teamShort: (id: string) => string; teamColor: (id: string) => string; onScore?: (id: string) => void; onStats?: (id: string) => void; isLive?: boolean; }
-function MRow({ m, teamName, teamShort, teamColor, onScore, onStats, isLive }: MRowProps) {
+interface MRowProps {
+  m: Match;
+  teamName: (id: string) => string;
+  teamShort: (id: string) => string;
+  teamColor: (id: string) => string;
+  teamLogo?: (id: string) => string | undefined;
+  onScore?: (id: string) => void;
+  onStats?: (id: string) => void;
+  isLive?: boolean;
+}
+function MRow({ m, teamName, teamShort, teamColor, teamLogo, onScore, onStats, isLive }: MRowProps) {
   const score = (idx: number) => { const inn = m.innings[idx]; if (!inn) return '-'; return `${inn.battingEntries.reduce((s, e) => s + e.runs, 0) + inn.extras}/${inn.battingEntries.filter((e) => !e.isNotOut).length}`; };
+  const logo1 = teamLogo ? teamLogo(m.team1Id) : undefined;
+  const logo2 = teamLogo ? teamLogo(m.team2Id) : undefined;
+
   return (
     <div className="bg-slate-800/40 border border-slate-700/30 rounded-xl p-2.5">
       <div className="flex items-center gap-1.5">
         <div className="flex-1 flex items-center gap-1.5 min-w-0">
-          <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ background: teamColor(m.team1Id) }}>{teamShort(m.team1Id).slice(0,2)}</div>
+          {logo1 ? (
+            <img src={logo1} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ background: teamColor(m.team1Id) }}>{teamShort(m.team1Id).slice(0,2)}</div>
+          )}
           <span className="text-xs font-semibold text-white truncate">{teamName(m.team1Id)}</span>
           {m.innings[0] && <span className="text-xs font-mono text-slate-300 ml-auto whitespace-nowrap">{score(0)}</span>}
         </div>
@@ -506,7 +523,11 @@ function MRow({ m, teamName, teamShort, teamColor, onScore, onStats, isLive }: M
         <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
           {m.innings[1] && <span className="text-xs font-mono text-slate-300 mr-auto whitespace-nowrap">{score(1)}</span>}
           <span className="text-xs font-semibold text-white truncate">{teamName(m.team2Id)}</span>
-          <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ background: teamColor(m.team2Id) }}>{teamShort(m.team2Id).slice(0,2)}</div>
+          {logo2 ? (
+            <img src={logo2} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ background: teamColor(m.team2Id) }}>{teamShort(m.team2Id).slice(0,2)}</div>
+          )}
         </div>
       </div>
       {m.result && <p className="text-[10px] text-amber-400/80 mt-1 text-center">{m.result}</p>}

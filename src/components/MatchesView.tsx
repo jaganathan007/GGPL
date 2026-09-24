@@ -443,9 +443,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                     {/* Teams Card */}
                     <div className="flex items-center justify-between gap-4 p-4 bg-slate-950/60 rounded-xl border border-slate-800/60 mb-3.5">
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t1?.color || '#06b6d4' }}>
-                          {t1?.shortName?.slice(0, 3) || 'T1'}
-                        </div>
+                        {t1?.logo ? (
+                          <img src={t1.logo} alt={t1.name} className="w-10 h-10 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t1?.color || '#06b6d4' }}>
+                            {t1?.shortName?.slice(0, 3) || 'T1'}
+                          </div>
+                        )}
                         <div>
                           <p className="text-sm font-bold text-white">{t1?.name || 'Team 1'}</p>
                           <p className="text-[11px] text-slate-400">{t1?.players?.length || 0} Players</p>
@@ -461,9 +465,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                           <p className="text-sm font-bold text-white">{t2?.name || 'Team 2'}</p>
                           <p className="text-[11px] text-slate-400">{t2?.players?.length || 0} Players</p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t2?.color || '#3b82f6' }}>
-                          {t2?.shortName?.slice(0, 3) || 'T2'}
-                        </div>
+                        {t2?.logo ? (
+                          <img src={t2.logo} alt={t2.name} className="w-10 h-10 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t2?.color || '#3b82f6' }}>
+                            {t2?.shortName?.slice(0, 3) || 'T2'}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -579,9 +587,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
 
                     <div className="flex items-center gap-6 mb-3">
                       <div className="flex-1 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t1?.color || '#06b6d4' }}>
-                          {t1?.shortName.slice(0, 3) || '??'}
-                        </div>
+                        {t1?.logo ? (
+                          <img src={t1.logo} alt={t1.name} className="w-9 h-9 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md flex-shrink-0" style={{ background: t1?.color || '#06b6d4' }}>
+                            {t1?.shortName.slice(0, 3) || '??'}
+                          </div>
+                        )}
                         <div>
                           <p className="text-xs font-semibold text-slate-300">{t1?.name || 'Unknown'}</p>
                           <p className="text-lg font-extrabold text-white">
@@ -601,9 +613,13 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                               : <span className="text-slate-600">—</span>}
                           </p>
                         </div>
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: t2?.color || '#3b82f6' }}>
-                          {t2?.shortName.slice(0, 3) || '??'}
-                        </div>
+                        {t2?.logo ? (
+                          <img src={t2.logo} alt={t2.name} className="w-9 h-9 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-md flex-shrink-0" style={{ background: t2?.color || '#3b82f6' }}>
+                            {t2?.shortName.slice(0, 3) || '??'}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -717,12 +733,16 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         isT1Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
                       }`}>
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
-                            style={{ backgroundColor: t1?.color || '#06b6d4' }}
-                          >
-                            {t1?.shortName?.slice(0, 3).toUpperCase() || 'T1'}
-                          </div>
+                          {t1?.logo ? (
+                            <img src={t1.logo} alt={t1.name} className="w-9 h-9 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                          ) : (
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md flex-shrink-0"
+                              style={{ backgroundColor: t1?.color || '#06b6d4' }}
+                            >
+                              {t1?.shortName?.slice(0, 3).toUpperCase() || 'T1'}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-bold text-white flex items-center gap-1.5">
                               {t1?.name || 'Team 1'}
@@ -744,12 +764,16 @@ export default function MatchesView({ onScoreMatch, onViewStats, isAdmin, isGlob
                         isT2Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
                       }`}>
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
-                            style={{ backgroundColor: t2?.color || '#3b82f6' }}
-                          >
-                            {t2?.shortName?.slice(0, 3).toUpperCase() || 'T2'}
-                          </div>
+                          {t2?.logo ? (
+                            <img src={t2.logo} alt={t2.name} className="w-9 h-9 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0" />
+                          ) : (
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md flex-shrink-0"
+                              style={{ backgroundColor: t2?.color || '#3b82f6' }}
+                            >
+                              {t2?.shortName?.slice(0, 3).toUpperCase() || 'T2'}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-bold text-white flex items-center gap-1.5">
                               {t2?.name || 'Team 2'}

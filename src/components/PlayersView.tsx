@@ -12,10 +12,12 @@ interface Props {
 interface PlayerFull {
   id: string;
   name: string;
+  photo?: string;
   teamId: string;
   teamName: string;
   teamColor: string;
   teamShort: string;
+  teamLogo?: string;
 }
 
 export default function PlayersView({ currentUserId, isLoggedIn, onNavigateToTeams }: Props) {
@@ -103,15 +105,28 @@ export default function PlayersView({ currentUserId, isLoggedIn, onNavigateToTea
           <ArrowLeft className="w-4 h-4" /> Back to Players
         </button>
         <div className="bg-slate-900/70 border border-slate-800/60 rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
-            style={{ background: selectedPlayer.teamColor + '33', border: '2px solid ' + selectedPlayer.teamColor + '66' }}>
-            {selectedPlayer.name.charAt(0).toUpperCase()}
-          </div>
+          {selectedPlayer.photo ? (
+            <img
+              src={selectedPlayer.photo}
+              alt={selectedPlayer.name}
+              className="w-16 h-16 rounded-2xl object-cover flex-shrink-0 shadow-lg"
+              style={{ border: '2px solid ' + selectedPlayer.teamColor }}
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-lg"
+              style={{ background: selectedPlayer.teamColor + '33', border: '2px solid ' + selectedPlayer.teamColor + '66' }}>
+              {selectedPlayer.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-bold text-white">{selectedPlayer.name}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full" style={{ background: selectedPlayer.teamColor }} />
+                {selectedPlayer.teamLogo ? (
+                  <img src={selectedPlayer.teamLogo} alt={selectedPlayer.teamName} className="w-4 h-4 rounded-md object-cover" />
+                ) : (
+                  <div className="w-3 h-3 rounded-full" style={{ background: selectedPlayer.teamColor }} />
+                )}
                 <span className="text-sm text-slate-300">{selectedPlayer.teamName}</span>
               </div>
               <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide"
@@ -203,9 +218,13 @@ export default function PlayersView({ currentUserId, isLoggedIn, onNavigateToTea
       {myTeams.map((team) => (
         <div key={team.id} className="space-y-2">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: team.color }}>
-              {team.shortName.slice(0, 2)}
-            </div>
+            {team.logo ? (
+              <img src={team.logo} alt={team.name} className="w-7 h-7 rounded-lg object-cover shadow" />
+            ) : (
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: team.color }}>
+                {team.shortName.slice(0, 2)}
+              </div>
+            )}
             <h3 className="text-sm font-bold text-white">{team.name}</h3>
             <span className="text-xs text-slate-500">({team.players.length} players)</span>
           </div>
@@ -215,16 +234,34 @@ export default function PlayersView({ currentUserId, isLoggedIn, onNavigateToTea
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {team.players.map((player, idx) => {
                 const s = getStats(player.id);
-                const pf: PlayerFull = { id: player.id, name: player.name, teamId: team.id, teamName: team.name, teamColor: team.color, teamShort: team.shortName };
+                const pf: PlayerFull = {
+                  id: player.id,
+                  name: player.name,
+                  photo: player.photo,
+                  teamId: team.id,
+                  teamName: team.name,
+                  teamColor: team.color,
+                  teamShort: team.shortName,
+                  teamLogo: team.logo,
+                };
                 return (
                   <motion.button key={player.id} layout
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
                     onClick={() => setSelectedPlayer(pf)}
                     className="bg-slate-900/60 border border-slate-800/40 hover:border-cyan-500/30 rounded-xl p-3 flex items-center gap-3 text-left transition-all group w-full">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                      style={{ background: team.color + '33', border: '1.5px solid ' + team.color + '66' }}>
-                      {player.name.charAt(0).toUpperCase()}
-                    </div>
+                    {player.photo ? (
+                      <img
+                        src={player.photo}
+                        alt={player.name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0 shadow-sm"
+                        style={{ border: '2px solid ' + team.color }}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                        style={{ background: team.color + '33', border: '1.5px solid ' + team.color + '66' }}>
+                        {player.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{player.name}</p>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">

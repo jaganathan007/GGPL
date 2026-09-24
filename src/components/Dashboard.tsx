@@ -167,12 +167,20 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                       
                       {/* Left Box: Batting Team */}
                       <div className="flex items-center gap-4">
-                        <div
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-base shadow-lg ring-2 ring-slate-800"
-                          style={{ backgroundColor: battingTeam?.color || '#06b6d4' }}
-                        >
-                          {battingTeam?.shortName?.slice(0, 3).toUpperCase() || 'BAT'}
-                        </div>
+                        {battingTeam?.logo ? (
+                          <img
+                            src={battingTeam.logo}
+                            alt={battingTeam.name}
+                            className="w-14 h-14 rounded-2xl object-cover shadow-lg ring-2 ring-slate-800 flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-base shadow-lg ring-2 ring-slate-800 flex-shrink-0"
+                            style={{ backgroundColor: battingTeam?.color || '#06b6d4' }}
+                          >
+                            {battingTeam?.shortName?.slice(0, 3).toUpperCase() || 'BAT'}
+                          </div>
+                        )}
                         <div>
                           <h3 className="text-lg font-bold text-white tracking-wide">
                             {battingTeam?.shortName || battingTeam?.name || 'Team 1'}
@@ -251,12 +259,20 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                             <span className="font-medium text-slate-300">{bowlerName}</span> - {bowlerRunsConceded} ({bowlerOvers})
                           </p>
                         </div>
-                        <div
-                          className="w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-base shadow-lg ring-2 ring-slate-800"
-                          style={{ backgroundColor: bowlingTeam?.color || '#3b82f6' }}
-                        >
-                          {bowlingTeam?.shortName?.slice(0, 3).toUpperCase() || 'BOWL'}
-                        </div>
+                        {bowlingTeam?.logo ? (
+                          <img
+                            src={bowlingTeam.logo}
+                            alt={bowlingTeam.name}
+                            className="w-14 h-14 rounded-2xl object-cover shadow-lg ring-2 ring-slate-800 flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-white text-base shadow-lg ring-2 ring-slate-800 flex-shrink-0"
+                            style={{ backgroundColor: bowlingTeam?.color || '#3b82f6' }}
+                          >
+                            {bowlingTeam?.shortName?.slice(0, 3).toUpperCase() || 'BOWL'}
+                          </div>
+                        )}
                       </div>
 
                     </div>
@@ -399,12 +415,20 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                       isT1Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
                     }`}>
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
-                          style={{ backgroundColor: t1?.color || '#06b6d4' }}
-                        >
-                          {t1?.shortName?.slice(0, 3).toUpperCase() || 'T1'}
-                        </div>
+                        {t1?.logo ? (
+                          <img
+                            src={t1.logo}
+                            alt={t1.name}
+                            className="w-10 h-10 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md flex-shrink-0"
+                            style={{ backgroundColor: t1?.color || '#06b6d4' }}
+                          >
+                            {t1?.shortName?.slice(0, 3).toUpperCase() || 'T1'}
+                          </div>
+                        )}
                         <div>
                           <p className="text-sm font-bold text-white flex items-center gap-1.5">
                             {t1?.name || 'Team 1'}
@@ -426,12 +450,20 @@ export default function Dashboard({ onNavigate, onScoreMatch, isAdmin, onViewSta
                       isT2Winner ? 'bg-cyan-950/20 border-cyan-500/40' : 'bg-slate-950/50 border-slate-800/80'
                     }`}>
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md"
-                          style={{ backgroundColor: t2?.color || '#3b82f6' }}
-                        >
-                          {t2?.shortName?.slice(0, 3).toUpperCase() || 'T2'}
-                        </div>
+                        {t2?.logo ? (
+                          <img
+                            src={t2.logo}
+                            alt={t2.name}
+                            className="w-10 h-10 rounded-xl object-cover shadow-md border border-slate-700/50 flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md flex-shrink-0"
+                            style={{ backgroundColor: t2?.color || '#3b82f6' }}
+                          >
+                            {t2?.shortName?.slice(0, 3).toUpperCase() || 'T2'}
+                          </div>
+                        )}
                         <div>
                           <p className="text-sm font-bold text-white flex items-center gap-1.5">
                             {t2?.name || 'Team 2'}

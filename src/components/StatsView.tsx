@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp, Zap, ArrowLeft } from 'lucide-react';
+import { BarChart3, TrendingUp, Zap, ArrowLeft, Trophy } from 'lucide-react';
 import { useApp } from '../store';
 
 interface Props {
@@ -9,11 +9,14 @@ interface Props {
 
 interface BatStats {
   playerId: string; playerName: string; teamName: string; teamColor: string;
+  playerPhoto?: string; teamLogo?: string;
   innings: number; runs: number; balls: number; hs: number; notOuts: number;
   fours: number; sixes: number; fifties: number; hundreds: number; catches: number;
 }
+
 interface BowlStats {
   playerId: string; playerName: string; teamName: string; teamColor: string;
+  playerPhoto?: string; teamLogo?: string;
   overs: number; wickets: number; runs: number; maidens: number;
   bestWkts: number; bestRuns: number; threeFers: number; fiveFers: number;
 }
@@ -37,47 +40,87 @@ export default function StatsView({ currentUserId }: Props) {
         const player = team.players.find((p) => p.id === bat.playerId);
         if (!player) continue;
         if (!batMap[bat.playerId]) {
-          batMap[bat.playerId] = { playerId: bat.playerId, playerName: player.name, teamName: team.name, teamColor: team.color, innings: 0, runs: 0, balls: 0, hs: 0, notOuts: 0, fours: 0, sixes: 0, fifties: 0, hundreds: 0, catches: 0 };
+          batMap[bat.playerId] = {
+            playerId: bat.playerId,
+            playerName: player.name,
+            teamName: team.name,
+            teamColor: team.color,
+            playerPhoto: player.photo,
+            teamLogo: team.logo,
+            innings: 0, runs: 0, balls: 0, hs: 0, notOuts: 0,
+            fours: 0, sixes: 0, fifties: 0, hundreds: 0, catches: 0,
+          };
         }
         const b = batMap[bat.playerId];
-        b.innings++; b.runs += bat.runs; b.balls += bat.balls; b.fours += bat.fours; b.sixes += bat.sixes;
+        b.innings++;
+        b.runs += bat.runs;
+        b.balls += bat.balls;
+        b.fours += bat.fours;
+        b.sixes += bat.sixes;
         if (bat.isNotOut) b.notOuts++;
         if (bat.runs > b.hs) b.hs = bat.runs;
         if (bat.runs >= 100) b.hundreds++;
         else if (bat.runs >= 50) b.fifties++;
       }
-      // Count catches
+
       for (const bat of inn.battingEntries) {
         if (bat.fielderId && bat.dismissalType === 'caught') {
-          const team = teams.find((t) => t.players.some((p) => p.id === bat.fielderId));
-          if (team && batMap[bat.fielderId!]) batMap[bat.fielderId!].catches++;
+          if (batMap[bat.fielderId]) {
+            batMap[bat.fielderId].catches++;
+          }
         }
       }
+
       for (const bowl of inn.bowlingEntries) {
         const team = teams.find((t) => t.players.some((p) => p.id === bowl.playerId));
         if (!team) continue;
         const player = team.players.find((p) => p.id === bowl.playerId);
         if (!player) continue;
         if (!bowlMap[bowl.playerId]) {
-          bowlMap[bowl.playerId] = { playerId: bowl.playerId, playerName: player.name, teamName: team.name, teamColor: team.color, overs: 0, wickets: 0, runs: 0, maidens: 0, bestWkts: 0, bestRuns: 999, threeFers: 0, fiveFers: 0 };
+          bowlMap[bowl.playerId] = {
+            playerId: bowl.playerId,
+            playerName: player.name,
+            teamName: team.name,
+            teamColor: team.color,
+            playerPhoto: player.photo,
+            teamLogo: team.logo,
+            overs: 0, wickets: 0, runs: 0, maidens: 0,
+            bestWkts: 0, bestRuns: 999, threeFers: 0, fiveFers: 0,
+          };
         }
         const bw = bowlMap[bowl.playerId];
-        bw.overs += bowl.overs; bw.wickets += bowl.wickets; bw.runs += bowl.runsConceded; bw.maidens += bowl.maidens;
-        if (bowl.wickets >= 5) bw.fiveFers++; else if (bowl.wickets >= 3) bw.threeFers++;
+        bw.overs += bowl.overs;
+        bw.wickets += bowl.wickets;
+        bw.runs += bowl.runsConceded;
+        bw.maidens += bowl.maidens;
+        if (bowl.wickets >= 5) bw.fiveFers++;
+        else if (bowl.wickets >= 3) bw.threeFers++;
         if (bowl.wickets > bw.bestWkts || (bowl.wickets === bw.bestWkts && bowl.runsConceded < bw.bestRuns)) {
-          bw.bestWkts = bowl.wickets; bw.bestRuns = bowl.runsConceded;
+          bw.bestWkts = bowl.wickets;
+          bw.bestRuns = bowl.runsConceded;
         }
       }
     }
   }
 
   const batters = Object.values(batMap).sort((a, b) => b.runs - a.runs);
-  const bowlers = Object.values(bowlMap).filter((b) => b.wickets > 0).sort((a, b) => b.wickets - a.wickets || a.runs - b.runs);
+  const bowlers = Object.values(bowlMap).sort((a, b) => b.wickets - a.wickets);
 
-  function avg(runs: number, outs: number) { return outs === 0 ? (runs > 0 ? 'N/O' : '-') : (runs / outs).toFixed(1); }
-  function sr(runs: number, balls: number) { return balls === 0 ? '-' : ((runs / balls) * 100).toFixed(1); }
-  function econ(runs: number, overs: number) { return overs === 0 ? '-' : (runs / overs).toFixed(2); }
-  function bowlAvg(runs: number, wkts: number) { return wkts === 0 ? '-' : (runs / wkts).toFixed(1); }
+  function avg(runs: number, dismissals: number) {
+    if (dismissals === 0) return runs > 0 ? 'N/O' : '-';
+    return (runs / dismissals).toFixed(1);
+  }
+  function sr(runs: number, balls: number) {
+    if (balls === 0) return '-';
+    return ((runs / balls) * 100).toFixed(1);
+  }
+  function econ(runs: number, overs: number) {
+    if (overs === 0) return '-';
+    return (runs / overs).toFixed(2);
+  }
+  function bowlAvg(runs: number, wkts: number) {
+    return wkts === 0 ? '-' : (runs / wkts).toFixed(1);
+  }
 
   // ── Detail view ──
   if (selectedId) {
@@ -86,6 +129,9 @@ export default function StatsView({ currentUserId }: Props) {
     const playerName = bat?.playerName || bowl?.playerName || 'Player';
     const teamName = bat?.teamName || bowl?.teamName || '';
     const teamColor = bat?.teamColor || bowl?.teamColor || '#64748b';
+    const playerPhoto = bat?.playerPhoto || bowl?.playerPhoto;
+    const teamLogo = bat?.teamLogo || bowl?.teamLogo;
+
     return (
       <div className="space-y-5">
         <button onClick={() => setSelectedId(null)}
@@ -93,14 +139,27 @@ export default function StatsView({ currentUserId }: Props) {
           <ArrowLeft className="w-4 h-4" /> Back to Statistics
         </button>
         <div className="bg-slate-900/70 border border-slate-800/60 rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
-            style={{ background: teamColor + '33', border: '2px solid ' + teamColor + '66' }}>
-            {playerName.charAt(0).toUpperCase()}
-          </div>
+          {playerPhoto ? (
+            <img
+              src={playerPhoto}
+              alt={playerName}
+              className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 shadow-lg"
+              style={{ border: '2px solid ' + teamColor }}
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0 shadow-lg"
+              style={{ background: teamColor + '33', border: '2px solid ' + teamColor + '66' }}>
+              {playerName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <h2 className="text-xl font-bold text-white">{playerName}</h2>
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="w-3 h-3 rounded-full" style={{ background: teamColor }} />
+            <div className="flex items-center gap-2 mt-1">
+              {teamLogo ? (
+                <img src={teamLogo} alt={teamName} className="w-4 h-4 rounded-md object-cover" />
+              ) : (
+                <div className="w-3 h-3 rounded-full" style={{ background: teamColor }} />
+              )}
               <span className="text-sm text-slate-300">{teamName}</span>
             </div>
           </div>
@@ -126,7 +185,8 @@ export default function StatsView({ currentUserId }: Props) {
                 { label: 'Balls Faced', value: bat.balls },
                 { label: 'Catches', value: bat.catches },
               ].map((item) => (
-                <div key={item.label} className={'rounded-xl p-3 text-center border ' + (item.hi ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/50 border-slate-700/30')}>
+                <div key={item.label}
+                  className={'rounded-xl p-3 text-center border ' + (item.hi ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-800/50 border-slate-700/30')}>
                   <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5 leading-tight">{item.label}</p>
                   <p className={'text-lg font-bold ' + (item.hi ? 'text-amber-400' : 'text-white')}>{item.value}</p>
                 </div>
@@ -135,7 +195,7 @@ export default function StatsView({ currentUserId }: Props) {
           </div>
         )}
 
-        {bowl && (
+        {bowl && (bowl.wickets > 0 || bowl.overs > 0) && (
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <Zap className="w-3.5 h-3.5 text-cyan-400" /> Bowling Stats
@@ -152,7 +212,8 @@ export default function StatsView({ currentUserId }: Props) {
                 { label: '3-Wicket Hauls', value: bowl.threeFers },
                 { label: '5-Wicket Hauls', value: bowl.fiveFers },
               ].map((item) => (
-                <div key={item.label} className={'rounded-xl p-3 text-center border ' + (item.hi ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-slate-800/50 border-slate-700/30')}>
+                <div key={item.label}
+                  className={'rounded-xl p-3 text-center border ' + (item.hi ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-slate-800/50 border-slate-700/30')}>
                   <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500 mb-0.5 leading-tight">{item.label}</p>
                   <p className={'text-lg font-bold ' + (item.hi ? 'text-cyan-400' : 'text-white')}>{item.value}</p>
                 </div>
@@ -164,18 +225,19 @@ export default function StatsView({ currentUserId }: Props) {
     );
   }
 
-  // ── Leaderboard ──
+  // ── Leaderboard view ──
   return (
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-cyan-400" /> Statistics
+          <BarChart3 className="w-5 h-5 text-amber-400" /> Player Statistics
         </h2>
-        <p className="text-xs text-slate-400 mt-0.5">Tap any player to see their full performance stats</p>
+        <p className="text-xs text-slate-400 mt-0.5">Top performers across all matches — tap any player for full stats</p>
       </div>
+
       <div className="flex bg-slate-900/60 border border-slate-800/50 rounded-xl p-1 gap-1">
         <button onClick={() => setTab('batting')}
-          className={'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all ' + (tab === 'batting' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow' : 'text-slate-400 hover:text-white')}>
+          className={'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold rounded-lg transition-all ' + (tab === 'batting' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow' : 'text-slate-400 hover:text-white')}>
           <TrendingUp className="w-3.5 h-3.5" /> Batting
         </button>
         <button onClick={() => setTab('bowling')}
@@ -203,11 +265,25 @@ export default function StatsView({ currentUserId }: Props) {
                   initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
                   className={'w-full grid grid-cols-[2rem_1fr_3rem_3rem_3rem_3.5rem_3.5rem] gap-x-2 items-center px-3 py-3 rounded-xl border text-left cursor-pointer hover:border-cyan-500/40 transition-all group ' + (i === 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-900/50 border-slate-800/40')}>
                   <span className={'text-xs font-bold text-center ' + (i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-orange-400' : 'text-slate-600')}>{i + 1}</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: b.teamColor }} />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {b.playerPhoto ? (
+                      <img src={b.playerPhoto} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-700 shadow-sm" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                        style={{ background: b.teamColor + '40', border: '1px solid ' + b.teamColor + '60' }}>
+                        {b.playerName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-white truncate group-hover:text-cyan-400 transition-colors">{b.playerName}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{b.teamName}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {b.teamLogo ? (
+                          <img src={b.teamLogo} alt="" className="w-3 h-3 rounded object-cover" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full" style={{ background: b.teamColor }} />
+                        )}
+                        <span className="text-[10px] text-slate-500 truncate">{b.teamName}</span>
+                      </div>
                     </div>
                   </div>
                   <span className="text-xs text-slate-400 text-right">{b.innings}</span>
@@ -230,22 +306,36 @@ export default function StatsView({ currentUserId }: Props) {
             <>
               <div className="grid grid-cols-[2rem_1fr_3rem_3rem_3.5rem_3.5rem_3.5rem] gap-x-2 px-3 pb-1">
                 <span /><span className="text-[10px] text-slate-600 font-bold uppercase">Player</span>
-                <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Ovrs</span>
+                <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Ov</span>
                 <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Wkts</span>
                 <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Runs</span>
                 <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Econ</span>
-                <span className="text-[10px] text-slate-600 font-bold uppercase text-right">Best</span>
+                <span className="text-[10px] text-slate-600 font-bold uppercase text-right">BBI</span>
               </div>
               {bowlers.map((b, i) => (
                 <motion.button key={b.playerId} onClick={() => setSelectedId(b.playerId)}
                   initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
                   className={'w-full grid grid-cols-[2rem_1fr_3rem_3rem_3.5rem_3.5rem_3.5rem] gap-x-2 items-center px-3 py-3 rounded-xl border text-left cursor-pointer hover:border-cyan-500/40 transition-all group ' + (i === 0 ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-slate-900/50 border-slate-800/40')}>
                   <span className={'text-xs font-bold text-center ' + (i === 0 ? 'text-cyan-400' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-orange-400' : 'text-slate-600')}>{i + 1}</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: b.teamColor }} />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {b.playerPhoto ? (
+                      <img src={b.playerPhoto} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-700 shadow-sm" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                        style={{ background: b.teamColor + '40', border: '1px solid ' + b.teamColor + '60' }}>
+                        {b.playerName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-white truncate group-hover:text-cyan-400 transition-colors">{b.playerName}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{b.teamName}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {b.teamLogo ? (
+                          <img src={b.teamLogo} alt="" className="w-3 h-3 rounded object-cover" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full" style={{ background: b.teamColor }} />
+                        )}
+                        <span className="text-[10px] text-slate-500 truncate">{b.teamName}</span>
+                      </div>
                     </div>
                   </div>
                   <span className="text-xs text-slate-400 text-right">{b.overs}</span>

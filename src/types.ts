@@ -1,6 +1,10 @@
 export interface Player {
   id: string;
   name: string;
+  photo?: string;
+  role?: string;
+  battingStyle?: string;
+  bowlingStyle?: string;
 }
 
 export interface User {
@@ -35,6 +39,7 @@ export interface Team {
   name: string;
   shortName: string;
   color: string;
+  logo?: string;
   players: Player[];
   leagueId?: string;
   ownerId?: string;
