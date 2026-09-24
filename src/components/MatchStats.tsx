@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, MapPin, Calendar, Clock, Award, TrendingUp, Target, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Trophy, MapPin, Calendar, Clock, Award, TrendingUp, Target, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApp } from '../store';
 import type { Match, Team, BattingEntry, BowlingEntry, BallEvent } from '../types';
 
@@ -53,7 +54,6 @@ function getStrikeRate(runs: number, balls: number): string {
 
 function getEconomy(runs: number, overs: number): string {
   if (overs === 0) return '0.00';
-  // overs stored as e.g. 3.4 meaning 3 overs 4 balls => need to convert properly
   const fullOvers = Math.floor(overs);
   const partialBalls = Math.round((overs - fullOvers) * 10);
   const totalBalls = fullOvers * 6 + partialBalls;
@@ -87,13 +87,11 @@ function bestBowler(entries: BowlingEntry[]): BowlingEntry | undefined {
   return [...entries].sort((a, b) => b.wickets - a.wickets || a.runsConceded - b.runsConceded)[0];
 }
 
-// Returns the innings index for a given team (by battingTeamId), or fallback
 function getTeamInningsIdx(match: Match, teamId: string, fallback: number): number {
   const idx = match.innings.findIndex(inn => inn.battingTeamId === teamId);
   return idx >= 0 ? idx : fallback;
 }
 
-// Ball bubble style — defined here to avoid function-in-map issues
 function getBallStyle(ball: BallEvent) {
   if (ball.type === 'wicket') return { bg: 'bg-rose-500', text: 'text-white', label: 'W' };
   if (ball.type === 'wide')   return { bg: 'bg-cyan-500/20 border border-cyan-500/50', text: 'text-cyan-300', label: 'Wd' };
@@ -104,18 +102,16 @@ function getBallStyle(ball: BallEvent) {
   return { bg: 'bg-slate-600/50', text: 'text-white', label: String(ball.runs) };
 }
 
-// Derives live match info: who is batting/bowling + their current scores
 function getLiveInfo(inn: import('../types').Innings, teams: import('../types').Team[]): {
   strikerName: string | null;
   nonStrikerName: string | null;
   bowlerName: string | null;
-  strikerScore: string | null;      // e.g. "12(5)"
-  nonStrikerScore: string | null;   // e.g. "11(5)"
-  bowlerFigures: string | null;     // e.g. "2/10 (3ov)"
+  strikerScore: string | null;
+  nonStrikerScore: string | null;
+  bowlerFigures: string | null;
 } {
   const log = inn.ballLog || [];
 
-  // Build not-out batters with their stats
   const notOutBatters = inn.battingEntries
     .filter(e => e.isNotOut)
     .map(e => {
@@ -164,13 +160,11 @@ function getLiveInfo(inn: import('../types').Innings, teams: import('../types').
     nonStrikerName = notOutBatters[1].name;
   }
 
-  // Scores for striker / non-striker
   const strikerEntry  = notOutBatters.find(b => b.name === strikerName);
   const nsEntry       = notOutBatters.find(b => b.name === nonStrikerName);
   const strikerScore  = strikerEntry  ? `${strikerEntry.runs}(${strikerEntry.balls})`  : null;
   const nonStrikerScore = nsEntry     ? `${nsEntry.runs}(${nsEntry.balls})`            : null;
 
-  // Bowler figures from bowling entries
   let bowlerFigures: string | null = null;
   if (bowlerName) {
     const bowlTeam = teams.find(t => t.id === inn.bowlingTeamId);
@@ -184,11 +178,11 @@ function getLiveInfo(inn: import('../types').Innings, teams: import('../types').
   return { strikerName, nonStrikerName, bowlerName, strikerScore, nonStrikerScore, bowlerFigures };
 }
 
-
-
 export default function MatchStats({ matchId, onBack }: Props) {
   const { state } = useApp();
   const match = state.matches.find(m => m.id === matchId);
+  const [selectedInningsIdx, setSelectedInningsIdx] = useState(0);
+  const [showOversHistory, setShowOversHistory] = useState(false);
 
   if (!match) {
     return (
@@ -201,11 +195,8 @@ export default function MatchStats({ matchId, onBack }: Props) {
   const team1 = getTeam(state.teams, match.team1Id);
   const team2 = getTeam(state.teams, match.team2Id);
 
-  // Correct innings index per team (toss may flip batting order)
   const t1Inn = getTeamInningsIdx(match, match.team1Id, 0);
   const t2Inn = getTeamInningsIdx(match, match.team2Id, 1);
-  const teams = state.teams;
-
 
   // Determine Man of the Match
   let motm: { name: string; teamColor: string; reason: string; photo?: string } | null = null;
@@ -231,6 +222,27 @@ export default function MatchStats({ matchId, onBack }: Props) {
     const best = allPerformers.sort((a, b) => b.score - a.score)[0];
     motm = { name: best.name, teamColor: best.teamColor, reason: best.reason, photo: best.photo };
   }
+
+  // Active selected innings
+  const selectedInn = match.innings[selectedInningsIdx] || match.innings[0];
+  const batTeam = selectedInn ? getTeam(state.teams, selectedInn.battingTeamId) : null;
+  const bowlTeam = selectedInn ? getTeam(state.teams, selectedInn.bowlingTeamId) : null;
+  const total = selectedInn ? selectedInn.battingEntries.reduce((s, e) => s + e.runs, 0) + selectedInn.extras : 0;
+  const wickets = selectedInn ? selectedInn.battingEntries.filter(e => !e.isNotOut).length : 0;
+  const best = selectedInn ? bestBatter(selectedInn.battingEntries) : undefined;
+  const bestBowl = selectedInn ? bestBowler(selectedInn.bowlingEntries) : undefined;
+
+  const isActiveInnings = !match.isComplete && selectedInningsIdx === match.innings.length - 1;
+  const liveInfo = isActiveInnings && selectedInn ? getLiveInfo(selectedInn, state.teams) : null;
+
+  // Group balls by over for the selected innings
+  const log = selectedInn?.ballLog || [];
+  const overMap: Record<number, BallEvent[]> = {};
+  log.forEach(ball => {
+    if (!overMap[ball.over]) overMap[ball.over] = [];
+    overMap[ball.over].push(ball);
+  });
+  const overNumbers = Object.keys(overMap).map(Number).sort((a, b) => a - b);
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -364,7 +376,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
                 <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Live — Now Playing</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {/* Striker */}
                 <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3 text-center">
                   <p className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest mb-1.5">⚡ Striker</p>
                   <p className="text-sm font-bold text-white truncate leading-tight">{strikerName || '—'}</p>
@@ -373,7 +384,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   )}
                   <p className="text-[10px] text-slate-500 mt-1">Facing</p>
                 </div>
-                {/* Non-Striker */}
                 <div className="bg-slate-800/60 border border-slate-700/40 rounded-xl p-3 text-center">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">🏃 Non-Striker</p>
                   <p className="text-sm font-bold text-white truncate leading-tight">{nonStrikerName || '—'}</p>
@@ -382,7 +392,6 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   )}
                   <p className="text-[10px] text-slate-500 mt-1">At crease</p>
                 </div>
-                {/* Bowler */}
                 <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-3 text-center">
                   <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest mb-1.5">🎯 Bowler</p>
                   <p className="text-sm font-bold text-white truncate leading-tight">{bowlerName || '—'}</p>
@@ -396,348 +405,307 @@ export default function MatchStats({ matchId, onBack }: Props) {
           );
         })()}
 
-        {/* Innings Scorecards */}
-        {match.innings.map((inn, innIdx) => {
-          const batTeam = getTeam(state.teams, inn.battingTeamId);
-          const bowlTeam = getTeam(state.teams, inn.bowlingTeamId);
-          const total = inn.battingEntries.reduce((s, e) => s + e.runs, 0) + inn.extras;
-          const wickets = inn.battingEntries.filter(e => !e.isNotOut).length;
-          const best = bestBatter(inn.battingEntries);
-          const bestBowl = bestBowler(inn.bowlingEntries);
+        {/* ── TEAM SELECTION BUTTONS / TABS ──────────────────────────────── */}
+        {match.innings.length > 0 ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {match.innings.map((inn, idx) => {
+                const isSelected = selectedInningsIdx === idx;
+                const team = getTeam(state.teams, inn.battingTeamId);
+                const innRuns = inn.battingEntries.reduce((s, e) => s + e.runs, 0) + inn.extras;
+                const innWkts = inn.battingEntries.filter(e => !e.isNotOut).length;
+                const innOvs = getInningsOvers(match, idx);
 
-          // Live info for active innings
-          const isActiveInnings = !match.isComplete && innIdx === match.innings.length - 1;
-          const liveInfo = isActiveInnings ? getLiveInfo(inn, state.teams) : null;
-
-
-          return (
-            <motion.div
-              key={innIdx}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + innIdx * 0.1 }}
-              className="bg-slate-900/60 border border-slate-800/50 rounded-2xl overflow-hidden"
-            >
-              {/* Innings Header */}
-              <div className="px-4 py-3 bg-slate-800/30 border-b border-slate-800/40 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {batTeam?.logo ? (
-                    <img src={batTeam.logo} alt={batTeam.name} className="w-5 h-5 rounded-md object-cover shadow-sm" />
-                  ) : (
-                    <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
-                  )}
-                  <span className="text-sm font-bold text-white">{batTeam?.name || '?'}</span>
-                  <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">{innIdx === 0 ? '1st' : '2nd'} Innings</span>
-                  {isActiveInnings && <span className="text-[9px] font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-extrabold text-white">{total}<span className="text-sm text-slate-500">/{wickets}</span></span>
-                </div>
-              </div>
-
-              {/* Batting Scorecard — Cricinfo Style */}
-              <div className="px-4 pt-3 pb-1">
-                {/* Column headers */}
-                <div className="grid grid-cols-[1fr_36px_36px_36px_36px_48px] text-[11px] text-slate-500 font-semibold border-b border-slate-700/50 pb-1.5 mb-0.5">
-                  <span>Batting</span>
-                  <span className="text-right">R</span>
-                  <span className="text-right">B</span>
-                  <span className="text-right">4s</span>
-                  <span className="text-right">6s</span>
-                  <span className="text-right">S/R</span>
-                </div>
-                {inn.battingEntries.map((entry, i) => {
-                  const isBest = best && entry.playerId === best.playerId;
-                  const playerName = getPlayerName(state.teams, inn.battingTeamId, entry.playerId);
-                  const dismissal = getDismissalText(entry, state.teams, inn.bowlingTeamId);
-                  const isStriker = liveInfo && playerName === liveInfo.strikerName;
-                  const isNonStriker = liveInfo && playerName === liveInfo.nonStrikerName;
-                  return (
-                    <div key={i} className={`grid grid-cols-[1fr_36px_36px_36px_36px_48px] items-start py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-cyan-500/5 -mx-4 px-4' : ''}`}>
-                      {/* Name + dismissal */}
-                      {(() => {
-                        const batPlayer = batTeam?.players.find(p => p.id === entry.playerId);
-                        return (
-                          <div className="flex items-center gap-2 min-w-0 pr-2">
-                            {batPlayer?.photo ? (
-                              <img src={batPlayer.photo} alt={playerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
-                            ) : (
-                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (batTeam?.color || '#06b6d4') + '40', border: '1px solid ' + (batTeam?.color || '#06b6d4') + '80' }}>
-                                {playerName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[13px] font-medium leading-tight ${entry.isNotOut ? 'text-slate-100' : 'text-slate-300'}`}>
-                                  {playerName}
-                                  {entry.isNotOut && entry.balls > 0 && <span className="text-cyan-400 ml-0.5 text-[10px]">*</span>}
-                                </span>
-                                {isBest && <Zap className="w-3 h-3 text-amber-400 shrink-0" />}
-                                {isStriker && (
-                                  <span className="text-[8px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
-                                )}
-                                {isNonStriker && (
-                                  <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-slate-500 italic leading-tight">
-                                {entry.isNotOut ? 'not out' : `∨ ${dismissal}`}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      {/* Stats */}
-                      <span className={`text-right text-[13px] font-bold leading-tight pt-0.5 ${entry.runs >= 50 ? 'text-amber-300' : entry.runs >= 30 ? 'text-cyan-300' : 'text-white'}`}>{entry.runs}</span>
-                      <span className="text-right text-[12px] text-slate-400 leading-tight pt-0.5">{entry.balls}</span>
-                      <span className="text-right text-[12px] text-blue-400 leading-tight pt-0.5">{entry.fours}</span>
-                      <span className="text-right text-[12px] text-amber-400 leading-tight pt-0.5">{entry.sixes}</span>
-                      <span className="text-right text-[11px] text-slate-400 leading-tight pt-0.5">{getStrikeRate(entry.runs, entry.balls)}</span>
-                    </div>
-                  );
-                })}
-                {/* Extras + Total */}
-                {inn.extras > 0 && (
-                  <div className="flex items-center justify-between py-2 text-[12px] text-slate-500 border-b border-slate-800/20">
-                    <span>Extras</span>
-                    <span className="font-medium text-slate-400">{inn.extras}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="text-[13px] font-bold text-slate-200">Total</span>
-                  <span className="text-[15px] font-extrabold text-white">{total}<span className="text-slate-500 text-sm font-medium">/{wickets}</span></span>
-                </div>
-
-              </div>
-
-              {/* Divider */}
-              <div className="px-4">
-                <div className="h-px bg-slate-800/60" />
-              </div>
-
-              {/* Bowling Scorecard — Cricinfo Style */}
-              <div className="px-4 pt-3 pb-3">
-                <div className="grid grid-cols-[1fr_40px_36px_36px_36px_48px] text-[11px] text-slate-500 font-semibold border-b border-slate-700/50 pb-1.5 mb-0.5">
-                  <span>Bowling</span>
-                  <span className="text-right">O</span>
-                  <span className="text-right">M</span>
-                  <span className="text-right">R</span>
-                  <span className="text-right">W</span>
-                  <span className="text-right">Econ</span>
-                </div>
-                {inn.bowlingEntries.map((entry, i) => {
-                  const isBest = bestBowl && entry.playerId === bestBowl.playerId;
-                  const bowlerPlayerName = getPlayerName(state.teams, inn.bowlingTeamId, entry.playerId);
-                  const isCurrentBowler = liveInfo && bowlerPlayerName === liveInfo.bowlerName;
-                  return (
-                    <div key={i} className={`grid grid-cols-[1fr_40px_36px_36px_36px_48px] items-center py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-violet-500/5 -mx-4 px-4' : ''}`}>
-                      {(() => {
-                        const bowlPlayer = bowlTeam?.players.find(p => p.id === entry.playerId);
-                        return (
-                          <div className="flex items-center gap-2 min-w-0 pr-2">
-                            {bowlPlayer?.photo ? (
-                              <img src={bowlPlayer.photo} alt={bowlerPlayerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
-                            ) : (
-                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (bowlTeam?.color || '#8b5cf6') + '40', border: '1px solid ' + (bowlTeam?.color || '#8b5cf6') + '80' }}>
-                                {bowlerPlayerName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                              <span className="text-[13px] font-medium text-slate-100 leading-tight">{bowlerPlayerName}</span>
-                              {isBest && <Target className="w-3 h-3 text-violet-400 shrink-0" />}
-                              {isCurrentBowler && (
-                                <span className="text-[8px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 rounded-full">🎯 BOWLING</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      <span className="text-right text-[12px] text-slate-400">{entry.overs}</span>
-                      <span className="text-right text-[12px] text-slate-400">{entry.maidens}</span>
-                      <span className="text-right text-[12px] text-white font-bold">{entry.runsConceded}</span>
-                      <span className={`text-right text-[13px] font-bold ${entry.wickets >= 3 ? 'text-violet-300' : entry.wickets > 0 ? 'text-violet-400' : 'text-slate-400'}`}>{entry.wickets}</span>
-                      <span className="text-right text-[11px] text-slate-400">{getEconomy(entry.runsConceded, entry.overs)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-
-            </motion.div>
-          );
-        })}
-
-        {/* Match Highlights */}
-        {match.innings.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-slate-900/40 border border-slate-800/40 rounded-2xl p-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Match Highlights</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {match.innings.map((inn, innIdx) => {
-                const batTeam = getTeam(state.teams, inn.battingTeamId);
-                const totalRuns = inn.battingEntries.reduce((s, e) => s + e.runs, 0) + inn.extras;
-                const totalFours = inn.battingEntries.reduce((s, e) => s + e.fours, 0);
-                const totalSixes = inn.battingEntries.reduce((s, e) => s + e.sixes, 0);
-                const highestScore = Math.max(...inn.battingEntries.map(e => e.runs), 0);
                 return (
-                  <div key={innIdx} className="space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
-                      <span className="text-[10px] text-slate-400 font-medium">{batTeam?.shortName} — {innIdx === 0 ? '1st' : '2nd'}</span>
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => { setSelectedInningsIdx(idx); }}
+                    className={`p-3.5 rounded-2xl border transition-all text-left flex items-center gap-3 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-cyan-500/20 via-sky-500/15 to-transparent border-cyan-500/70 shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-500/40'
+                        : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {team?.logo ? (
+                      <img src={team.logo} alt={team.name} className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-700/60 shadow" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow" style={{ backgroundColor: team?.color || '#06b6d4' }}>
+                        {team?.shortName?.slice(0, 3) || 'T'}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                          {team?.name}
+                        </p>
+                        <span className="text-[10px] text-slate-500 font-semibold shrink-0">
+                          ({idx === 0 ? '1st' : '2nd'})
+                        </span>
+                      </div>
+                      <p className="text-xs font-mono font-extrabold text-cyan-400 mt-0.5">
+                        {innRuns}/{innWkts} <span className="text-[11px] text-slate-400 font-normal">({innOvs} ov)</span>
+                      </p>
                     </div>
-                    <div className="bg-slate-800/40 rounded-lg p-2 space-y-1">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-slate-500">Total</span>
-                        <span className="text-white font-bold">{totalRuns}</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-slate-500">Fours</span>
-                        <span className="text-blue-400 font-bold">{totalFours}</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-slate-500">Sixes</span>
-                        <span className="text-amber-400 font-bold">{totalSixes}</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-slate-500">Highest</span>
-                        <span className="text-cyan-400 font-bold">{highestScore}</span>
-                      </div>
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
-          </motion.div>
-        )}
-        {/* ── Over by Over Details ─────────────────────────────────── */}
-        {match.innings.some(inn => (inn.ballLog || []).length > 0) && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 mt-1">
-            <span className="text-lg">🏏</span>
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Over Summary</h2>
-            <div className="flex-1 h-px bg-slate-800/60" />
-          </motion.div>
-        )}
-        {match.innings.map((inn, innIdx) => {
-          const log = inn.ballLog || [];
-          if (log.length === 0) return null;
 
-
-          const battingTeam = getTeam(teams, inn.battingTeamId);
-          const bowlingTeam = getTeam(teams, inn.bowlingTeamId);
-
-          // Group balls by over number
-          const overMap: Record<number, typeof log> = {};
-          log.forEach(ball => {
-            if (!overMap[ball.over]) overMap[ball.over] = [];
-            overMap[ball.over].push(ball);
-          });
-          const overNumbers = Object.keys(overMap).map(Number).sort((a, b) => a - b);
-
-
-          return (
-            <motion.div
-              key={`over-details-${innIdx}`}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-slate-900/60 border border-slate-800/60 rounded-2xl overflow-hidden"
-            >
-              {/* Header */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/60">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: battingTeam?.color || '#10b981' }} />
-                <span className="text-sm font-bold text-white">{battingTeam?.name}</span>
-                <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded-full">
-                  {innIdx + 1}{innIdx === 0 ? 'st' : 'nd'} Innings
-                </span>
-                <span className="ml-auto text-[10px] text-slate-500">
-                  Bowling: <span className="text-slate-400">{bowlingTeam?.shortName}</span>
-                </span>
-              </div>
-
-              {/* Overs */}
-              <div className="p-4 space-y-4">
-                {overNumbers.map(overNum => {
-                  const balls = overMap[overNum];
-                  const overRuns = balls.reduce((s, b) => s + (b.type === 'wicket' ? 0 : b.runs), 0);
-                  const overWickets = balls.filter(b => b.type === 'wicket').length;
-                  const bowlerName = balls[0]?.bowler || '';
-
-                  return (
-                    <div key={overNum}>
-                      {/* Over label row */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                            Over {overNum + 1}
-                          </span>
-                          {bowlerName && (
-                            <span className="text-[10px] text-slate-600">• {bowlerName}</span>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {overRuns} runs{overWickets > 0 ? `, ${overWickets}W` : ''}
-                        </span>
-                      </div>
-
-                      {/* Ball bubbles */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {balls.map((ball, bIdx) => {
-                          const style = getBallStyle(ball);
-                          return (
-                            <div
-                              key={bIdx}
-                              className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${style.bg} ${style.text} transition-transform hover:scale-110`}
-                              title={`${ball.striker} • ${ball.bowler}`}
-                            >
-                              {style.label}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-slate-800/40 bg-slate-950/30 flex-wrap">
-                <span className="text-[9px] text-slate-600 uppercase tracking-widest font-bold">Legend:</span>
-                {[
-                  { label: '•', desc: 'Dot', cls: 'bg-slate-700/60 text-slate-400' },
-                  { label: '4', desc: 'Four', cls: 'bg-blue-500/25 border border-blue-500/40 text-blue-300' },
-                  { label: '6', desc: 'Six', cls: 'bg-amber-500/25 border border-amber-500/40 text-amber-300' },
-                  { label: 'W', desc: 'Wicket', cls: 'bg-rose-500 text-white' },
-                  { label: 'Wd', desc: 'Wide', cls: 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300' },
-                  { label: 'NB', desc: 'No Ball', cls: 'bg-orange-500/20 border border-orange-500/50 text-orange-300' },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center gap-1.5">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${item.cls}`}>
-                      {item.label}
-                    </div>
-                    <span className="text-[9px] text-slate-600">{item.desc}</span>
+            {/* ── SELECTED TEAM SCORECARD ──────────────────────────────── */}
+            {selectedInn && (
+              <motion.div
+                key={selectedInningsIdx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-900/60 border border-slate-800/50 rounded-2xl overflow-hidden shadow-xl"
+              >
+                {/* Innings Header */}
+                <div className="px-4 py-3 bg-slate-800/30 border-b border-slate-800/40 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {batTeam?.logo ? (
+                      <img src={batTeam.logo} alt={batTeam.name} className="w-5 h-5 rounded-md object-cover shadow-sm" />
+                    ) : (
+                      <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
+                    )}
+                    <span className="text-sm font-bold text-white">{batTeam?.name || '?'}</span>
+                    <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">{selectedInningsIdx === 0 ? '1st' : '2nd'} Innings</span>
+                    {isActiveInnings && <span className="text-[9px] font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
                   </div>
-                ))}
-              </div>
-            </motion.div>
-          );
-        })}
+                  <div className="text-right">
+                    <span className="text-lg font-extrabold text-white">{total}<span className="text-sm text-slate-500">/{wickets}</span></span>
+                  </div>
+                </div>
 
+                {/* Batting Scorecard */}
+                <div className="px-4 pt-3 pb-1">
+                  <div className="grid grid-cols-[1fr_36px_36px_36px_36px_48px] text-[11px] text-slate-500 font-semibold border-b border-slate-700/50 pb-1.5 mb-0.5">
+                    <span>Batting</span>
+                    <span className="text-right">R</span>
+                    <span className="text-right">B</span>
+                    <span className="text-right">4s</span>
+                    <span className="text-right">6s</span>
+                    <span className="text-right">S/R</span>
+                  </div>
+                  {selectedInn.battingEntries.map((entry, i) => {
+                    const isBest = best && entry.playerId === best.playerId;
+                    const playerName = getPlayerName(state.teams, selectedInn.battingTeamId, entry.playerId);
+                    const dismissal = getDismissalText(entry, state.teams, selectedInn.bowlingTeamId);
+                    const isStriker = liveInfo && playerName === liveInfo.strikerName;
+                    const isNonStriker = liveInfo && playerName === liveInfo.nonStrikerName;
+                    const batPlayer = batTeam?.players.find(p => p.id === entry.playerId);
 
-        <div className="text-center pt-2 pb-6">
-          <button
-            onClick={onBack}
-            className="px-6 py-2.5 bg-slate-800/60 border border-slate-700/50 text-sm text-slate-300 font-medium rounded-xl hover:bg-slate-800 hover:border-slate-600 transition-all"
-          >
-            ← Back to Matches
-          </button>
-        </div>
+                    return (
+                      <div key={i} className={`grid grid-cols-[1fr_36px_36px_36px_36px_48px] items-start py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-cyan-500/5 -mx-4 px-4' : ''}`}>
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          {batPlayer?.photo ? (
+                            <img src={batPlayer.photo} alt={playerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (batTeam?.color || '#06b6d4') + '40', border: '1px solid ' + (batTeam?.color || '#06b6d4') + '80' }}>
+                              {playerName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`text-[13px] font-medium leading-tight ${entry.isNotOut ? 'text-slate-100' : 'text-slate-300'}`}>
+                                {playerName}
+                                {entry.isNotOut && entry.balls > 0 && <span className="text-cyan-400 ml-0.5 text-[10px]">*</span>}
+                              </span>
+                              {isBest && <Zap className="w-3 h-3 text-amber-400 shrink-0" />}
+                              {isStriker && (
+                                <span className="text-[8px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
+                              )}
+                              {isNonStriker && (
+                                <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-500 italic leading-tight">
+                              {entry.isNotOut ? 'not out' : `∨ ${dismissal}`}
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-right text-[13px] font-bold leading-tight pt-0.5 ${entry.runs >= 50 ? 'text-amber-300' : entry.runs >= 30 ? 'text-cyan-300' : 'text-white'}`}>{entry.runs}</span>
+                        <span className="text-right text-[12px] text-slate-400 leading-tight pt-0.5">{entry.balls}</span>
+                        <span className="text-right text-[12px] text-blue-400 leading-tight pt-0.5">{entry.fours}</span>
+                        <span className="text-right text-[12px] text-amber-400 leading-tight pt-0.5">{entry.sixes}</span>
+                        <span className="text-right text-[11px] text-slate-400 leading-tight pt-0.5">{getStrikeRate(entry.runs, entry.balls)}</span>
+                      </div>
+                    );
+                  })}
+                  {selectedInn.extras > 0 && (
+                    <div className="flex items-center justify-between py-2 text-[12px] text-slate-500 border-b border-slate-800/20">
+                      <span>Extras</span>
+                      <span className="font-medium text-slate-400">{selectedInn.extras}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between py-2.5">
+                    <span className="text-[13px] font-bold text-slate-200">Total</span>
+                    <span className="text-[15px] font-extrabold text-white">{total}<span className="text-slate-500 text-sm font-medium">/{wickets}</span></span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="px-4">
+                  <div className="h-px bg-slate-800/60" />
+                </div>
+
+                {/* Bowling Scorecard */}
+                <div className="px-4 pt-3 pb-3">
+                  <div className="grid grid-cols-[1fr_40px_36px_36px_36px_48px] text-[11px] text-slate-500 font-semibold border-b border-slate-700/50 pb-1.5 mb-0.5">
+                    <span>Bowling</span>
+                    <span className="text-right">O</span>
+                    <span className="text-right">M</span>
+                    <span className="text-right">R</span>
+                    <span className="text-right">W</span>
+                    <span className="text-right">Econ</span>
+                  </div>
+                  {selectedInn.bowlingEntries.map((entry, i) => {
+                    const isBest = bestBowl && entry.playerId === bestBowl.playerId;
+                    const bowlerPlayerName = getPlayerName(state.teams, selectedInn.bowlingTeamId, entry.playerId);
+                    const isCurrentBowler = liveInfo && bowlerPlayerName === liveInfo.bowlerName;
+                    const bowlPlayer = bowlTeam?.players.find(p => p.id === entry.playerId);
+
+                    return (
+                      <div key={i} className={`grid grid-cols-[1fr_40px_36px_36px_36px_48px] items-center py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-violet-500/5 -mx-4 px-4' : ''}`}>
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          {bowlPlayer?.photo ? (
+                            <img src={bowlPlayer.photo} alt={bowlerPlayerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (bowlTeam?.color || '#8b5cf6') + '40', border: '1px solid ' + (bowlTeam?.color || '#8b5cf6') + '80' }}>
+                              {bowlerPlayerName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                            <span className="text-[13px] font-medium text-slate-100 leading-tight">{bowlerPlayerName}</span>
+                            {isBest && <Target className="w-3 h-3 text-violet-400 shrink-0" />}
+                            {isCurrentBowler && (
+                              <span className="text-[8px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 rounded-full">🎯 BOWLING</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-right text-[12px] text-slate-400">{entry.overs}</span>
+                        <span className="text-right text-[12px] text-slate-400">{entry.maidens}</span>
+                        <span className="text-right text-[12px] text-white font-bold">{entry.runsConceded}</span>
+                        <span className={`text-right text-[13px] font-bold ${entry.wickets >= 3 ? 'text-violet-300' : entry.wickets > 0 ? 'text-violet-400' : 'text-slate-400'}`}>{entry.wickets}</span>
+                        <span className="text-right text-[11px] text-slate-400">{getEconomy(entry.runsConceded, entry.overs)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── OVER'S HISTORY BUTTON & ACCORDION ────────────────────────── */}
+            <div className="space-y-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowOversHistory(!showOversHistory)}
+                className="w-full py-3.5 px-4 bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800/80 hover:border-cyan-500/40 rounded-2xl flex items-center justify-between transition-all group shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
+                      Over's History
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      {overNumbers.length > 0 ? `${overNumbers.length} over${overNumbers.length !== 1 ? 's' : ''} • Ball-by-ball timeline` : 'No overs recorded'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-cyan-400 font-semibold px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                    {showOversHistory ? 'Hide' : 'View Overs'}
+                  </span>
+                  {showOversHistory ? <ChevronUp className="w-4 h-4 text-cyan-400" /> : <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-cyan-400" />}
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {showOversHistory && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden space-y-3 pt-1"
+                  >
+                    {overNumbers.length === 0 ? (
+                      <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                        No ball-by-ball data recorded for this innings.
+                      </div>
+                    ) : (
+                      overNumbers.map(overNum => {
+                        const balls = overMap[overNum];
+                        const overRuns = balls.reduce((s, b) => s + (b.type === 'wicket' ? 0 : b.runs), 0);
+                        const overWickets = balls.filter(b => b.type === 'wicket').length;
+                        const bowlerName = balls[0]?.bowler || 'Bowler';
+                        const bowlerPlayer = bowlTeam?.players.find(p => p.name === bowlerName || p.id === balls[0]?.bowlerId);
+
+                        return (
+                          <div
+                            key={overNum}
+                            className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-3"
+                          >
+                            {/* Over header */}
+                            <div className="flex items-center justify-between border-b border-slate-800/70 pb-2.5">
+                              <div className="flex items-center gap-2.5">
+                                <span className="px-2.5 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-bold rounded-lg">
+                                  Over {overNum + 1}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  {bowlerPlayer?.photo ? (
+                                    <img src={bowlerPlayer.photo} alt={bowlerName} className="w-5 h-5 rounded-full object-cover border border-slate-600 shadow" />
+                                  ) : (
+                                    <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                                  )}
+                                  <span className="text-xs font-bold text-slate-200">{bowlerName}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {overWickets > 0 && (
+                                  <span className="px-2 py-0.5 bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[10px] font-extrabold rounded-md">
+                                    {overWickets} Wkt{overWickets !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                <span className="text-xs font-extrabold text-white font-mono bg-slate-800/80 px-2 py-1 rounded-md">
+                                  {overRuns} run{overRuns !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Ball by ball bubbles */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {balls.map((ball, bIdx) => {
+                                const st = getBallStyle(ball);
+                                return (
+                                  <div
+                                    key={bIdx}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-md transition-transform hover:scale-110 ${st.bg} ${st.text}`}
+                                    title={`${ball.type} - ${ball.runs} runs`}
+                                  >
+                                    {st.label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-8 text-center text-slate-500 text-sm">
+            No innings data recorded for this match yet.
+          </div>
+        )}
+
       </div>
     </div>
   );
