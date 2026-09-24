@@ -282,15 +282,29 @@ export default function ScoringView({ matchId, onBack }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => setTossWinner(team1?.id || '')}
-              className={`py-4 rounded-xl border transition-all ${tossWinner === team1?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
+              className={`py-4 px-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 ${tossWinner === team1?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
             >
-              <span className="font-semibold">{team1?.shortName || team1?.name}</span>
+              {team1?.logo ? (
+                <img src={team1.logo} alt="" className="w-12 h-12 rounded-xl object-cover shadow" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow" style={{ background: team1?.color || '#06b6d4' }}>
+                  {team1?.shortName?.slice(0, 2) || 'T1'}
+                </div>
+              )}
+              <span className="font-bold text-sm text-white">{team1?.shortName || team1?.name}</span>
             </button>
             <button 
               onClick={() => setTossWinner(team2?.id || '')}
-              className={`py-4 rounded-xl border transition-all ${tossWinner === team2?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
+              className={`py-4 px-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 ${tossWinner === team2?.id ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}
             >
-              <span className="font-semibold">{team2?.shortName || team2?.name}</span>
+              {team2?.logo ? (
+                <img src={team2.logo} alt="" className="w-12 h-12 rounded-xl object-cover shadow" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow" style={{ background: team2?.color || '#8b5cf6' }}>
+                  {team2?.shortName?.slice(0, 2) || 'T2'}
+                </div>
+              )}
+              <span className="font-bold text-sm text-white">{team2?.shortName || team2?.name}</span>
             </button>
           </div>
 
@@ -436,8 +450,15 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {availableBatters.map(p => (
                     <button key={p.id} onClick={() => engine.selectNewBatter({id:p.id,name:p.name})}
-                      className="w-full py-2.5 px-4 bg-slate-800/60 border border-slate-700/50 rounded-lg text-sm text-white hover:border-cyan-500/50 hover:bg-slate-800 transition-all text-left">
-                      {p.name}
+                      className="w-full py-2 px-3 bg-slate-800/60 border border-slate-700/50 rounded-xl text-sm text-white hover:border-cyan-500/50 hover:bg-slate-800 transition-all text-left flex items-center gap-2.5">
+                      {p.photo ? (
+                        <img src={p.photo} alt={p.name} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-600" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: (battingTeam?.color || '#06b6d4') + '40', border: '1px solid ' + (battingTeam?.color || '#06b6d4') + '80' }}>
+                          {p.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="font-medium text-slate-200">{p.name}</span>
                     </button>
                   ))}
                 </div>
@@ -502,8 +523,17 @@ export default function ScoringView({ matchId, onBack }: Props) {
                 return !lastBowler || p.id !== lastBowler.playerId;
               }).map(p => (
                 <button key={p.id} onClick={() => engine.selectNewBowler({id:p.id,name:p.name})}
-                  className="w-full py-2.5 px-4 bg-slate-800/60 border border-slate-700/50 rounded-lg text-sm text-white hover:border-violet-500/50 hover:bg-slate-800 transition-all text-left flex justify-between">
-                  <span>{p.name}</span>
+                  className="w-full py-2 px-3 bg-slate-800/60 border border-slate-700/50 rounded-xl text-sm text-white hover:border-violet-500/50 hover:bg-slate-800 transition-all text-left flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    {p.photo ? (
+                      <img src={p.photo} alt={p.name} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-600" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: (bowlingTeam?.color || '#8b5cf6') + '40', border: '1px solid ' + (bowlingTeam?.color || '#8b5cf6') + '80' }}>
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="font-medium text-slate-200">{p.name}</span>
+                  </div>
                   {engine.bowlers.find(b=>b.playerId===p.id) && <span className="text-[10px] text-slate-500">{engine.bowlers.find(b=>b.playerId===p.id)!.overs} ov</span>}
                 </button>
               ))}
@@ -590,55 +620,97 @@ export default function ScoringView({ matchId, onBack }: Props) {
         {/* Batters on crease */}
         <div className="grid grid-cols-2 gap-3">
           {/* Striker */}
-          {engine.striker && (
-            <div key="striker-card" className="bg-slate-900/70 border border-cyan-500/40 rounded-xl p-3 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 to-sky-400 rounded-t-xl" />
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">⚡ Striker</span>
-                <span className="relative flex h-1.5 w-1.5 ml-auto">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-500" />
-                </span>
+          {engine.striker && (() => {
+            const strikerPlayer = battingTeam?.players.find(p => p.id === engine.striker?.playerId);
+            return (
+              <div key="striker-card" className="bg-slate-900/80 border border-cyan-500/40 rounded-2xl p-3 relative overflow-hidden shadow-lg shadow-cyan-950/20">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-sky-400" />
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">⚡ Striker</span>
+                  <span className="relative flex h-2 w-2 ml-auto">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  {strikerPlayer?.photo ? (
+                    <img src={strikerPlayer.photo} alt={engine.striker.name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-cyan-400/60 shadow" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: (battingTeam?.color || '#06b6d4') + '40', border: '1.5px solid ' + (battingTeam?.color || '#06b6d4') }}>
+                      {engine.striker.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <p className="text-sm font-bold text-white truncate min-w-0">{engine.striker.name}</p>
+                </div>
+                <div className="flex items-end gap-2">
+                  <span className="text-2xl font-extrabold text-white leading-none">{engine.striker.runs}</span>
+                  <span className="text-[10px] text-slate-400 mb-0.5">({engine.striker.balls}b)</span>
+                  {engine.striker.fours > 0 && <span className="text-[10px] text-blue-400 font-bold mb-0.5">{engine.striker.fours}×4</span>}
+                  {engine.striker.sixes > 0 && <span className="text-[10px] text-amber-400 font-bold mb-0.5">{engine.striker.sixes}×6</span>}
+                </div>
               </div>
-              <p className="text-sm font-bold text-white truncate">{engine.striker.name}</p>
-              <div className="flex items-end gap-2 mt-1.5">
-                <span className="text-2xl font-extrabold text-white leading-none">{engine.striker.runs}</span>
-                <span className="text-[10px] text-slate-500 mb-0.5">({engine.striker.balls}b)</span>
-                {engine.striker.fours > 0 && <span className="text-[10px] text-blue-400 mb-0.5">{engine.striker.fours}×4</span>}
-                {engine.striker.sixes > 0 && <span className="text-[10px] text-amber-400 mb-0.5">{engine.striker.sixes}×6</span>}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Non-Striker */}
-          {engine.nonStriker && (
-            <div key="non-striker-card" className="bg-slate-900/50 border border-slate-700/40 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">🏏 Non-Striker</span>
+          {engine.nonStriker && (() => {
+            const nonStrikerPlayer = battingTeam?.players.find(p => p.id === engine.nonStriker?.playerId);
+            return (
+              <div key="non-striker-card" className="bg-slate-900/60 border border-slate-700/50 rounded-2xl p-3 shadow">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">🏏 Non-Striker</span>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  {nonStrikerPlayer?.photo ? (
+                    <img src={nonStrikerPlayer.photo} alt={engine.nonStriker.name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-600 shadow" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: (battingTeam?.color || '#64748b') + '30', border: '1.5px solid ' + (battingTeam?.color || '#64748b') }}>
+                      {engine.nonStriker.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <p className="text-sm font-bold text-slate-300 truncate min-w-0">{engine.nonStriker.name}</p>
+                </div>
+                <div className="flex items-end gap-2">
+                  <span className="text-2xl font-extrabold text-slate-300 leading-none">{engine.nonStriker.runs}</span>
+                  <span className="text-[10px] text-slate-500 mb-0.5">({engine.nonStriker.balls}b)</span>
+                  {engine.nonStriker.fours > 0 && <span className="text-[10px] text-blue-400/70 font-semibold mb-0.5">{engine.nonStriker.fours}×4</span>}
+                  {engine.nonStriker.sixes > 0 && <span className="text-[10px] text-amber-400/70 font-semibold mb-0.5">{engine.nonStriker.sixes}×6</span>}
+                </div>
               </div>
-              <p className="text-sm font-bold text-slate-300 truncate">{engine.nonStriker.name}</p>
-              <div className="flex items-end gap-2 mt-1.5">
-                <span className="text-2xl font-extrabold text-slate-300 leading-none">{engine.nonStriker.runs}</span>
-                <span className="text-[10px] text-slate-600 mb-0.5">({engine.nonStriker.balls}b)</span>
-                {engine.nonStriker.fours > 0 && <span className="text-[10px] text-blue-400/70 mb-0.5">{engine.nonStriker.fours}×4</span>}
-                {engine.nonStriker.sixes > 0 && <span className="text-[10px] text-amber-400/70 mb-0.5">{engine.nonStriker.sixes}×6</span>}
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
 
         {/* Current Bowler */}
-        {engine.currentBowler && (
-          <div className="bg-slate-900/40 border border-slate-800/40 rounded-xl px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-violet-400"/>
-              <span className="text-xs text-slate-400">Bowler:</span>
-              <span className="text-sm font-semibold text-white">{engine.currentBowler.name}</span>
+        {engine.currentBowler && (() => {
+          const bowlerPlayer = bowlingTeam?.players.find(p => p.id === engine.currentBowler?.playerId);
+          return (
+            <div className="bg-slate-900/60 border border-violet-500/20 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {bowlerPlayer?.photo ? (
+                  <img src={bowlerPlayer.photo} alt={engine.currentBowler.name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-violet-500/50 shadow" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: (bowlingTeam?.color || '#8b5cf6') + '40', border: '1.5px solid ' + (bowlingTeam?.color || '#8b5cf6') }}>
+                    {engine.currentBowler.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <span className="text-[10px] text-violet-400 font-bold uppercase tracking-wider block">Bowler</span>
+                  <p className="text-sm font-bold text-white leading-tight truncate">{engine.currentBowler.name}</p>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className="text-sm font-extrabold text-violet-300 font-mono">
+                  {engine.currentBowler.wickets}-{engine.currentBowler.runs}
+                </span>
+                <span className="text-xs text-slate-400 block font-mono">
+                  ({engine.currentBowler.overs}.{engine.currentBowler.currentOverBalls} ov)
+                </span>
+              </div>
             </div>
-            <span className="text-xs text-slate-500">{engine.currentBowler.overs}.{engine.currentBowler.currentOverBalls}-{engine.currentBowler.maidens}-{engine.currentBowler.runs}-{engine.currentBowler.wickets}</span>
-          </div>
-        )}
+          );
+        })()}
 
         {/* This Over */}
         <div className="flex items-center gap-2 px-1">
@@ -905,10 +977,30 @@ export default function ScoringView({ matchId, onBack }: Props) {
 function ScoringHeader({t1,t2,match,onBack}:{t1:any,t2:any,match:Match,onBack:()=>void}) {
   return (
     <header className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-sky-500 shadow-lg shadow-cyan-900/30">
-      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-        <button onClick={onBack} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"><ArrowLeft className="w-5 h-5"/></button>
-        <div><div className="flex items-center gap-2"><span className="text-sm font-bold text-white">{t1?.shortName||'??'}</span><span className="text-[10px] text-cyan-100/50 font-bold">VS</span><span className="text-sm font-bold text-white">{t2?.shortName||'??'}</span></div>
-        <p className="text-[10px] text-cyan-100/60">{match.venue} • {match.totalOvers} overs</p></div>
+      <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><ArrowLeft className="w-5 h-5"/></button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              {t1?.logo ? (
+                <img src={t1.logo} alt="" className="w-6 h-6 rounded-md object-cover border border-white/20" />
+              ) : (
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: t1?.color || '#fff' }} />
+              )}
+              <span className="text-sm font-bold text-white">{t1?.shortName||'??'}</span>
+            </div>
+            <span className="text-[10px] text-cyan-100/60 font-bold">VS</span>
+            <div className="flex items-center gap-1.5">
+              {t2?.logo ? (
+                <img src={t2.logo} alt="" className="w-6 h-6 rounded-md object-cover border border-white/20" />
+              ) : (
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: t2?.color || '#fff' }} />
+              )}
+              <span className="text-sm font-bold text-white">{t2?.shortName||'??'}</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-[10px] text-cyan-100/70 hidden sm:block">{match.venue} • {match.totalOvers} overs</p>
       </div>
     </header>
   );
@@ -916,10 +1008,14 @@ function ScoringHeader({t1,t2,match,onBack}:{t1:any,t2:any,match:Match,onBack:()
 
 function ScoreBar({batting,total,wickets,overs,maxOvers,target,runsNeeded}:{batting:any,total:number,wickets:number,overs:string,maxOvers:number,target:number|null,runsNeeded:number|null}) {
   return (
-    <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} className="bg-gradient-to-br from-slate-900 to-slate-800/50 border border-slate-700/40 rounded-2xl p-4 text-center">
-      <div className="flex items-center justify-center gap-2 mb-1">
-        <div className="w-3 h-3 rounded-full" style={{background:batting?.color||'#10b981'}}/>
-        <p className="text-xs font-semibold text-slate-300">{batting?.name||'?'}</p>
+    <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} className="bg-gradient-to-br from-slate-900 to-slate-800/50 border border-slate-700/40 rounded-2xl p-4 text-center shadow-xl">
+      <div className="flex items-center justify-center gap-2 mb-1.5">
+        {batting?.logo ? (
+          <img src={batting.logo} alt="" className="w-5 h-5 rounded-md object-cover shadow-sm" />
+        ) : (
+          <div className="w-3 h-3 rounded-full" style={{background:batting?.color||'#10b981'}}/>
+        )}
+        <p className="text-sm font-bold text-slate-200">{batting?.name||'?'}</p>
       </div>
       <p className="text-4xl font-extrabold text-white">{total}<span className="text-xl text-slate-500">/{wickets}</span></p>
       <p className="text-sm text-slate-400">{overs} / {maxOvers} overs</p>

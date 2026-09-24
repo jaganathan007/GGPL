@@ -208,27 +208,28 @@ export default function MatchStats({ matchId, onBack }: Props) {
 
 
   // Determine Man of the Match
-  let motm: { name: string; teamColor: string; reason: string } | null = null;
-  const allPerformers: { name: string; teamColor: string; score: number; reason: string }[] = [];
+  let motm: { name: string; teamColor: string; reason: string; photo?: string } | null = null;
+  const allPerformers: { name: string; teamColor: string; score: number; reason: string; photo?: string }[] = [];
   match.innings.forEach(inn => {
     const batTeam = getTeam(state.teams, inn.battingTeamId);
     const bowlTeam = getTeam(state.teams, inn.bowlingTeamId);
     inn.battingEntries.forEach(e => {
-      const name = getPlayerName(state.teams, inn.battingTeamId, e.playerId);
-      // Score = runs + bonus for SR
+      const player = batTeam?.players.find(p => p.id === e.playerId);
+      const name = player?.name || 'Unknown';
       const sr = e.balls > 0 ? (e.runs / e.balls) * 100 : 0;
       const score = e.runs * 2 + (sr > 150 ? 20 : sr > 120 ? 10 : 0);
-      allPerformers.push({ name, teamColor: batTeam?.color || '#10b981', score, reason: `${e.runs}(${e.balls})` });
+      allPerformers.push({ name, teamColor: batTeam?.color || '#10b981', score, reason: `${e.runs}(${e.balls})`, photo: player?.photo });
     });
     inn.bowlingEntries.forEach(e => {
-      const name = getPlayerName(state.teams, inn.bowlingTeamId, e.playerId);
+      const player = bowlTeam?.players.find(p => p.id === e.playerId);
+      const name = player?.name || 'Unknown';
       const score = e.wickets * 30 + (e.wickets >= 3 ? 25 : 0) - e.runsConceded;
-      allPerformers.push({ name, teamColor: bowlTeam?.color || '#10b981', score, reason: `${e.wickets}/${e.runsConceded}` });
+      allPerformers.push({ name, teamColor: bowlTeam?.color || '#10b981', score, reason: `${e.wickets}/${e.runsConceded}`, photo: player?.photo });
     });
   });
   if (allPerformers.length > 0) {
     const best = allPerformers.sort((a, b) => b.score - a.score)[0];
-    motm = { name: best.name, teamColor: best.teamColor, reason: best.reason };
+    motm = { name: best.name, teamColor: best.teamColor, reason: best.reason, photo: best.photo };
   }
 
   return (
@@ -272,9 +273,13 @@ export default function MatchStats({ matchId, onBack }: Props) {
         >
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <div className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: team1?.color || '#10b981' }}>
-                {team1?.shortName.slice(0, 2) || '??'}
-              </div>
+              {team1?.logo ? (
+                <img src={team1.logo} alt={team1.name} className="w-12 h-12 rounded-xl mx-auto mb-2 object-cover shadow-md border border-slate-700/50" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: team1?.color || '#10b981' }}>
+                  {team1?.shortName.slice(0, 2) || '??'}
+                </div>
+              )}
               <p className="text-xs font-semibold text-slate-300">{team1?.name}</p>
               <p className="text-3xl font-extrabold text-white mt-1">
                 {getInningsTotal(match, t1Inn)}<span className="text-lg text-slate-500">/{getInningsWickets(match, t1Inn)}</span>
@@ -285,9 +290,13 @@ export default function MatchStats({ matchId, onBack }: Props) {
               <span className="text-xs text-slate-600 font-bold tracking-widest">VS</span>
             </div>
             <div className="text-center flex-1">
-              <div className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: team2?.color || '#10b981' }}>
-                {team2?.shortName.slice(0, 2) || '??'}
-              </div>
+              {team2?.logo ? (
+                <img src={team2.logo} alt={team2.name} className="w-12 h-12 rounded-xl mx-auto mb-2 object-cover shadow-md border border-slate-700/50" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold shadow-md" style={{ background: team2?.color || '#10b981' }}>
+                  {team2?.shortName.slice(0, 2) || '??'}
+                </div>
+              )}
               <p className="text-xs font-semibold text-slate-300">{team2?.name}</p>
               <p className="text-3xl font-extrabold text-white mt-1">
                 {match.innings.length > 1 ? (
@@ -310,17 +319,29 @@ export default function MatchStats({ matchId, onBack }: Props) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4"
+            className="bg-gradient-to-r from-amber-500/15 to-orange-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg shadow-amber-950/20"
           >
-            <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center shrink-0">
-              <Award className="w-6 h-6 text-amber-400" />
-            </div>
+            {motm.photo ? (
+              <img
+                src={motm.photo}
+                alt={motm.name}
+                className="w-14 h-14 rounded-2xl object-cover shrink-0 shadow-lg border-2 border-amber-500/50"
+              />
+            ) : (
+              <div className="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center shrink-0 border border-amber-500/30">
+                <Award className="w-7 h-7 text-amber-400" />
+              </div>
+            )}
             <div>
-              <p className="text-[10px] text-amber-500/70 uppercase tracking-wider font-semibold">Man of the Match</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: motm.teamColor }} />
-                <p className="text-sm font-bold text-white">{motm.name}</p>
-                <span className="text-xs text-slate-400">({motm.reason})</span>
+              <p className="text-[10px] text-amber-400 uppercase tracking-widest font-bold flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5" /> MAN OF THE MATCH
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: motm.teamColor }} />
+                <p className="text-base font-extrabold text-white">{motm.name}</p>
+                <span className="text-xs text-amber-400/90 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                  {motm.reason}
+                </span>
               </div>
             </div>
           </motion.div>
@@ -400,7 +421,11 @@ export default function MatchStats({ matchId, onBack }: Props) {
               {/* Innings Header */}
               <div className="px-4 py-3 bg-slate-800/30 border-b border-slate-800/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
+                  {batTeam?.logo ? (
+                    <img src={batTeam.logo} alt={batTeam.name} className="w-5 h-5 rounded-md object-cover shadow-sm" />
+                  ) : (
+                    <div className="w-3 h-3 rounded-full" style={{ background: batTeam?.color || '#10b981' }} />
+                  )}
                   <span className="text-sm font-bold text-white">{batTeam?.name || '?'}</span>
                   <span className="text-[10px] text-slate-500 bg-slate-800/60 px-2 py-0.5 rounded">{innIdx === 0 ? '1st' : '2nd'} Innings</span>
                   {isActiveInnings && <span className="text-[9px] font-bold text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full uppercase tracking-wide animate-pulse">LIVE</span>}
@@ -430,24 +455,38 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   return (
                     <div key={i} className={`grid grid-cols-[1fr_36px_36px_36px_36px_48px] items-start py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-cyan-500/5 -mx-4 px-4' : ''}`}>
                       {/* Name + dismissal */}
-                      <div className="flex flex-col gap-0.5 pr-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-[13px] font-medium leading-tight ${entry.isNotOut ? 'text-slate-100' : 'text-slate-300'}`}>
-                            {playerName}
-                            {entry.isNotOut && entry.balls > 0 && <span className="text-cyan-400 ml-0.5 text-[10px]">*</span>}
-                          </span>
-                          {isBest && <Zap className="w-3 h-3 text-amber-400 shrink-0" />}
-                          {isStriker && (
-                            <span className="text-[8px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
-                          )}
-                          {isNonStriker && (
-                            <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
-                          )}
-                        </div>
-                        <span className="text-[11px] text-slate-500 italic leading-tight">
-                          {entry.isNotOut ? 'not out' : `∨ ${dismissal}`}
-                        </span>
-                      </div>
+                      {(() => {
+                        const batPlayer = batTeam?.players.find(p => p.id === entry.playerId);
+                        return (
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            {batPlayer?.photo ? (
+                              <img src={batPlayer.photo} alt={playerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (batTeam?.color || '#06b6d4') + '40', border: '1px solid ' + (batTeam?.color || '#06b6d4') + '80' }}>
+                                {playerName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[13px] font-medium leading-tight ${entry.isNotOut ? 'text-slate-100' : 'text-slate-300'}`}>
+                                  {playerName}
+                                  {entry.isNotOut && entry.balls > 0 && <span className="text-cyan-400 ml-0.5 text-[10px]">*</span>}
+                                </span>
+                                {isBest && <Zap className="w-3 h-3 text-amber-400 shrink-0" />}
+                                {isStriker && (
+                                  <span className="text-[8px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-1.5 py-0.5 rounded-full">⚡ STRIKER</span>
+                                )}
+                                {isNonStriker && (
+                                  <span className="text-[8px] font-bold text-slate-300 bg-slate-700/50 border border-slate-600/40 px-1.5 py-0.5 rounded-full">🏃 NON-STRIKER</span>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-slate-500 italic leading-tight">
+                                {entry.isNotOut ? 'not out' : `∨ ${dismissal}`}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {/* Stats */}
                       <span className={`text-right text-[13px] font-bold leading-tight pt-0.5 ${entry.runs >= 50 ? 'text-amber-300' : entry.runs >= 30 ? 'text-cyan-300' : 'text-white'}`}>{entry.runs}</span>
                       <span className="text-right text-[12px] text-slate-400 leading-tight pt-0.5">{entry.balls}</span>
@@ -492,13 +531,27 @@ export default function MatchStats({ matchId, onBack }: Props) {
                   const isCurrentBowler = liveInfo && bowlerPlayerName === liveInfo.bowlerName;
                   return (
                     <div key={i} className={`grid grid-cols-[1fr_40px_36px_36px_36px_48px] items-center py-2.5 border-b border-slate-800/30 ${isBest ? 'bg-violet-500/5 -mx-4 px-4' : ''}`}>
-                      <div className="flex items-center gap-1.5 flex-wrap pr-2">
-                        <span className="text-[13px] font-medium text-slate-100 leading-tight">{bowlerPlayerName}</span>
-                        {isBest && <Target className="w-3 h-3 text-violet-400 shrink-0" />}
-                        {isCurrentBowler && (
-                          <span className="text-[8px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 rounded-full">🎯 BOWLING</span>
-                        )}
-                      </div>
+                      {(() => {
+                        const bowlPlayer = bowlTeam?.players.find(p => p.id === entry.playerId);
+                        return (
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            {bowlPlayer?.photo ? (
+                              <img src={bowlPlayer.photo} alt={bowlerPlayerName} className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-700 shadow-sm" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: (bowlTeam?.color || '#8b5cf6') + '40', border: '1px solid ' + (bowlTeam?.color || '#8b5cf6') + '80' }}>
+                                {bowlerPlayerName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                              <span className="text-[13px] font-medium text-slate-100 leading-tight">{bowlerPlayerName}</span>
+                              {isBest && <Target className="w-3 h-3 text-violet-400 shrink-0" />}
+                              {isCurrentBowler && (
+                                <span className="text-[8px] font-bold text-violet-300 bg-violet-500/15 border border-violet-500/30 px-1.5 py-0.5 rounded-full">🎯 BOWLING</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       <span className="text-right text-[12px] text-slate-400">{entry.overs}</span>
                       <span className="text-right text-[12px] text-slate-400">{entry.maidens}</span>
                       <span className="text-right text-[12px] text-white font-bold">{entry.runsConceded}</span>
