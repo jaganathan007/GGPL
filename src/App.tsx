@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Swords, Trophy, LogOut, Eye, User, Lock, ShieldCheck, Search, Bell, Sun, Home, Radio, BarChart3, Calendar, Menu, ChevronDown, X, Clock, MapPin, Play } from 'lucide-react';
+import { Users, Swords, Trophy, Eye, User, Search, Bell, Sun, Home, Radio, BarChart3, Calendar, Menu, X, Clock, MapPin, Play } from 'lucide-react';
 import TeamsView from './components/TeamsView';
 import MatchesView from './components/MatchesView';
 import CreateMatchForm from './components/CreateMatchForm';
@@ -14,6 +14,7 @@ import Dashboard from './components/Dashboard';
 import TournamentsView from './components/TournamentsView';
 import PlayersView from './components/PlayersView';
 import StatsView from './components/StatsView';
+import ProfileView from './components/ProfileView';
 
 export default function App() {
   const { state } = useApp();
@@ -215,6 +216,7 @@ export default function App() {
     { id: 'tournaments', label: 'Tournaments', icon: Trophy },
     { id: 'players', label: 'Players', icon: User },
     { id: 'statistics', label: 'Statistics', icon: BarChart3 },
+    ...(isLoggedIn ? [{ id: 'profile', label: 'Profile', icon: User }] : []),
   ];
 
   function renderMainContent() {
@@ -342,6 +344,15 @@ export default function App() {
         return (
           <StatsView currentUserId={currentUserId || undefined} />
         );
+
+      case 'profile':
+        return isLoggedIn ? (
+          <ProfileView
+            currentUserId={currentUserId!}
+            currentUserName={currentUserName}
+            onLogout={handleLogout}
+          />
+        ) : null;
 
       default:
         return <Dashboard onNavigate={handleNavigate} onScoreMatch={handleScoreMatch} isAdmin={hasAdminAccess} onViewStats={setStatsMatchId} currentUserId={currentUserId || undefined} />;
@@ -607,32 +618,22 @@ export default function App() {
             
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-800">
               {isLoggedIn ? (
-                <div className="flex items-center gap-2 cursor-pointer group">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
+                <button
+                  onClick={() => handleNavigate('profile')}
+                  className="flex items-center gap-2 cursor-pointer group hover:opacity-90 transition-opacity"
+                  title="View Profile"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-md ring-2 ring-transparent group-hover:ring-cyan-500/50 transition-all">
                     {currentUserName ? currentUserName.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <span className="text-sm font-semibold text-slate-200 hidden sm:block">{currentUserName}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-white hidden sm:block" />
-                </div>
+                  <span className="text-sm font-semibold text-slate-200 hidden sm:block group-hover:text-white transition-colors">{currentUserName}</span>
+                </button>
               ) : (
                 <button onClick={() => setIsGuest(false)} className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold rounded-xl transition-all shadow-md">
                   <User className="w-3.5 h-3.5" />
                   <span>Login</span>
                 </button>
               )}
-              
-              {isLoggedIn && (
-                <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-900 rounded-xl transition-colors ml-1" title="Logout">
-                  <LogOut className="w-4.5 h-4.5" />
-                </button>
-              )}
-              <button
-                onClick={() => requestAdminAccess()}
-                className={`p-2 rounded-xl transition-colors ml-1 ${hasAdminAccess ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
-                title={hasAdminAccess ? 'Admin active' : 'Enter Admin PIN'}
-              >
-                {hasAdminAccess ? <ShieldCheck className="w-4.5 h-4.5" /> : <Lock className="w-4.5 h-4.5" />}
-              </button>
             </div>
           </div>
         </header>

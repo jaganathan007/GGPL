@@ -72,6 +72,34 @@ export default function CreateMatchForm({ onCancel, onCreated, initialLeagueCode
     ? ownerFilteredTeams.filter(t => t.leagueId === linkedLeague.id)
     : ownerFilteredTeams;
 
+  // Block match creation if user has no mobile number
+  const currentUser = ownerId ? (state.users || []).find(u => u.id === ownerId) : null;
+  const hasMobile = !!(currentUser?.phone?.trim());
+
+  if (ownerId && !hasMobile) {
+    return (
+      <div className="max-w-md mx-auto pt-10">
+        <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Mobile Number Required</h2>
+          <p className="text-slate-400 text-sm mb-6">
+            You need to add your mobile number before creating a match. Go to your <span className="text-cyan-400 font-semibold">Profile</span> to add it.
+          </p>
+          <button
+            onClick={onCancel}
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl transition-all"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function handleLeagueStep(hasCode: boolean) {
     if (hasCode) {
       const code = leagueCode.trim().toUpperCase();
