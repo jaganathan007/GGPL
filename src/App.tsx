@@ -360,11 +360,24 @@ export default function App() {
       <aside className={`fixed left-0 top-0 bottom-0 w-60 bg-slate-950 border-r border-slate-800/60 flex flex-col z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} overflow-y-auto sidebar-scroll`}>
         {/* Header area */}
         <div className="p-6 flex flex-col items-center border-b border-slate-800/60">
-          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 rounded-2xl flex items-center justify-center mb-2.5 shadow-lg shadow-cyan-950">
-            <Trophy className="w-6 h-6 text-cyan-400" />
+          <div className="flex items-center gap-2.5 mb-1">
+            {/* CricLoop infinity logo */}
+            <div className="w-11 h-11 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-950">
+              <svg viewBox="0 0 60 36" width="32" height="20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18 C15 10, 5 4, 0 10 C-4 15, 0 26, 10 26 C20 26, 28 18, 30 18 C32 18, 40 26, 50 26 C60 26, 64 15, 60 10 C55 4, 45 10, 45 18 C45 26, 37 34, 30 34 C23 34, 15 26, 15 18 Z" fill="none" stroke="url(#cg)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+                <defs>
+                  <linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#22d3ee"/>
+                    <stop offset="100%" stopColor="#3b82f6"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold text-white tracking-tight leading-none">CricLoop</h1>
+              <p className="text-[9px] text-cyan-400/80 font-semibold uppercase tracking-widest mt-0.5">Play Beyond Borders</p>
+            </div>
           </div>
-          <h1 className="text-xl font-extrabold text-white tracking-tight">Cricverse</h1>
-          <p className="text-[10px] text-cyan-400/80 font-semibold uppercase tracking-widest mt-0.5">Play Beyond Borders</p>
         </div>
 
         {/* Navigation items */}
