@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Trophy, X, ShieldCheck, CheckCircle, Send, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Trophy, X, ShieldCheck, CheckCircle, Send, Loader2, Phone } from 'lucide-react';
 import { useApp } from '../store';
 import type { User as UserType } from '../types';
 
@@ -103,16 +103,32 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Find user by either email or mobile number
+  function findUserByInput(input: string): UserType | undefined {
+    const trimmed = input.trim();
+    if (!trimmed) return undefined;
+    const digits = trimmed.replace(/\D/g, '');
+    const isMobile = !trimmed.includes('@') && digits.length >= 10;
+    if (isMobile) {
+      const last10 = digits.slice(-10);
+      return (state.users || []).find(u => {
+        const uPhone = (u.phone || '').replace(/\D/g, '');
+        return uPhone.endsWith(last10);
+      });
+    }
+    return (state.users || []).find(u => u.email?.toLowerCase() === trimmed.toLowerCase());
+  }
+
   // ─── Send OTP via EmailJS ───────────────────────────────────────────────
   async function handleSendOtp() {
-    const emailTrimmed = email.trim().toLowerCase();
-    if (!emailTrimmed) {
-      setError('Please enter your email address first');
+    const rawInput = email.trim();
+    if (!rawInput) {
+      setError('Please enter your registered email or mobile number first');
       return;
     }
-    const existing = (state.users || []).find(u => u.email?.toLowerCase() === emailTrimmed);
-    if (!existing) {
-      setError('No account found with this email address.');
+    const existing = findUserByInput(rawInput);
+    if (!existing || !existing.email) {
+      setError('No account found with this email or mobile number.');
       return;
     }
 
@@ -123,12 +139,12 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     setSendingOtp(true);
 
     // ── Send via EmailJS ──────────────────────────────────────────────────
-    const result = await sendOtpEmail(emailTrimmed, existing.name, otp);
+    const result = await sendOtpEmail(existing.email, existing.name, otp);
     setSendingOtp(false);
 
     if (result.ok) {
       setPhase('forgotOtp');
-      setOtpSentInfo(emailTrimmed);
+      setOtpSentInfo(existing.email);
     } else {
       setError('Failed to send email. Please try again.');
     }
@@ -149,7 +165,7 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
     if (newPassword.length < 4) { setError('Password must be at least 4 characters'); return; }
     if (newPassword !== confirmNewPassword) { setError('Passwords do not match'); return; }
 
-    const user = (state.users || []).find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+    const user = findUserByInput(email);
     if (user) {
       dispatch({ type: 'UPDATE_USER', payload: { ...user, passwordHash: hashPassword(newPassword) } });
       setSession(user.id, user.name);
@@ -162,23 +178,27 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
   function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const emailTrimmed = email.trim().toLowerCase();
+    const inputTrimmed = email.trim();
 
-    if (!emailTrimmed) { setError('Please enter your email address'); return; }
+    if (!inputTrimmed) { 
+      setError(mode === 'login' ? 'Please enter your email or mobile number' : 'Please enter your email address'); 
+      return; 
+    }
 
     if (mode === 'signup') {
+      const emailLower = inputTrimmed.toLowerCase();
       if (!name.trim()) { setError('Please enter your name'); return; }
       if (password.length < 4) { setError('Password must be at least 4 characters'); return; }
       if (password !== confirmPassword) { setError('Passwords do not match'); return; }
 
-      const existing = (state.users || []).find(u => u.email?.toLowerCase() === emailTrimmed);
+      const existing = (state.users || []).find(u => u.email?.toLowerCase() === emailLower);
       if (existing) { setError('Account already exists. Please login instead.'); return; }
 
       const id   = uid();
       const user: UserType = {
         id,
         name: name.trim(),
-        email: emailTrimmed,
+        email: emailLower,
         passwordHash: hashPassword(password),
         createdAt: new Date().toISOString(),
       };
@@ -186,8 +206,12 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
       setSession(id, user.name);
       onLogin(id, user.name);
     } else {
-      const user = (state.users || []).find(u => u.email?.toLowerCase() === emailTrimmed);
-      if (!user)                                          { setError('No account found. Please sign up first.'); return; }
+      const user = findUserByInput(inputTrimmed);
+      if (!user) {
+        const isMobile = !inputTrimmed.includes('@') && inputTrimmed.replace(/\D/g, '').length >= 10;
+        setError(isMobile ? 'No account found with this mobile number.' : 'No account found. Please sign up first.');
+        return;
+      }
       if (user.passwordHash !== hashPassword(password))  { setError('Incorrect password. Please try again.'); return; }
       setSession(user.id, user.name);
       onLogin(user.id, user.name);
@@ -318,17 +342,23 @@ export default function AuthGate({ onLogin, onGuest }: AuthGateProps) {
                   </div>
                 )}
 
-                {/* Email */}
+                {/* Email or Mobile Number */}
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                    {mode === 'login' ? 'Email or Mobile Number' : 'Email Address'}
+                  </label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    {mode === 'login' && !email.includes('@') && email.replace(/\D/g, '').length >= 5 ? (
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400 pointer-events-none" />
+                    ) : (
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    )}
                     <input
-                      type="email"
+                      type={mode === 'login' ? 'text' : 'email'}
                       autoFocus={mode === 'login'}
                       value={email}
                       onChange={e => { setEmail(e.target.value); setError(''); }}
-                      placeholder="your@email.com"
+                      placeholder={mode === 'login' ? 'Email or 10-digit mobile number' : 'your@email.com'}
                       className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/60 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
                   </div>
